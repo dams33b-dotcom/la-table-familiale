@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#1A3A0A">
+  <title>La Table Familiale</title>
+  <style>
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    body{margin:0;padding:0;font-family:system-ui,-apple-system,sans-serif;background:#F7F5EF}
+    input,select,textarea,button{font-family:inherit}
+    input[type="range"]{-webkit-appearance:none;height:6px;border-radius:3px;background:#E8E4DA;outline:none}
+    input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:#2D6B0E;cursor:pointer}
+    ::-webkit-scrollbar{display:none}
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+  <script>
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyCReVEupBc9WGP7heEVzWeNIIxJbfUfo8o",
+      authDomain: "la-table-familiale.firebaseapp.com",
+      databaseURL: "https://la-table-familiale-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "la-table-familiale",
+      storageBucket: "la-table-familiale.firebasestorage.app",
+      messagingSenderId: "181019053837",
+      appId: "1:181019053837:web:040703dd5fd2fa4fb0ea44"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const FAMILY_ID = "madateam";
+    window._fb = { db, ref: (path) => db.ref(FAMILY_ID + "/" + path) };
+    console.log("🔥 Firebase connecté");
+  </script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+  <script type="text/babel">
+const {useState,useEffect,useMemo,useCallback}=React;
+
+// ── STORAGE (Firebase Realtime DB + localStorage fallback) ──
+function sGet(k,fb){
+  try{const v=localStorage.getItem(k);return v?JSON.parse(v):fb;}catch{return fb;}
+}
+function sSet(k,v){
+  try{
+    localStorage.setItem(k,JSON.stringify(v));
+    // Sync to Firebase
+    if(window._fb){window._fb.ref(k).set(v).catch(e=>console.warn("Firebase write error:",e));}
+  }catch(e){console.error(e);}
+}
+// Listen for Firebase changes (sync from other devices)
+function fbListen(k,callback){
+  if(!window._fb)return;
+  window._fb.ref(k).on("value",snap=>{
+    const val=snap.val();
+    if(val!==null&&val!==undefined){
+      localStorage.setItem(k,JSON.stringify(val));
+      callback(val);
+    }
+  });
+}
+
+// ── DATA (loaded via fetch) ──
+let DATA=null;
+
+
+// Data: p=plats, e=entrees, s=stock, pr=profils
+// Item: [id,nom,type,genre,saison,temps_prepa,batch,temps_batch,ings[],macros{},recette]
+// Ing: [nom,unite,qD,qM,qE], Macros: {D:[kcal,p,l,g],M:[..],E:[..]}
+// Profil: [cal,prot,lip,gluc,age,poids,taille,imc,activite,objectif,repartition]
+
+const C = {
+  forest:"#1A3A0A",fL:"#2D6B0E",gold:"#B8860B",blue:"#1565C0",pink:"#AD1457",
+  bg:"#F7F5EF",text:"#1A1A1A",tM:"#4A4A4A",tL:"#7A7A7A",
+  bdr:"#E8E4DA",bdrL:"#F0EDE5",danger:"#C62828",dangerBg:"#FFF3F0",
+  ok:"#2E7D32",okBg:"#F0FFF0",
+};
+const PC={Damien:C.fL,Maroie:C.pink,"Maël":C.blue};
+const ET={"Tartine/toast":"🍞","Crêpe/wrap":"🌮","Végétarien/végétalien":"🥬",
+  "Salade/bowl":"🥗","Poisson/fruit de mer":"🐟","Poulet halal":"🍗",
+  "Quiche/tarte/pizza":"🥧","Gratin":"🧀","Cake salé":"🍰","Burger":"🍔","Risotto":"🍚","Entrée":"🥕"};
+const EC={"Française":"🇫🇷","Méditerranéenne":"🌊","Asiatique":"🥢","Indienne":"🇮🇳","Orientale":"🌙","Autres":"🌍"};
+const JOURS_ALL=["Dimanche","Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi"];
+function getWeekDays(startDate){
+  const d=startDate||new Date();
+  const days=[];
+  for(let i=0;i<7;i++){
+    const day=new Date(d);day.setDate(d.getDate()+i);
+    const name=JOURS_ALL[day.getDay()];
+    const dateStr=day.toLocaleDateString("fr-FR",{day:"numeric",month:"long"});
+    const capDate=dateStr.charAt(0).toUpperCase()+dateStr.slice(1);
+    days.push({name,dateStr:name+" "+capDate,full:name+" "+capDate});
+  }
+  return days;
+}
+const TYPES=["Poisson/fruit de mer","Poulet halal","Végétarien/végétalien","Salade/bowl",
+  "Quiche/tarte/pizza","Tartine/toast","Gratin","Crêpe/wrap","Cake salé","Burger","Risotto"];
+const CUISINES=["Française","Méditerranéenne","Asiatique","Indienne","Orientale","Autres"];
+
+const IC={"Levure chimique":"SUCRÉ","Miel":"SUCRÉ","Pain de mie complet":"SUCRÉ",
+  "Sirop d\u0027érable":"SUCRÉ","Sucre de coco":"SUCRÉ",
+  "Beurre de cacahuète":"SALÉ","Couscous parfumé (cru)":"SALÉ","Croûtons":"SALÉ",
+  "Crème de coco":"SALÉ","Fajitas (tortillas)":"SALÉ","Farine":"SALÉ",
+  "Gaspacho (brique)":"SALÉ","Lentilles corail (crues)":"SALÉ","Macédoine (prête)":"SALÉ",
+  "Maquereaux (conserve)":"SALÉ","Maïs (conserve)":"SALÉ","Petits pois (conserve)":"SALÉ",
+  "Purée (sachet ou PDT)":"SALÉ","Pâtes 3 min (crues)":"SALÉ","Pâtes à lasagnes":"SALÉ",
+  "Quinoa (cru)":"SALÉ","Riz thaï & basmati (cru)":"SALÉ","Sardines (conserve)":"SALÉ",
+  "Sauce arrabiata":"SALÉ","Sauce pesto ail":"SALÉ","Sauce tomate":"SALÉ",
+  "Soupe tomate (brique)":"SALÉ","Thon (conserve)":"SALÉ","Tomate séchée":"SALÉ",
+  "Basilic frais":"HUI","Bouillon légumes":"HUI","Cornichons":"HUI","Cumin":"HUI",
+  "Curcuma":"HUI","Curry":"HUI","Gros sel":"HUI","Harissa / piment":"HUI",
+  "Herbes de Provence":"HUI","Huile de coco":"HUI","Huile olive":"HUI",
+  "Huile sésame toastée":"HUI","Mayonnaise":"HUI","Moutarde":"HUI",
+  "Paprika":"HUI","Piment":"HUI","Poivre":"HUI","Pâte de curry vert":"HUI",
+  "Sauce soja sucrée":"HUI","Sauce teriyaki":"HUI","Sel":"HUI",
+  "Sel, poivre":"HUI","Vinaigre balsamique":"HUI","Vinaigre de cidre":"HUI",
+  "Vinaigre de xérès":"HUI","Vinaigre vin rouge":"HUI",
+  "Beurre doux":"FRAIS","Beurre salé":"FRAIS","Brique chèvre":"FRAIS",
+  "Chèvre frais":"FRAIS","Crème fraîche":"FRAIS","Fromage râpé":"FRAIS",
+  "Fêta":"FRAIS","Houmous":"FRAIS","Jus de citron":"FRAIS","Jus de citron vert":"FRAIS",
+  "Lait de vache":"FRAIS","Mozzarella":"FRAIS","Pain":"FRAIS","Parmesan":"FRAIS",
+  "Parmesan (copeaux)":"FRAIS","Pâte feuilletée":"FRAIS","Pâte à pizza ronde":"FRAIS",
+  "Rillettes / jambon dinde":"FRAIS","Surimi":"FRAIS","Taboulé (prêt)":"FRAIS",
+  "Yaourt blanc":"FRAIS","Œufs":"FRAIS",
+  "Anchois":"PROT","Brandade morue (traiteur)":"PROT","Crevettes":"PROT",
+  "Hachis parmentier mer (traiteur)":"PROT","Merguez végétales":"PROT",
+  "Pavé de truite":"PROT","Poisson blanc (filet)":"PROT",
+  "Poulet halal (aiguillettes)":"PROT","Poulet halal (blanc)":"PROT",
+  "Saumon (pavé)":"PROT","Truite fumée":"PROT","Viande végétale hachée":"PROT",
+  "Dattes":"FRUITS","Mangue":"FRUITS","Nectarines / pêches":"FRUITS",
+  "Pastèque":"FRUITS","Poires":"FRUITS","Pomme (fruit)":"FRUITS",
+  "Amandes effilées":"FSEC","Cranberry (séchée)":"FSEC","Graines de courge":"FSEC",
+  "Graines de sésame":"FSEC","Huile de noix":"FSEC","Mélange de graines":"FSEC",
+  "Noisettes":"FSEC","Noix":"FSEC","Noix de cajou":"FSEC",
+  "Noix de muscade":"FSEC","Pignons de pin":"FSEC","Raisins secs":"FSEC",
+  "Ail":"LEG","Algues (nori)":"LEG","Aubergines":"LEG","Avocat":"LEG",
+  "Betteraves (cuites)":"LEG","Brocolis":"LEG","Brocolis / chou-fleur":"LEG",
+  "Carottes":"LEG","Champignons":"LEG","Chou blanc":"LEG",
+  "Citron (zeste + jus)":"LEG","Concombre":"LEG","Courgettes":"LEG",
+  "Haricots verts frais":"LEG","Oignons":"LEG","Olives":"LEG",
+  "Persil":"LEG","Persil / ciboulette":"LEG","Persil frais":"LEG",
+  "Poireaux":"LEG","Pois chiches (conserve)":"LEG","Pomme de terre":"LEG",
+  "Pousses de soja / germes":"LEG","Radis":"LEG","Roquette":"LEG",
+  "Salade verte":"LEG","Salade verte / romaine":"LEG","Tomates":"LEG",
+  "Tomates cerises":"LEG","Tomates pelées (conserve)":"LEG",
+  "Échalotes":"LEG","Épinards frais":"LEG",
+  "Beaufort":"SURG","Boulgour (cru)":"SURG","Boursin":"SURG",
+  "Butternut (courge)":"SURG","Coriandre fraîche":"SURG",
+  "Cream cheese / Philadelphia":"SURG","Crêpes salées (surgelées)":"SURG",
+  "Câpres":"SURG","Edamame / petits pois":"SURG","Farine de pois chiche":"SURG",
+  "Feuilleté St-Jacques (surgelé)":"SURG","Feuilleté chèvre (surgelé)":"SURG",
+  "Garam masala":"SURG","Gingembre frais":"SURG","Haricots noirs (conserve)":"SURG",
+  "Légumes grillés (surgelés)":"SURG","Menthe fraîche":"SURG","Muscade":"SURG",
+  "Nouilles de riz (sèches)":"SURG","Oignon rouge":"SURG","Oignon vert / cébette":"SURG",
+  "Pain burger":"SURG","Pain pita":"SURG","Patate douce":"SURG",
+  "Poisson bordelaise (surgelé)":"SURG","Poivrons":"SURG","Riz arborio (cru)":"SURG",
+  "Sole (filet)":"SURG","Tabasco":"SURG","Tahini":"SURG","Thym frais":"SURG",
+  "Tomme de brebis":"SURG","Vin blanc sec":"SURG","Zaatar":"SURG",
+  "Épinards (surgelés)":"SURG","Labneh":"SURG","Pâte miso":"SURG"};
+
+const CAT_ORDER=[["SUCRÉ","🍫"],["SALÉ","🧂"],["HUI","🫒"],["FRAIS","🧀"],
+  ["PROT","🥩"],["FRUITS","🍎"],["FSEC","🥜"],["LEG","🥬"],["SURG","❄️"]];
+const CN={"SUCRÉ":"SUCRÉ","SALÉ":"SALÉ","HUI":"HUILES ET CONDIMENTS",
+  "FRAIS":"FRAIS","PROT":"FRAIS PROTÉINES","FRUITS":"FRUITS","FSEC":"FRUITS SECS",
+  "LEG":"LÉGUMES","SURG":"SURGELÉS"};
+
+
+function App(){
+  const [tab,setTab]=useState(0);
+  const [ratings,setRatings]=useState({});
+  const [obs,setObs]=useState({});
+  const [menu,setMenu]=useState(null);
+  const [locked,setLocked]=useState(false);
+  const [history,setHistory]=useState([]);
+  const [profiles,setProfiles]=useState(["Damien","Maroie","Maël"]);
+  const [stockCk,setStockCk]=useState({});
+  const [courseCk,setCourseCk]=useState({});
+  const [selPlat,setSelPlat]=useState(null);
+  const [stockOrder,setStockOrder]=useState({});
+  const [customArt,setCustomArt]=useState({add:[],del:[],ren:{}});
+  const [photos,setPhotos]=useState({});
+  const [lockDialog,setLockDialog]=useState(false);
+
+  useEffect(()=>{
+    // Load from localStorage first (instant)
+    setRatings(sGet("ltf2_rat",{}));setObs(sGet("ltf2_obs",{}));
+    setMenu(sGet("ltf2_menu",null));setLocked(sGet("ltf2_lock",false));
+    setHistory(sGet("ltf2_hist",[]));setProfiles(sGet("ltf2_prof",["Damien","Maroie","Maël"]));
+    setStockCk(sGet("ltf2_stk",{}));setCourseCk(sGet("ltf2_crs",{}));
+    setPhotos(sGet("ltf2_photos",{}));
+    setStockOrder(sGet("ltf2_sord",{}));
+    setCustomArt(sGet("ltf2_cart",{add:[],del:[],ren:{}}));
+    // Listen for Firebase changes (sync from Maroie's phone)
+    fbListen("ltf2_rat",setRatings);
+    fbListen("ltf2_obs",setObs);
+    fbListen("ltf2_menu",v=>{if(v)setMenu(v);});
+    fbListen("ltf2_lock",setLocked);
+    fbListen("ltf2_hist",v=>{if(v)setHistory(v);});
+    fbListen("ltf2_stk",setStockCk);
+    fbListen("ltf2_crs",setCourseCk);
+    fbListen("ltf2_photos",setPhotos);
+    fbListen("ltf2_sord",setStockOrder);
+    fbListen("ltf2_cart",v=>{if(v)setCustomArt(v);});
+  },[]);
+
+  const sv={
+    menu:m=>{setMenu(m);sSet("ltf2_menu",m);},
+    rat:(id,v)=>{const n={...ratings,[id]:v};setRatings(n);sSet("ltf2_rat",n);},
+    obs:(id,t)=>{const n={...obs,[id]:t};setObs(n);sSet("ltf2_obs",n);},
+    lock:()=>{
+      const n=!locked;setLocked(n);sSet("ltf2_lock",n);
+      if(n&&menu){const h=[{date:new Date().toISOString(),menu:JSON.parse(JSON.stringify(menu))},...history].slice(0,4);
+        setHistory(h);sSet("ltf2_hist",h);}
+    },
+    prof:p=>{setProfiles(p);sSet("ltf2_prof",p);},
+    stk:s=>{setStockCk(s);sSet("ltf2_stk",s);},
+    crs:c=>{setCourseCk(c);sSet("ltf2_crs",c);},
+    photo:(id,url)=>{const n={...photos,[id]:url};setPhotos(n);sSet("ltf2_photos",n);},
+    sord:o=>{setStockOrder(o);sSet("ltf2_sord",o);},
+    cart:c=>{setCustomArt(c);sSet("ltf2_cart",c);},
+  };
+
+  const TABS=[{i:"📋",l:"Menu"},{i:"🍽",l:"Repas"},{i:"🛒",l:"Courses"},
+    {i:"👨‍🍳",l:"Batch"},{i:"📦",l:"Stock"},{i:"👨‍👩‍👦",l:"Profils"}];
+
+  return (
+    <div style={{background:C.bg,minHeight:"100vh",color:C.text,fontFamily:"system-ui,-apple-system,sans-serif"}}>
+      {/* HEADER */}
+      <header style={{background:`linear-gradient(135deg,${C.forest},${C.fL})`,color:"#fff",
+        padding:"12px 16px 8px",position:"sticky",top:0,zIndex:100,boxShadow:"0 2px 8px rgba(0,0,0,.15)",textAlign:"center"}}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"center",position:"relative"}}>
+          <div>
+            <h1 style={{margin:0,fontSize:17,fontWeight:700}}>🌿 La Table Familiale</h1>
+            <p style={{margin:"1px 0 0",fontSize:10,opacity:.8}}>
+              {DATA.plats.length} plats · {DATA.entrees.length} entrées</p>
+          </div>
+          {menu&&<button onClick={()=>{if(!locked){sv.lock();setLockDialog(true);}else{sv.lock();}}} style={{background:locked?C.gold:"rgba(255,255,255,.15)",
+            border:"none",borderRadius:8,padding:"5px 10px",color:"#fff",fontSize:12,cursor:"pointer",position:"absolute",right:0}}>
+            {locked?"🔒":"🔓"}</button>}
+        </div>
+      </header>
+
+      {/* NAV EN HAUT (sous le header) */}
+      <nav style={{background:"#fff",borderBottom:`1px solid ${C.bdr}`,display:"flex",
+        justifyContent:"space-around",padding:"6px 0",position:"sticky",top:55,zIndex:99,
+        boxShadow:"0 1px 4px rgba(0,0,0,.04)"}}>
+        {TABS.map((t,i)=>(
+          <button key={i} onClick={()=>setTab(i)} style={{background:"none",border:"none",
+            cursor:"pointer",padding:"4px 8px",display:"flex",flexDirection:"column",alignItems:"center",gap:2,
+            opacity:tab===i?1:.4,borderBottom:tab===i?`2px solid ${C.fL}`:"2px solid transparent",
+            transition:"all .2s"}}>
+            <span style={{fontSize:16}}>{t.i}</span>
+            <span style={{fontSize:9,fontWeight:tab===i?700:400,color:tab===i?C.fL:C.tL}}>{t.l}</span>
+          </button>
+        ))}
+      </nav>
+
+      {/* CONTENT */}
+      <main style={{paddingBottom:20}}>
+        {tab===0&&<MenuTab menu={menu} setMenu={sv.menu} locked={locked} profiles={profiles}
+          setProfiles={sv.prof} ratings={ratings} photos={photos} onSel={setSelPlat}/>}
+        {tab===1&&<CatalogTab ratings={ratings} profiles={profiles} photos={photos} onSel={setSelPlat}/>}
+        {tab===2&&<CoursesTab menu={menu} profiles={profiles} stockCk={stockCk} courseCk={courseCk} setCk={sv.crs} stockOrder={stockOrder}/>}
+        {tab===3&&<BatchTab menu={menu}/>}
+        {tab===4&&<StockTab stockCk={stockCk} setStockCk={sv.stk} stockOrder={stockOrder} setStockOrder={sv.sord} customArt={customArt} setCustomArt={sv.cart}/>}
+        {tab===5&&<ProfilsTab/>}
+      </main>
+
+      {lockDialog&&<LockDialog menu={menu} profiles={profiles} onClose={()=>setLockDialog(false)}/>}
+
+      {selPlat&&<Modal plat={selPlat} photos={photos} onClose={()=>setSelPlat(null)} profiles={profiles}
+        rating={ratings[selPlat.id]||0} onRate={v=>sv.rat(selPlat.id,v)}
+        obs={obs[selPlat.id]||""} onObs={t=>sv.obs(selPlat.id,t)}
+        photo={photos[selPlat.id]||""} onPhoto={u=>sv.photo(selPlat.id,u)}/>}
+    </div>
+  );
+}
+
+function Tag({text,color}){
+  return <span style={{fontSize:10,padding:"2px 7px",borderRadius:10,background:color+"14",
+    color,fontWeight:500,whiteSpace:"nowrap"}}>{text}</span>;
+}
+function Chip({label,on,click}){
+  return <button onClick={click} style={{padding:"4px 10px",borderRadius:16,
+    border:`1px solid ${on?C.fL:C.bdr}`,background:on?C.fL:"#fff",
+    color:on?"#fff":C.tM,fontSize:10,fontWeight:on?600:400,cursor:"pointer",whiteSpace:"nowrap"}}>{label}</button>;
+}
+
+// ═══════ TAB 1 — MENU ═══════
+function MenuTab({menu,setMenu,locked,profiles,setProfiles,ratings,photos,onSel}){
+  const [nbR,setNbR]=useState(menu?.repas?.length||7);
+  const [nbE,setNbE]=useState(menu?.entrees?.length||2);
+  const [saison,setSaison]=useState("Toutes saisons");
+  const [noteF,setNoteF]=useState(0);
+  const [confirm,setConfirm]=useState(false);
+  const [replIdx,setReplIdx]=useState(null);
+
+  const filtered=useMemo(()=>DATA.plats.filter(p=>{
+    if(saison==="Toutes saisons") return true;
+    if(saison==="Printemps") return p.saison==="Toutes saisons"||p.saison==="Été";
+    return p.saison==="Toutes saisons"||p.saison===saison;
+  }).filter(p=>noteF===0||(ratings[p.id]||0)>=noteF),[saison,noteF,ratings]);
+
+  const filteredE=useMemo(()=>DATA.entrees.filter(e=>{
+    if(saison==="Toutes saisons") return true;
+    if(saison==="Printemps") return e.saison==="Toutes saisons"||e.saison==="Été";
+    return e.saison==="Toutes saisons"||e.saison===saison;
+  }),[saison]);
+
+  function generate(){
+    if(menu&&!confirm){setConfirm(true);return;}
+    setConfirm(false);
+    const sh=[...filtered].sort(()=>Math.random()-.5).slice(0,nbR);
+    const bo={Oui:0,Partiel:1,Non:2};
+    sh.sort((a,b)=>(bo[a.batch]??1)-(bo[b.batch]??1));
+    const weekDays=getWeekDays(new Date());
+    const repas=sh.map((p,i)=>({...p,jour:weekDays[i%7].full,jourShort:weekDays[i%7].name,jourIdx:i%7,jourDate:weekDays[i%7].dateStr}));
+    const ent=[...filteredE].sort(()=>Math.random()-.5).slice(0,nbE);
+    setMenu({repas,entrees:ent,at:new Date().toISOString(),startDate:new Date().toISOString()});
+  }
+  function removeR(idx){if(locked)return;
+    const wd=getWeekDays(menu.startDate?new Date(menu.startDate):new Date());
+    const r=menu.repas.filter((_,i)=>i!==idx).map((r,i)=>({...r,jour:wd[i%7].full,jourShort:wd[i%7].name,jourIdx:i%7,jourDate:wd[i%7].dateStr}));
+    setMenu({...menu,repas:r});}
+  function replaceR(idx,type){if(locked)return;
+    const cands=filtered.filter(p=>p.type===type&&!menu.repas.some(r=>r.id===p.id));
+    if(!cands.length)return;
+    const r=[...menu.repas];r[idx]={...cands[Math.floor(Math.random()*cands.length)],jour:r[idx].jour,jourShort:r[idx].jourShort,jourIdx:r[idx].jourIdx,jourDate:r[idx].jourDate};
+    setMenu({...menu,repas:r});setReplIdx(null);}
+  function toggleProf(name){
+    const n=profiles.includes(name)?profiles.filter(p=>p!==name):[...profiles,name];
+    if(!n.length)return;setProfiles(n);}
+
+  return (
+    <div style={{padding:14}}>
+      <div style={{background:"#fff",borderRadius:14,padding:16,marginBottom:14,border:`1px solid ${C.bdr}`}}>
+        <h2 style={{margin:"0 0 12px",fontSize:16,fontWeight:700,color:C.forest}}>Générer le menu</h2>
+        <div style={{display:"flex",gap:6,marginBottom:12,justifyContent:"center"}}>
+          {["Damien","Maroie","Maël"].map(n=>(
+            <button key={n} onClick={()=>toggleProf(n)} style={{padding:"5px 12px",borderRadius:18,fontSize:12,
+              cursor:"pointer",border:`2px solid ${PC[n]}`,fontWeight:600,
+              background:profiles.includes(n)?PC[n]:"transparent",
+              color:profiles.includes(n)?"#fff":PC[n]}}>{n}</button>
+          ))}
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
+          <div>
+            <label style={{fontSize:11,color:C.tM,fontWeight:600}}>Repas: <strong style={{color:C.forest,fontSize:15}}>{nbR}</strong></label>
+            <input type="range" min={2} max={14} value={nbR} onChange={e=>setNbR(+e.target.value)} style={{width:"100%",accentColor:C.fL}}/>
+          </div>
+          <div>
+            <label style={{fontSize:11,color:C.tM,fontWeight:600}}>Entrées: <strong style={{color:C.forest,fontSize:15}}>{nbE}</strong></label>
+            <input type="range" min={0} max={8} value={nbE} onChange={e=>setNbE(+e.target.value)} style={{width:"100%",accentColor:C.fL}}/>
+          </div>
+        </div>
+
+        {/* FILTRE SAISON simplifié : 4 saisons + Toutes */}
+        <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:12,justifyContent:"center"}}>
+          {["Toutes saisons","Printemps","Été","Automne","Hiver"].map(s=>(
+            <button key={s} onClick={()=>setSaison(s)} style={{padding:"5px 12px",borderRadius:18,fontSize:11,
+              cursor:"pointer",border:`1px solid ${saison===s?C.fL:C.bdr}`,fontWeight:saison===s?700:400,
+              background:saison===s?C.fL:"#fff",color:saison===s?"#fff":C.tM}}>
+              {s==="Printemps"?"🌸":s==="Été"?"☀️":s==="Automne"?"🍂":s==="Hiver"?"❄️":"🌿"} {s}
+            </button>
+          ))}
+          <span style={{fontSize:11,color:C.tL,alignSelf:"center"}}>{filtered.length} plats</span>
+        </div>
+
+        <div style={{textAlign:"center",marginBottom:12}}><select value={noteF} onChange={e=>setNoteF(+e.target.value)} style={{padding:"5px 10px",
+          borderRadius:8,border:`1px solid ${C.bdr}`,fontSize:12,background:"#fff"}}>
+          <option value={0}>Toutes notes</option>
+          {[1,2,3,4,5].map(n=><option key={n} value={n}>≥ {"⭐".repeat(n)}</option>)}
+        </select></div>
+
+        <button onClick={generate} disabled={locked} style={{width:"100%",padding:12,borderRadius:10,
+          border:"none",background:locked?C.tL:`linear-gradient(135deg,${C.forest},${C.fL})`,
+          color:"#fff",fontSize:14,fontWeight:700,cursor:locked?"not-allowed":"pointer",
+          boxShadow:locked?"none":"0 3px 10px rgba(26,58,10,.3)"}}>
+          {locked?"🔒 Verrouillé":`🔄 Générer ${nbR} repas et ${nbE} entrées`}
+        </button>
+
+        {confirm&&<div style={{marginTop:10,padding:12,background:C.dangerBg,borderRadius:10}}>
+          <p style={{margin:"0 0 8px",fontSize:12,color:C.danger,fontWeight:600}}>⚠️ Remplacer le menu ?</p>
+          <div style={{display:"flex",gap:6}}>
+            <button onClick={generate} style={{flex:1,padding:8,borderRadius:8,border:"none",
+              background:C.danger,color:"#fff",fontSize:12,fontWeight:600,cursor:"pointer"}}>Oui</button>
+            <button onClick={()=>setConfirm(false)} style={{flex:1,padding:8,borderRadius:8,
+              border:`1px solid ${C.bdr}`,background:"#fff",fontSize:12,cursor:"pointer"}}>Non</button>
+          </div>
+        </div>}
+      </div>
+
+      {menu&&<>
+        <h3 style={{fontSize:13,color:C.forest,fontWeight:700,marginBottom:8,textTransform:"uppercase",letterSpacing:.5,textAlign:"center"}}>
+          🍽 Repas ({menu.repas.length})
+        </h3>
+        <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:20}}>
+          {menu.repas.map((p,idx)=>{
+            const fresh=idx>=Math.max(0,menu.repas.length-(menu.repas.length>4?3:1));
+            return(<div key={p.id+"-"+idx}>
+              <div style={{background:"#fff",borderRadius:10,padding:"10px 12px",border:`1px solid ${C.bdr}`,position:"relative"}}>
+                <div style={{position:"absolute",top:-7,left:12,background:fresh?"#E3F2FD":C.okBg,
+                  padding:"1px 8px",borderRadius:8,fontSize:9,fontWeight:700,
+                  color:fresh?C.blue:C.ok,border:`1px solid ${fresh?C.blue+"33":C.ok+"33"}`}}>
+                  {p.jourDate||p.jour} {fresh&&"🧊"}</div>
+                <div onClick={()=>onSel(p)} style={{cursor:"pointer",marginTop:6}}>
+                  <div style={{display:"flex",alignItems:"center",gap:8}}>
+                    {photos[p.id]?<img src={photos[p.id]} style={{width:40,height:40,borderRadius:8,objectFit:"cover",flexShrink:0}} onError={e=>{e.target.style.display="none"}}/>:<span style={{fontSize:24}}>{ET[p.type]||"🍽"}</span>}
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontSize:13,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.nom}</div>
+                      <div style={{display:"flex",gap:3,marginTop:3,flexWrap:"wrap"}}>
+                        <Tag text={p.type.split("/")[0]} color={C.fL}/>
+                        <Tag text={`${p.temps_prepa}min`} color={C.tM}/>
+                        {p.batch!=="Non"&&<Tag text={`${p.batch==="Oui"?"🟢":"🟡"} Batch`} color={C.gold}/>}
+                      </div>
+                    </div>
+                  </div>
+                  {p.macros&&<div style={{display:"flex",gap:6,marginTop:5,flexWrap:"wrap"}}>
+                    {profiles.map(name=>p.macros[name]&&(
+                      <span key={name} style={{fontSize:10,padding:"1px 6px",borderRadius:8,
+                        background:PC[name]+"15",color:PC[name],fontWeight:600}}>
+                        {name[0]}: {p.macros[name].prot}g P · {p.macros[name].kcal}kcal</span>
+                    ))}</div>}
+                </div>
+                {!locked&&<div style={{display:"flex",justifyContent:"flex-end",gap:4,marginTop:6}}>
+                  <button onClick={()=>setReplIdx(replIdx===idx?null:idx)} style={{padding:"3px 8px",borderRadius:6,
+                    border:`1px solid ${C.bdr}`,background:"#fff",fontSize:10,cursor:"pointer",color:C.tM}}>🔄</button>
+                  <button onClick={()=>removeR(idx)} style={{padding:"3px 8px",borderRadius:6,
+                    border:`1px solid ${C.danger}33`,background:C.dangerBg,fontSize:10,cursor:"pointer",color:C.danger}}>✕</button>
+                </div>}
+              </div>
+              {replIdx===idx&&!locked&&(
+                <div style={{padding:8,background:"#fff",borderRadius:"0 0 10px 10px",border:`1px solid ${C.bdr}`,borderTop:"none",display:"flex",flexWrap:"wrap",gap:4}}>
+                  {TYPES.map(type=>{const cnt=filtered.filter(p2=>p2.type===type&&!menu.repas.some(r=>r.id===p2.id)).length;
+                    return <button key={type} onClick={()=>replaceR(idx,type)} disabled={!cnt}
+                      style={{padding:"3px 8px",borderRadius:12,fontSize:10,border:`1px solid ${C.bdr}`,
+                        background:cnt?"#fff":"#f5f5f5",cursor:cnt?"pointer":"default",
+                        color:cnt?C.text:C.tL,opacity:cnt?1:.5}}>{ET[type]||"🍽"} {type.split("/")[0]} ({cnt})</button>;})}
+                </div>)}
+            </div>);
+          })}
+        </div>
+
+        {menu.entrees.length>0&&<>
+          <h3 style={{fontSize:13,color:C.gold,fontWeight:700,marginBottom:8,textTransform:"uppercase",letterSpacing:.5,textAlign:"center"}}>🥕 Entrées</h3>
+          <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:16}}>
+            {menu.entrees.map(e=>(
+              <div key={e.id} onClick={()=>onSel(e)} style={{background:"#fff",borderRadius:10,padding:"10px 12px",
+                border:`1px solid ${C.bdr}`,cursor:"pointer",display:"flex",alignItems:"center",gap:10}}>
+                <span style={{fontSize:20}}>🥕</span>
+                <div style={{flex:1}}><div style={{fontSize:13,fontWeight:600}}>{e.nom}</div>
+                <div style={{fontSize:10,color:C.tL}}>{e.genre} · {e.temps_prepa}min</div></div>
+              </div>
+            ))}
+          </div>
+        </>}
+      </>}
+
+      {!menu&&<div style={{textAlign:"center",padding:"30px 16px",color:C.tL}}>
+        <span style={{fontSize:40}}>📋</span><p style={{marginTop:10,fontSize:13}}>Aucun menu. Générez ci-dessus.</p></div>}
+    </div>
+  );
+}
+
+// ═══════ TAB 2 — CATALOGUE ═══════
+function CatalogTab({ratings,profiles,photos,onSel}){
+  const [search,setSearch]=useState("");
+  const [tF,setTF]=useState("all");
+  const [cF,setCF]=useState("all");
+  const [showE,setShowE]=useState(false);
+  const [sF,setSF]=useState("Toutes saisons");
+  const items=useMemo(()=>{
+    let list=showE?DATA.entrees:DATA.plats;
+    if(sF!=="Toutes saisons"){
+      if(sF==="Printemps") list=list.filter(p=>p.saison==="Toutes saisons"||p.saison==="Été");
+      else list=list.filter(p=>p.saison==="Toutes saisons"||p.saison===sF);
+    }
+    if(tF!=="all")list=list.filter(p=>p.type===tF);
+    if(cF!=="all")list=list.filter(p=>p.genre===cF);
+    if(search.trim()){const q=search.toLowerCase();list=list.filter(p=>p.nom.toLowerCase().includes(q));}
+    return list;
+  },[showE,sF,tF,cF,search]);
+
+  return(<div style={{padding:14,maxWidth:600,margin:"0 auto",textAlign:"center"}}>
+    <div style={{position:"relative",marginBottom:10}}>
+      <span style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",fontSize:14}}>🔍</span>
+      <input type="text" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Rechercher..."
+        style={{width:"100%",padding:"8px 10px 8px 32px",borderRadius:10,border:`1px solid ${C.bdr}`,fontSize:13,background:"#fff",boxSizing:"border-box"}}/>
+    </div>
+    <div style={{display:"flex",gap:6,marginBottom:10,justifyContent:"center"}}>
+      <button onClick={()=>setShowE(false)} style={{flex:1,padding:7,borderRadius:8,border:`2px solid ${C.fL}`,
+        background:!showE?C.fL:"transparent",color:!showE?"#fff":C.fL,fontSize:12,fontWeight:600,cursor:"pointer"}}>🍽 Plats ({DATA.plats.length})</button>
+      <button onClick={()=>setShowE(true)} style={{flex:1,padding:7,borderRadius:8,border:`2px solid ${C.gold}`,
+        background:showE?C.gold:"transparent",color:showE?"#fff":C.gold,fontSize:12,fontWeight:600,cursor:"pointer"}}>🥕 Entrées ({DATA.entrees.length})</button>
+    </div>
+    <div style={{display:"flex",gap:4,marginBottom:8,justifyContent:"center",flexWrap:"wrap"}}>
+      {["Toutes saisons","Printemps","Été","Automne","Hiver"].map(s=>(
+        <Chip key={s} label={`${s==="Printemps"?"🌸":s==="Été"?"☀️":s==="Automne"?"🍂":s==="Hiver"?"❄️":"🌿"} ${s}`}
+          on={sF===s} click={()=>setSF(s)}/>
+      ))}
+    </div>
+    <div style={{display:"flex",gap:4,marginBottom:8,overflowX:"auto",paddingBottom:4,justifyContent:"center",flexWrap:"wrap"}}>
+      <Chip label="Tous" on={tF==="all"} click={()=>setTF("all")}/>
+      {TYPES.map(t=><Chip key={t} label={`${ET[t]||""} ${t.split("/")[0]}`} on={tF===t} click={()=>setTF(t)}/>)}
+    </div>
+    <div style={{display:"flex",gap:4,marginBottom:12,overflowX:"auto",paddingBottom:4,justifyContent:"center",flexWrap:"wrap"}}>
+      <Chip label="Toutes" on={cF==="all"} click={()=>setCF("all")}/>
+      {CUISINES.map(c=><Chip key={c} label={`${EC[c]||""} ${c}`} on={cF===c} click={()=>setCF(c)}/>)}
+    </div>
+    <p style={{fontSize:11,color:C.tL,marginBottom:8}}>{items.length} résultat{items.length>1?"s":""}</p>
+    <div style={{display:"flex",flexDirection:"column",gap:6}}>
+      {items.map(p=>(<div key={p.id} onClick={()=>onSel(p)} style={{background:"#fff",borderRadius:10,padding:"10px 12px",
+        border:`1px solid ${C.bdr}`,cursor:"pointer",display:"flex",alignItems:"center",gap:10}}>
+        {photos[p.id]?<img src={photos[p.id]} style={{width:40,height:40,borderRadius:8,objectFit:"cover",flexShrink:0}} onError={e=>{e.target.style.display="none"}}/>:<span style={{fontSize:24,flexShrink:0}}>{ET[p.type]||"🍽"}</span>}
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:13,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.nom}</div>
+          <div style={{display:"flex",gap:3,marginTop:2,flexWrap:"wrap"}}>
+            <Tag text={p.genre} color={C.tM}/><Tag text={`${p.temps_prepa}min`} color={C.tM}/>
+            {p.batch!=="Non"&&<Tag text="Batch" color={C.gold}/>}
+          </div>
+        </div><span style={{fontSize:14,color:C.tL}}>›</span>
+      </div>))}
+    </div>
+  </div>);
+}
+
+// ═══════ TAB 3 — COURSES ═══════
+function CoursesTab({menu,profiles,stockCk,courseCk,setCk,stockOrder}){
+  const grouped=useMemo(()=>{
+    if(!menu)return[];
+    const all=[...(menu.repas||[]),...(menu.entrees||[])];
+    const map={};
+    all.forEach(plat=>{(plat.ingredients||[]).forEach(([nom,unite,qD,qM,qE])=>{
+      const k=nom+"__"+unite;
+      if(!map[k])map[k]={nom,unite,qD:0,qM:0,qE:0,cat:IC[nom]||"DIVERS"};
+      map[k].qD+=(qD||0);map[k].qM+=(qM||0);map[k].qE+=(qE||0);
+    });});
+    const items=Object.values(map).map(it=>{
+      let tot=0;
+      if(profiles.includes("Damien"))tot+=it.qD;
+      if(profiles.includes("Maroie"))tot+=it.qM;
+      if(profiles.includes("Maël"))tot+=it.qE;
+      return{...it,tot};
+    }).filter(i=>i.tot>0);
+    const early=new Set(),late=new Set();
+    (menu.repas||[]).forEach(r=>{(r.ingredients||[]).forEach(([n])=>{if(r.jourIdx<3)early.add(n);else late.add(n);});});
+    const freshOnly=new Set([...late].filter(n=>!early.has(n)));
+    const result=[];
+    CAT_ORDER.forEach(([ck,emoji])=>{
+      const ciRaw=items.filter(i=>i.cat===ck);
+      // Sort by stock order if available, else alphabetical
+      const catFullName=CN[ck]||ck;
+      const order=stockOrder&&stockOrder[catFullName];
+      const ci=order?ciRaw.sort((a,b)=>{const ia=order.indexOf(a.nom);const ib=order.indexOf(b.nom);
+        if(ia===-1&&ib===-1)return a.nom.localeCompare(b.nom,"fr");if(ia===-1)return 1;if(ib===-1)return -1;return ia-ib;}):
+        ciRaw.sort((a,b)=>a.nom.localeCompare(b.nom,"fr"));
+      const si=[];
+      const sc=DATA.stock.find(c=>c.nom===(CN[ck]||ck));
+      if(sc)sc.articles.forEach(art=>{if(stockCk[sc.nom+"__"+art.nom])
+        if(!ci.some(i=>i.nom.toLowerCase().includes(art.nom.toLowerCase())||art.nom.toLowerCase().includes(i.nom.toLowerCase())))
+          si.push({nom:art.nom,unite:"",tot:null,isStock:true,cat:ck});});
+      const combined=[...ci,...si];
+      if(combined.length)result.push({key:ck,name:CN[ck]||ck,emoji,items:combined,freshOnly});
+    });
+    return result;
+  },[menu,profiles,stockCk]);
+
+  const total=grouped.reduce((s,g)=>s+g.items.length,0);
+  const checked=Object.values(courseCk).filter(Boolean).length;
+  if(!menu)return<div style={{padding:20,textAlign:"center",color:C.tL}}><span style={{fontSize:40}}>🛒</span><p>Générez un menu.</p></div>;
+  return(<div style={{padding:14,maxWidth:600,margin:"0 auto",textAlign:"center"}}>
+    <div style={{background:"#fff",padding:"10px 14px",borderRadius:10,marginBottom:10,border:`1px solid ${C.bdr}`,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+      <div style={{textAlign:"center",flex:1}}><h2 style={{margin:0,fontSize:15,fontWeight:700,color:C.forest}}>🛒 Courses</h2>
+        <p style={{margin:"1px 0 0",fontSize:10,color:C.tL}}>Pour {profiles.join(", ")} · Ordre Intermarché</p></div>
+      <span style={{padding:"4px 10px",borderRadius:16,fontSize:12,fontWeight:700,
+        background:checked===total&&total?C.okBg:C.bg,color:checked===total&&total?C.ok:C.tM}}>{checked}/{total}</span>
+    </div>
+    <div style={{display:"flex",gap:10,marginBottom:12,padding:"6px 10px",background:"#fff",borderRadius:8,border:`1px solid ${C.bdrL}`,fontSize:10}}>
+      <span>🧊 = Jeu/Ven</span><span>📦 = Stock</span></div>
+    {grouped.map(({key,name,emoji,items,freshOnly})=>(
+      <div key={key} style={{marginBottom:14}}>
+        <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:5,padding:"5px 10px",background:C.forest+"0A",borderRadius:8}}>
+          <span style={{fontSize:16}}>{emoji}</span><span style={{fontSize:12,fontWeight:700,color:C.forest}}>{name}</span>
+          <span style={{fontSize:10,color:C.tL,marginLeft:"auto"}}>{items.length}</span></div>
+        {items.map(item=>{const k=item.isStock?`stk__${name}__${item.nom}`:`ing__${item.nom}__${item.unite}`;
+          const ck=courseCk[k];const isFO=freshOnly?.has(item.nom)&&!item.isStock;
+          return(<div key={k} onClick={()=>{const n={...courseCk,[k]:!ck};setCk(n);}}
+            style={{background:ck?C.okBg:"#fff",padding:"8px 10px",borderRadius:7,border:`1px solid ${ck?C.ok+"33":C.bdrL}`,
+              marginBottom:2,display:"flex",alignItems:"center",gap:8,cursor:"pointer"}}>
+            <div style={{width:18,height:18,borderRadius:4,flexShrink:0,border:`2px solid ${ck?C.ok:C.bdr}`,
+              background:ck?C.ok:"transparent",display:"flex",alignItems:"center",justifyContent:"center"}}>
+              {ck&&<span style={{color:"#fff",fontSize:11,fontWeight:700}}>✓</span>}</div>
+            <span style={{flex:1,fontSize:12,fontWeight:500,textDecoration:ck?"line-through":"none",color:ck?C.tL:C.text}}>{item.nom}</span>
+            {item.tot!=null&&<span style={{fontSize:12,fontWeight:700,color:C.fL,whiteSpace:"nowrap"}}>{fmtQ(item.tot,item.unite)}</span>}
+            {item.isStock&&<span style={{fontSize:8,padding:"1px 5px",borderRadius:5,background:C.gold+"20",color:C.gold,fontWeight:700}}>📦</span>}
+            {isFO&&<span style={{fontSize:8,padding:"1px 5px",borderRadius:5,background:"#E3F2FD",color:C.blue,fontWeight:700}}>🧊</span>}
+          </div>);})}
+      </div>
+    ))}
+    {total>0&&<div style={{marginTop:6,padding:"10px 12px",background:"#fff",borderRadius:10,border:`1px solid ${C.bdr}`,fontSize:11,color:C.tM}}>
+      <strong>{grouped.length}</strong> rayons · <strong>{total}</strong> articles</div>}
+  </div>);
+}
+function fmtQ(v,u){if(v==null)return"—";const r=Math.round(v*10)/10;const d=Number.isInteger(r)?r:r.toFixed(1);return u&&u!=="—"?`${d} ${u}`:`${d}`;}
+
+// ═══════ TAB 4 — BATCH (enrichi avec détails + stratégie) ═══════
+function BatchTab({menu}){
+  const [openId,setOpenId]=useState(null);
+  if(!menu)return<div style={{padding:20,textAlign:"center",color:C.tL}}><span style={{fontSize:40}}>👨‍🍳</span><p>Générez un menu.</p></div>;
+
+  const batch=menu.repas.filter(r=>r.batch==="Oui"||r.batch==="Partiel");
+  const jour=menu.repas.filter(r=>r.batch==="Non");
+  const hasRiz=p=>p.ingredients?.some(i=>i[0]?.toLowerCase().includes("riz"));
+
+  // Extract batch steps from recipe
+  function getBatchSteps(recette){
+    if(!recette)return{batch:[],jourMeme:[]};
+    const steps=recette.split(/(?=\d+\.)/).filter(s=>s.trim());
+    const batchSteps=steps.filter(s=>s.toLowerCase().includes("batch"));
+    const jourSteps=steps.filter(s=>!s.toLowerCase().includes("batch"));
+    return{batch:batchSteps,jourMeme:jourSteps};
+  }
+
+  // Build strategy with proper batch rules
+  function buildStrategy(batchPlats){
+    const tasks={four:[],feculents:[],legumineuses:[],oeufs:new Set(),decoupe:[],marinades:[],sauces:[], cuisson_longue:[]};
+    batchPlats.forEach(p=>{
+      const r=(p.recette||"").toLowerCase();
+      const ings=(p.ingredients||[]).map(i=>i[0].toLowerCase());
+      const allIngs=ings.join(" ");
+      const hasPoulet=ings.some(i=>i.includes("poulet"));
+      const hasViande=ings.some(i=>i.includes("viande")||i.includes("merguez"));
+      const hasRizP=ings.some(i=>i.includes("riz")&&!i.includes("arborio"));
+      const isFour=r.includes("four")||["gratin","lasagne","quiche","tarte","pizza","cake"].some(x=>r.includes(x)||p.type.toLowerCase().includes(x));
+      // Cuissons complètes au four (sauf si contient viande seule)
+      if(isFour&&!hasPoulet) tasks.four.push({nom:p.nom,time:parseInt(p.temps_batch)||parseInt(p.temps_prepa)||20});
+      // Marinades viande (on ne cuit PAS la viande)
+      if(hasPoulet||hasViande) tasks.marinades.push({nom:p.nom,detail:hasPoulet?"Marinade poulet":"Marinade viande"});
+      // Féculents (SAUF riz)
+      const fecs=["pâtes","quinoa","boulgour","couscous"].filter(f=>allIngs.includes(f));
+      if(fecs.length) tasks.feculents.push({nom:p.nom,fec:fecs.join(", "),time:parseInt(p.temps_batch)||15});
+      // Légumineuses
+      const legs=["lentilles","pois chiche","haricots"].filter(f=>allIngs.includes(f));
+      if(legs.length&&!fecs.length) tasks.legumineuses.push({nom:p.nom,leg:legs.join(", ")});
+      // Œufs durs/mollets
+      if(r.includes("œufs durs")||r.includes("œufs mollets")||r.includes("œuf dur")||r.includes("œuf mollet")) tasks.oeufs.add("Œufs durs/mollets");
+      // Découpe légumes
+      const legDec=ings.filter(i=>["carotte","poivron","oignon","courgette","concombre","poireau","brocoli","champignon","chou","betterave","patate","aubergine","tomate"].some(l=>i.includes(l)));
+      if(legDec.length>=2) tasks.decoupe.push({nom:p.nom,count:legDec.length});
+      // Cuisson longue (>25min)
+      const totalTime=parseInt(p.temps_prepa)||0;
+      if(totalTime>25||parseInt(p.temps_batch)>30) tasks.cuisson_longue.push({nom:p.nom,time:totalTime});
+    });
+    return tasks;
+  }
+  const strategy=buildStrategy(batch);
+  const totalBatchTime=batch.reduce((s,p)=>{const t=parseInt(p.temps_batch)||0;return s+t;},0);
+
+  return(
+    <div style={{padding:14,maxWidth:600,margin:"0 auto",textAlign:"center"}}>
+      <div style={{background:"#fff",borderRadius:12,padding:14,marginBottom:14,border:`1px solid ${C.bdr}`}}>
+        <h2 style={{margin:"0 0 4px",fontSize:16,fontWeight:700,color:C.forest,textAlign:"center"}}>Batch Cooking Dimanche</h2>
+        <p style={{margin:0,fontSize:11,color:C.tL}}>{batch.length} plats</p>
+      </div>
+
+      {batch.map(p=>{
+        const {batch:bSteps,jourMeme:jSteps}=getBatchSteps(p.recette);
+        const isOpen=openId===p.id;
+        return(
+          <div key={p.id} style={{background:"#fff",borderRadius:10,padding:"12px 14px",
+            border:`1px solid ${C.gold}33`,marginBottom:8}}>
+            <div style={{display:"flex",alignItems:"center",gap:8}}>
+              <span style={{fontSize:18}}>{ET[p.type]||"🍽"}</span>
+              <div style={{flex:1}}>
+                <div style={{fontSize:13,fontWeight:600}}>{p.nom}</div>
+                <div style={{fontSize:10,color:C.tL}}>⏱ {p.temps_batch!=="—"?p.temps_batch+" min":p.temps_prepa+" min"}</div>
+              </div>
+              <span style={{fontSize:10,padding:"2px 8px",borderRadius:8,
+                background:p.batch==="Oui"?C.okBg:C.gold+"15",
+                color:p.batch==="Oui"?C.ok:C.gold,fontWeight:700}}>{p.batch==="Oui"?"Complet":"Partiel"}</span>
+            </div>
+
+            {hasRiz(p)&&<div style={{marginTop:8,padding:"6px 10px",borderRadius:6,background:C.dangerBg,fontSize:10,color:C.danger}}>
+              ⚠️ Riz : cuire au dernier moment !</div>}
+
+            <button onClick={()=>setOpenId(isOpen?null:p.id)} style={{marginTop:8,background:"none",border:"none",
+              cursor:"pointer",fontSize:11,color:C.fL,fontWeight:600,padding:0}}>
+              ▸ {isOpen?"Masquer":"Voir le détail batch"}</button>
+
+            {isOpen&&<div style={{marginTop:8}}>
+              {bSteps.length>0&&<div style={{padding:"8px 10px",borderRadius:8,background:C.gold+"12",marginBottom:6}}>
+                <div style={{fontSize:10,fontWeight:700,color:C.gold,marginBottom:4}}>🔶 BATCH :</div>
+                {bSteps.map((s,i)=><div key={i} style={{fontSize:11,color:C.text,lineHeight:1.5}}>{s.trim()}</div>)}
+              </div>}
+              {jSteps.length>0&&<div style={{fontSize:10,color:C.tL}}>
+                🔹 Jour même : {p.temps_prepa} min de finition</div>}
+            </div>}
+          </div>
+        );
+      })}
+
+      {jour.length>0&&<>
+        <h3 style={{fontSize:13,color:C.tM,fontWeight:700,marginTop:16,marginBottom:8,textAlign:"center"}}>🔵 Jour même ({jour.length})</h3>
+        {jour.map(p=>(<div key={p.id} style={{background:"#fff",borderRadius:8,padding:"8px 12px",
+          border:`1px solid ${C.bdr}`,marginBottom:4,display:"flex",alignItems:"center",gap:8}}>
+          <span style={{fontSize:16}}>{ET[p.type]||"🍽"}</span>
+          <div><div style={{fontSize:12,fontWeight:500}}>{p.nom}</div>
+          <div style={{fontSize:10,color:C.tL}}>{p.jour} · {p.temps_prepa}min</div></div>
+        </div>))}
+      </>}
+
+      {/* Stratégie du dimanche */}
+      {batch.length>0&&<div style={{marginTop:16,background:C.gold+"12",borderRadius:12,padding:14,border:`1px solid ${C.gold}33`}}>
+        <h3 style={{margin:"0 0 10px",fontSize:14,fontWeight:700,color:C.gold,textAlign:"center"}}>📋 Stratégie du dimanche</h3>
+        
+        {strategy.four.length>0&&<div style={{marginBottom:10}}>
+          <div style={{fontSize:11,fontWeight:700,color:C.text}}>1. 🔥 Cuissons au four :</div>
+          {strategy.four.map((t,i)=><div key={i} style={{fontSize:11,color:C.tM,paddingLeft:12}}>• {t.nom} — {t.time} min</div>)}
+        </div>}
+
+        {strategy.feculents.length>0&&<div style={{marginBottom:10}}>
+          <div style={{fontSize:11,fontWeight:700,color:C.text}}>2. 🍝 Féculents (plaque, en parallèle) :</div>
+          {strategy.feculents.map((t,i)=><div key={i} style={{fontSize:11,color:C.tM,paddingLeft:12}}>• {t.fec} ({t.nom})</div>)}
+        </div>}
+
+        {strategy.legumineuses.length>0&&<div style={{marginBottom:10}}>
+          <div style={{fontSize:11,fontWeight:700,color:C.text}}>3. 🫘 Légumineuses :</div>
+          {strategy.legumineuses.map((t,i)=><div key={i} style={{fontSize:11,color:C.tM,paddingLeft:12}}>• {t.leg} ({t.nom})</div>)}
+        </div>}
+
+        {strategy.oeufs.size>0&&<div style={{marginBottom:10}}>
+          <div style={{fontSize:11,fontWeight:700,color:C.text}}>4. 🥚 Œufs :</div>
+          {[...strategy.oeufs].map((t,i)=><div key={i} style={{fontSize:11,color:C.tM,paddingLeft:12}}>• {t}</div>)}
+        </div>}
+
+        {strategy.decoupe.length>0&&<div style={{marginBottom:10}}>
+          <div style={{fontSize:11,fontWeight:700,color:C.text}}>5. 🔪 Découpe légumes :</div>
+          {strategy.decoupe.map((t,i)=><div key={i} style={{fontSize:11,color:C.tM,paddingLeft:12}}>• {t.nom} — {t.count} légumes</div>)}
+        </div>}
+
+        {strategy.marinades.length>0&&<div style={{marginBottom:10}}>
+          <div style={{fontSize:11,fontWeight:700,color:C.text}}>6. 🧂 Marinades (préparer, NE PAS cuire) :</div>
+          {strategy.marinades.map((t,i)=><div key={i} style={{fontSize:11,color:C.tM,paddingLeft:12}}>• {t.detail} — {t.nom}</div>)}
+        </div>}
+
+        <div style={{marginBottom:10,fontSize:11,fontWeight:700,color:C.text}}>7. 🥣 Sauces & vinaigrettes (5 min)</div>
+
+        {strategy.cuisson_longue.length>0&&<div style={{marginBottom:10,padding:"6px 10px",borderRadius:8,background:"#E3F2FD"}}>
+          <div style={{fontSize:10,fontWeight:700,color:C.blue}}>⏰ Plats à cuisson longue (rappel 19h45 - temps) :</div>
+          {strategy.cuisson_longue.map((t,i)=><div key={i} style={{fontSize:10,color:C.blue,paddingLeft:8}}>• {t.nom} ({t.time} min)</div>)}
+        </div>}
+
+        <div style={{marginTop:8,padding:"6px 10px",borderRadius:8,background:C.gold+"20",fontSize:11,fontWeight:600,color:C.gold}}>
+          ⏱ ~{Math.max(totalBatchTime,30)} min en parallélisant</div>
+      </div>}
+
+      {/* Règles */}
+      <div style={{marginTop:14,background:C.dangerBg,borderRadius:10,padding:12,fontSize:11}}>
+        <strong style={{color:C.danger}}>⚠️ Règles batch V2</strong>
+        <div style={{marginTop:4,color:C.tM,lineHeight:1.6}}>
+          ✅ Féculents (sauf riz), légumineuses, œufs durs, soupes, quiches/tartes, marinades, sauces<br/>
+          ❌ Pas de riz — cuire au dernier moment (10-12 min)<br/>
+          ❌ Pas de viande ni légumes seuls
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ═══════ TAB 5 — STOCK ═══════
+function StockTab({stockCk,setStockCk,stockOrder,setStockOrder,customArt,setCustomArt}){
+  const [search,setSearch]=useState("");
+  const [catF,setCatF]=useState("all");
+  const [dragCat,setDragCat]=useState(null);
+  const [dragIdx,setDragIdx]=useState(null);
+  const [dragOverIdx,setDragOverIdx]=useState(null);
+  const touchStart=React.useRef(null);
+  const [addingTo,setAddingTo]=useState(null);
+  const [newArtName,setNewArtName]=useState("");
+  const [renamingKey,setRenamingKey]=useState(null);
+  const [renameVal,setRenameVal]=useState("");
+  const nonAlim=["SANITAIRES","PRODUITS MÉNAGERS","DIVERS"];
+  const ECat={"SUCRÉ":"🍫","SALÉ":"🧂","HUILES ET CONDIMENTS":"🫒","SANITAIRES":"🧴",
+    "PRODUITS MÉNAGERS":"🧹","DIVERS":"📦","FRAIS":"🧀","FRAIS PROTÉINES":"🥩",
+    "FRUITS":"🍎","FRUITS SECS":"🥜","LÉGUMES":"🥬","SURGELÉS":"❄️"};
+
+  // Get ordered articles for a category
+  function getOrdered(cat){
+    // Base articles + custom added - custom deleted, with renames applied
+    let names=cat.articles.map(a=>a.nom);
+    // Add custom articles for this category
+    if(customArt.add){customArt.add.forEach(a=>{if(a.cat===cat.nom&&!names.includes(a.nom))names.push(a.nom);});}
+    // Remove deleted
+    if(customArt.del){names=names.filter(n=>!customArt.del.includes(cat.nom+"__"+n));}
+    // Apply renames
+    if(customArt.ren){names=names.map(n=>customArt.ren[cat.nom+"__"+n]||n);}
+    const order=stockOrder[cat.nom];
+    if(!order)return names;
+    const ordered=order.filter(n=>names.includes(n));
+    const newItems=names.filter(n=>!order.includes(n));
+    return [...ordered,...newItems];
+  }
+
+  function addArticle(catNom,nom){
+    if(!nom.trim())return;
+    const next={...customArt,add:[...(customArt.add||[]),{cat:catNom,nom:nom.trim()}]};
+    setCustomArt(next);setNewArtName("");setAddingTo(null);
+  }
+  function deleteArticle(catNom,artNom){
+    if(!confirm("Supprimer "+artNom+" ?"))return;
+    const next={...customArt,del:[...(customArt.del||[]),catNom+"__"+artNom]};
+    setCustomArt(next);
+  }
+  function renameArticle(catNom,oldName,newName){
+    if(!newName.trim())return;
+    const next={...customArt,ren:{...(customArt.ren||{}),[catNom+"__"+oldName]:newName.trim()}};
+    setCustomArt(next);setRenamingKey(null);setRenameVal("");
+  }
+
+  function moveArticle(catNom,fromIdx,toIdx){
+    if(fromIdx===toIdx)return;
+    const cat=DATA.stock.find(c=>c.nom===catNom);
+    if(!cat)return;
+    const ordered=getOrdered(cat);
+    const item=ordered[fromIdx];
+    const next=[...ordered];
+    next.splice(fromIdx,1);
+    next.splice(toIdx,0,item);
+    const newOrder={...stockOrder,[catNom]:next};
+    setStockOrder(newOrder);
+  }
+
+  const filtered=useMemo(()=>{
+    let cats=DATA.stock;
+    if(catF!=="all")cats=cats.filter(c=>c.nom===catF);
+    if(search.trim()){const q=search.toLowerCase();cats=cats.map(c=>({...c,articles:c.articles.filter(a=>a.nom.toLowerCase().includes(q))})).filter(c=>c.articles.length);}
+    return cats;
+  },[catF,search]);
+  const ckCount=Object.values(stockCk).filter(Boolean).length;
+  const isSearching=search.trim().length>0;
+
+  return(<div style={{padding:14,maxWidth:600,margin:"0 auto",textAlign:"center"}}>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+      <h2 style={{margin:0,fontSize:16,fontWeight:700,color:C.forest,textAlign:"center"}}>📦 Stock</h2>
+      {ckCount>0&&<span style={{padding:"3px 8px",borderRadius:12,fontSize:11,fontWeight:600,background:C.gold+"15",color:C.gold}}>{ckCount} à racheter</span>}
+    </div>
+    <div style={{position:"relative",marginBottom:8}}>
+      <span style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",fontSize:13}}>🔍</span>
+      <input type="text" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Chercher..."
+        style={{width:"100%",padding:"7px 10px 7px 30px",borderRadius:8,border:`1px solid ${C.bdr}`,fontSize:12,background:"#fff",boxSizing:"border-box"}}/>
+    </div>
+    {!isSearching&&<p style={{fontSize:10,color:C.tL,marginBottom:8}}>↕️ Maintenez et glissez pour réordonner</p>}
+    <div style={{display:"flex",gap:4,overflowX:"auto",paddingBottom:6,marginBottom:10,justifyContent:"center",flexWrap:"wrap"}}>
+      <Chip label="Tout" on={catF==="all"} click={()=>setCatF("all")}/>
+      {DATA.stock.map(c=><Chip key={c.nom} label={`${ECat[c.nom]||""} ${c.nom}`} on={catF===c.nom} click={()=>setCatF(c.nom)}/>)}
+    </div>
+    {filtered.map(cat=>{
+      const orderedNames=isSearching?cat.articles.map(a=>a.nom):getOrdered(cat);
+      return(<div key={cat.nom} style={{marginBottom:14}}>
+      <h3 style={{fontSize:12,fontWeight:700,color:C.forest,marginBottom:5,display:"flex",alignItems:"center",gap:4,justifyContent:"center"}}>
+        {ECat[cat.nom]||"📦"} {cat.nom} <span style={{fontSize:10,color:C.tL,fontWeight:400}}>({orderedNames.length})</span></h3>
+      {nonAlim.includes(cat.nom)&&addingTo===cat.nom?
+        <div style={{display:"flex",gap:4,marginBottom:6}}>
+          <input type="text" value={newArtName} onChange={e=>setNewArtName(e.target.value)}
+            placeholder="Nom du nouvel article..." autoFocus
+            style={{flex:1,padding:"6px 10px",borderRadius:6,border:`1px solid ${C.bdr}`,fontSize:12,boxSizing:"border-box"}}
+            onKeyDown={e=>{if(e.key==="Enter")addArticle(cat.nom,newArtName);}}/>
+          <button onClick={()=>addArticle(cat.nom,newArtName)} style={{padding:"6px 10px",borderRadius:6,
+            background:C.fL,color:"#fff",border:"none",fontSize:11,cursor:"pointer"}}>OK</button>
+          <button onClick={()=>{setAddingTo(null);setNewArtName("");}} style={{padding:"6px 8px",borderRadius:6,
+            border:`1px solid ${C.bdr}`,background:"#fff",fontSize:11,cursor:"pointer"}}>X</button>
+        </div>
+      :nonAlim.includes(cat.nom)&&<button onClick={()=>setAddingTo(cat.nom)} style={{marginBottom:6,padding:"5px 10px",
+        borderRadius:6,border:`1px dashed ${C.fL}`,background:"transparent",fontSize:11,cursor:"pointer",color:C.fL}}>
+        + Ajouter un article</button>}
+      {orderedNames.map((artNom,idx)=>{const k=cat.nom+"__"+artNom;const ck=stockCk[k];
+        const isDragging=dragCat===cat.nom&&dragIdx===idx;
+        const isDragOver=dragCat===cat.nom&&dragOverIdx===idx;
+        return <div key={artNom}
+          draggable={!isSearching}
+          onDragStart={e=>{setDragCat(cat.nom);setDragIdx(idx);e.dataTransfer.effectAllowed="move";}}
+          onDragOver={e=>{e.preventDefault();if(dragCat===cat.nom)setDragOverIdx(idx);}}
+          onDragEnd={()=>{if(dragCat===cat.nom&&dragIdx!==null&&dragOverIdx!==null)moveArticle(cat.nom,dragIdx,dragOverIdx);
+            setDragCat(null);setDragIdx(null);setDragOverIdx(null);}}
+          onTouchStart={e=>{touchStart.current={cat:cat.nom,idx,y:e.touches[0].clientY};}}
+          onTouchMove={e=>{
+            if(!touchStart.current||touchStart.current.cat!==cat.nom)return;
+            const touch=e.touches[0];
+            const el=document.elementFromPoint(touch.clientX,touch.clientY);
+            if(el){const row=el.closest("[data-didx]");
+              if(row){const newIdx=parseInt(row.dataset.didx);
+                if(!isNaN(newIdx)&&newIdx!==dragOverIdx){setDragCat(cat.nom);setDragIdx(touchStart.current.idx);setDragOverIdx(newIdx);}}}
+          }}
+          onTouchEnd={()=>{if(dragCat===cat.nom&&dragIdx!==null&&dragOverIdx!==null)moveArticle(cat.nom,dragIdx,dragOverIdx);
+            touchStart.current=null;setDragCat(null);setDragIdx(null);setDragOverIdx(null);}}
+          data-didx={idx}
+          style={{display:"flex",alignItems:"center",gap:8,padding:"7px 10px",
+            background:isDragOver?"#E8F5E9":isDragging?"#FFF8E1":ck?C.gold+"08":"#fff",
+            borderRadius:6,cursor:isSearching?"pointer":"grab",
+            border:`1px solid ${isDragOver?C.ok+"66":ck?C.gold+"33":C.bdrL}`,marginBottom:2,
+            opacity:isDragging?.5:1,transition:"background .15s, border .15s",
+            userSelect:"none",WebkitUserSelect:"none"}}>
+          {!isSearching&&<span style={{fontSize:10,color:C.tL,cursor:"grab",padding:"2px",flexShrink:0}}>☰</span>}
+          <div onClick={()=>{const n={...stockCk,[k]:!ck};setStockCk(n);}}
+            style={{display:"flex",alignItems:"center",gap:8,flex:1}}>
+            <div style={{width:18,height:18,borderRadius:4,border:`2px solid ${ck?C.gold:C.bdr}`,
+              background:ck?C.gold:"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+              {ck&&<span style={{color:"#fff",fontSize:11,fontWeight:700}}>✓</span>}</div>
+            {renamingKey===cat.nom+"__"+artNom?
+              <div style={{display:"flex",gap:4,flex:1}} onClick={e=>e.stopPropagation()}>
+                <input type="text" value={renameVal} onChange={e=>setRenameVal(e.target.value)} autoFocus
+                  style={{flex:1,padding:"3px 6px",borderRadius:4,border:`1px solid ${C.bdr}`,fontSize:11}}
+                  onKeyDown={e=>{if(e.key==="Enter")renameArticle(cat.nom,artNom,renameVal);}}/>
+                <button onClick={()=>renameArticle(cat.nom,artNom,renameVal)} style={{padding:"3px 6px",borderRadius:4,
+                  background:C.fL,color:"#fff",border:"none",fontSize:10,cursor:"pointer"}}>OK</button>
+                <button onClick={()=>setRenamingKey(null)} style={{padding:"3px 6px",borderRadius:4,
+                  border:`1px solid ${C.bdr}`,background:"#fff",fontSize:10,cursor:"pointer"}}>X</button>
+              </div>
+            :<><span style={{fontSize:12,textAlign:"left",flex:1}}>{artNom}</span>
+              {nonAlim.includes(cat.nom)&&<div style={{display:"flex",gap:2,flexShrink:0}} onClick={e=>e.stopPropagation()}>
+                <button onClick={()=>{setRenamingKey(cat.nom+"__"+artNom);setRenameVal(artNom);}} style={{padding:"2px 5px",borderRadius:4,
+                  border:`1px solid ${C.bdrL}`,background:"#fff",fontSize:9,cursor:"pointer",color:C.tL}}>✏️</button>
+                <button onClick={()=>deleteArticle(cat.nom,artNom)} style={{padding:"2px 5px",borderRadius:4,
+                  border:`1px solid ${C.danger}22`,background:C.dangerBg,fontSize:9,cursor:"pointer",color:C.danger}}>🗑</button>
+              </div>}</>}
+          </div>
+        </div>;})}
+    </div>);})}
+  </div>);
+}
+
+// ═══════ TAB 6 — PROFILS (enrichi) ═══════
+function ProfilsTab(){
+  const meta={Damien:{e:"👨",i:"💪"},Maroie:{e:"👩",i:"✨"},"Maël":{e:"👦",i:"⚡"}};
+  const repasLabels={"petit_dejeuner":"Petit-déjeuner","dejeuner":"Déjeuner","gouter":"Goûter","diner":"Dîner"};
+
+  return(<div style={{padding:14}}>
+    <div style={{background:"#fff",borderRadius:12,padding:14,marginBottom:14,border:`1px solid ${C.bdr}`}}>
+      <h2 style={{margin:"0 0 2px",fontSize:16,fontWeight:700,color:C.forest}}>Profils nutritionnels</h2>
+    </div>
+
+    {Object.entries(DATA.profils).map(([name,p])=>{
+      const m=meta[name]||{};
+      return(<div key={name} style={{background:"#fff",borderRadius:12,padding:16,
+        borderLeft:`4px solid ${PC[name]}`,marginBottom:12,border:`1px solid ${C.bdrL}`}}>
+        <h3 style={{margin:"0 0 8px",fontSize:16,fontWeight:700,color:PC[name]}}>{name}</h3>
+
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:12,fontSize:12}}>
+          <div>Âge: <strong>{p.age} ans</strong></div>
+          <div>Poids: <strong>{p.poids} kg</strong></div>
+          <div>Taille: <strong>{p.taille} m</strong></div>
+          <div>Objectif: <strong>{p.objectif}</strong></div>
+        </div>
+
+        <div style={{background:PC[name]+"10",borderRadius:10,padding:14,textAlign:"center",marginBottom:10}}>
+          <div style={{fontSize:26,fontWeight:800,color:PC[name]}}>{p.calories} kcal/j</div>
+          <div style={{display:"flex",justifyContent:"center",gap:16,marginTop:8,fontSize:12,color:C.tM}}>
+            <span>Prot <strong>{p.proteines}g</strong></span>
+            <span>Lip <strong>{p.lipides||"—"}g</strong></span>
+            <span>Gluc <strong>{p.glucides||"—"}g</strong></span>
+          </div>
+        </div>
+
+        {p.repartition&&<div>
+          <div style={{fontSize:11,fontWeight:600,color:C.tM,marginBottom:4}}>Répartition journalière</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:4}}>
+            {Object.entries(p.repartition).map(([repas,kcal])=>(
+              <div key={repas} style={{padding:"5px 8px",borderRadius:6,background:C.bg,
+                display:"flex",justifyContent:"space-between",fontSize:11}}>
+                <span style={{color:C.tM}}>{repasLabels[repas]||repas}</span>
+                <span style={{fontWeight:600}}>{kcal} kcal</span>
+              </div>
+            ))}
+          </div>
+        </div>}
+      </div>);
+    })}
+
+    <div style={{background:"#fff",borderRadius:12,padding:14,border:`1px solid ${C.bdr}`}}>
+      <h3 style={{margin:"0 0 8px",fontSize:13,fontWeight:700,color:C.forest}}>📋 Règles</h3>
+      <div style={{fontSize:11,lineHeight:1.8,color:C.tM}}>
+        <div>• Végétarien-first : Œufs {">"} Poissons {">"} Fromages {">"} Poulet halal</div>
+        <div>• 15 min max · Petit-déj salé 3-4x/sem · Batch dimanche ~2h</div>
+      </div>
+    </div>
+
+    <div style={{background:"#E3F2FD",borderRadius:12,padding:14,border:`1px solid ${C.blue}22`,marginTop:4}}>
+      <h3 style={{margin:"0 0 8px",fontSize:13,fontWeight:700,color:C.blue}}>📱 Fonctionnalités version Netlify</h3>
+      <div style={{fontSize:11,lineHeight:1.8,color:C.tM}}>
+        <div>🔔 <strong>Notification achats frais</strong> — Jeudi 9h : liste des produits frais à acheter pour le week-end</div>
+        <div>🔔 <strong>Notification batch</strong> — Dimanche 9h : rappel des préparations du jour</div>
+        <div>⏰ <strong>Notification cuisson longue</strong> — Alerte programmée (19h45 - temps cuisson) pour les plats {">"} 25 min</div>
+        <div>📄 <strong>Export PDF</strong> — Synthèse semaine téléchargeable au verrouillage</div>
+        <div>🔄 <strong>Synchro 2 iPhones</strong> — Firebase Realtime Database (Damien + Maroie)</div>
+        <div>📶 <strong>Mode hors-ligne</strong> — Service Worker + PWA (ajout écran d'accueil)</div>
+        <div>↕️ <strong>Drag & drop stock</strong> — Réordonner les articles dans chaque catégorie</div>
+      </div>
+    </div>
+  </div>);
+}
+
+// ═══════ MODAL ═══════
+function Modal({plat,onClose,profiles,rating,onRate,obs,onObs,photos,photo,onPhoto}){
+  const [photoInput,setPhotoInput]=useState("");
+  const [showPhotoEdit,setShowPhotoEdit]=useState(false);
+  const [showIng,setShowIng]=useState(true);
+  const [showRec,setShowRec]=useState(false);
+  const steps=(plat.recette||"").split(/(?=\d+\.)/).filter(s=>s.trim());
+
+  return(<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.5)",zIndex:200,
+    display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={onClose}>
+    <div onClick={e=>e.stopPropagation()} style={{background:C.bg,borderRadius:"18px 18px 0 0",
+      width:"100%",maxWidth:480,maxHeight:"88vh",overflowY:"auto",paddingBottom:"env(safe-area-inset-bottom,16px)"}}>
+      <div style={{background:`linear-gradient(135deg,${C.forest},${C.fL})`,padding:16,borderRadius:"18px 18px 0 0",color:"#fff",position:"relative"}}>
+        <button onClick={onClose} style={{position:"absolute",top:10,right:10,background:"rgba(255,255,255,.2)",
+          border:"none",borderRadius:"50%",width:28,height:28,color:"#fff",fontSize:16,cursor:"pointer",
+          display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+        {photo?<img src={photo} style={{width:"100%",height:120,objectFit:"cover",borderRadius:8,marginBottom:6}} onError={e=>{e.target.style.display="none"}}/>:<span style={{fontSize:36}}>{ET[plat.type]||"🍽"}</span>}
+        <h2 style={{margin:"6px 0 3px",fontSize:16,fontWeight:700}}>{plat.nom}</h2>
+        <div style={{fontSize:11,opacity:.85}}>{plat.type} · {EC[plat.genre]||""} {plat.genre} · {plat.saison} · {plat.temps_prepa}min</div>
+      </div>
+      <div style={{padding:"14px 16px"}}>
+        <div style={{display:"flex",gap:4,marginBottom:14,justifyContent:"center"}}>
+          {[1,2,3,4,5].map(n=>(<button key={n} onClick={()=>onRate(n===rating?0:n)} style={{background:"none",border:"none",
+            fontSize:24,cursor:"pointer",opacity:n<=rating?1:.2}}>⭐</button>))}
+        </div>
+        {plat.ingredients?.some(i=>i[0]?.toLowerCase().includes("riz"))&&plat.batch!=="Non"&&(
+          <div style={{padding:"8px 12px",borderRadius:8,background:C.dangerBg,marginBottom:14,fontSize:11,color:C.danger}}>⚠️ Riz: ne PAS batch cooker</div>)}
+        {plat.macros&&<div style={{marginBottom:14}}>
+          <h4 style={{fontSize:12,color:C.forest,fontWeight:700,marginBottom:6}}>Valeurs nutritionnelles</h4>
+          <div style={{display:"grid",gridTemplateColumns:`repeat(${profiles.length},1fr)`,gap:6}}>
+            {profiles.map(name=>plat.macros[name]&&(<div key={name} style={{padding:8,borderRadius:8,
+              border:`2px solid ${PC[name]}22`,background:PC[name]+"08",textAlign:"center"}}>
+              <div style={{fontSize:11,fontWeight:700,color:PC[name],marginBottom:4}}>{name}</div>
+              <div style={{fontSize:18,fontWeight:800}}>{plat.macros[name].kcal}</div>
+              <div style={{fontSize:9,color:C.tL}}>kcal</div>
+              <div style={{display:"flex",justifyContent:"center",gap:6,marginTop:4,fontSize:10}}>
+                <span><b>{plat.macros[name].prot}g</b> P</span>
+                <span><b>{plat.macros[name].lip}g</b> L</span>
+                <span><b>{plat.macros[name].gluc}g</b> G</span>
+              </div>
+            </div>))}
+          </div>
+        </div>}
+        {plat.ingredients?.length>0&&<div style={{marginBottom:14}}>
+          <button onClick={()=>setShowIng(!showIng)} style={{width:"100%",padding:10,borderRadius:8,
+            border:`1px solid ${C.bdr}`,background:"#fff",cursor:"pointer",display:"flex",
+            justifyContent:"space-between",fontSize:12,fontWeight:600,color:C.forest}}>
+            <span>📋 Ingrédients ({plat.ingredients.length})</span>
+            <span style={{transform:showIng?"rotate(180deg)":"rotate(0)",transition:".2s"}}>▼</span></button>
+          {showIng&&<div style={{border:`1px solid ${C.bdr}`,borderTop:"none",borderRadius:"0 0 8px 8px",overflow:"hidden"}}>
+            <div style={{display:"grid",gridTemplateColumns:`2fr 1fr ${profiles.map(()=>"1fr").join(" ")}`,
+              background:C.forest,color:"#fff",padding:"6px 10px",fontSize:10,fontWeight:600}}>
+              <span>Ingrédient</span><span style={{textAlign:"center"}}>Unité</span>
+              {profiles.map(n=><span key={n} style={{textAlign:"center"}}>{n[0]}</span>)}</div>
+            {plat.ingredients.map(([nom,unite,qD,qM,qE],i)=>{const qMap={Damien:qD,Maroie:qM,"Maël":qE};
+              return(<div key={i} style={{display:"grid",gridTemplateColumns:`2fr 1fr ${profiles.map(()=>"1fr").join(" ")}`,
+                padding:"5px 10px",fontSize:11,borderTop:`1px solid ${C.bdrL}`,background:i%2?"#fff":C.bg}}>
+                <span style={{fontWeight:500}}>{nom}</span>
+                <span style={{textAlign:"center",color:C.tL}}>{unite}</span>
+                {profiles.map(n=><span key={n} style={{textAlign:"center",fontWeight:600,color:PC[n]}}>
+                  {qMap[n]!=null?(Number.isInteger(qMap[n])?qMap[n]:qMap[n].toFixed(1).replace(/\.0$/,"")):"—"}</span>)}
+              </div>);})}
+          </div>}
+        </div>}
+        {steps.length>0&&<div style={{marginBottom:14}}>
+          <button onClick={()=>setShowRec(!showRec)} style={{width:"100%",padding:10,borderRadius:8,
+            border:`1px solid ${C.bdr}`,background:"#fff",cursor:"pointer",display:"flex",
+            justifyContent:"space-between",fontSize:12,fontWeight:600,color:C.forest}}>
+            <span>📖 Recette ({steps.length} étapes)</span>
+            <span style={{transform:showRec?"rotate(180deg)":"rotate(0)",transition:".2s"}}>▼</span></button>
+          {showRec&&<div style={{padding:"10px 14px",background:"#fff",borderRadius:"0 0 8px 8px",
+            border:`1px solid ${C.bdr}`,borderTop:"none"}}>
+            {steps.map((s,i)=>{const isBatch=s.toLowerCase().includes("batch");
+              return <div key={i} style={{padding:"6px 0",borderBottom:i<steps.length-1?`1px solid ${C.bdrL}`:"none",
+                fontSize:12,lineHeight:1.5,color:isBatch?C.gold:C.text,fontWeight:isBatch?600:400}}>{s.trim()}</div>;})}
+          </div>}
+        </div>}
+        <div style={{marginBottom:14}}>
+          <h4 style={{fontSize:12,color:C.forest,fontWeight:700,marginBottom:6}}>📷 Photo</h4>
+          {photo&&<img src={photo} style={{width:"100%",height:150,objectFit:"cover",borderRadius:8,marginBottom:8}} onError={e=>{e.target.style.display="none"}}/>}
+          {showPhotoEdit?<div style={{display:"flex",gap:6}}>
+            <input type="text" value={photoInput} onChange={e=>setPhotoInput(e.target.value)}
+              placeholder="Coller URL image..." style={{flex:1,padding:"7px 10px",borderRadius:8,border:`1px solid ${C.bdr}`,fontSize:11,boxSizing:"border-box"}}/>
+            <button onClick={()=>{onPhoto(photoInput);setShowPhotoEdit(false);setPhotoInput("");}} style={{padding:"7px 12px",borderRadius:8,
+              background:C.fL,color:"#fff",border:"none",fontSize:11,cursor:"pointer"}}>OK</button>
+            <button onClick={()=>setShowPhotoEdit(false)} style={{padding:"7px 8px",borderRadius:8,
+              border:`1px solid ${C.bdr}`,background:"#fff",fontSize:11,cursor:"pointer"}}>X</button>
+          </div>:<div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+            <button onClick={()=>{
+              const inp=document.createElement("input");
+              inp.type="file";inp.accept="image/*";inp.capture="environment";
+              inp.onchange=ev=>{
+                const file=ev.target.files[0];if(!file)return;
+                const reader=new FileReader();
+                reader.onload=r=>{onPhoto(r.target.result);};
+                reader.readAsDataURL(file);
+              };
+              inp.click();
+            }} style={{padding:"7px 12px",borderRadius:8,border:`1px solid ${C.fL}`,
+              background:C.fL+"10",fontSize:11,cursor:"pointer",color:C.fL,fontWeight:600}}>
+              {"📸 Depuis l'appareil"}</button>
+            <button onClick={()=>setShowPhotoEdit(true)} style={{padding:"7px 12px",borderRadius:8,
+              border:`1px solid ${C.bdr}`,background:"#fff",fontSize:11,cursor:"pointer",color:C.tM}}>{"📎 URL"}</button>
+            {photo&&<button onClick={()=>onPhoto("")} style={{padding:"7px 12px",borderRadius:8,
+              border:`1px solid ${C.danger}33`,background:C.dangerBg,fontSize:11,cursor:"pointer",color:C.danger}}>Supprimer</button>}
+          </div>}
+        </div>
+        <div><h4 style={{fontSize:12,color:C.forest,fontWeight:700,marginBottom:6}}>💬 Observations</h4>
+          <textarea value={obs} onChange={e=>onObs(e.target.value)} placeholder="Ex: Maël adore..."
+            rows={2} style={{width:"100%",padding:10,borderRadius:8,border:`1px solid ${C.bdr}`,
+              fontSize:12,resize:"vertical",fontFamily:"inherit",boxSizing:"border-box"}}/></div>
+      </div>
+    </div>
+  </div>);
+}
+
+// ═══════ LOCK DIALOG (Synthèse + PDF) ═══════
+function LockDialog({menu,profiles,onClose}){
+  if(!menu)return null;
+  const [generating,setGenerating]=useState(false);
+  const pdfRef=React.useRef(null);
+  const batch=menu.repas.filter(r=>r.batch==="Oui"||r.batch==="Partiel");
+  const jour=menu.repas.filter(r=>r.batch==="Non");
+
+  function generateText(){
+    let t="🌿 LA TABLE FAMILIALE\nSemaine du "+new Date().toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"})+"\n\n";
+    t+="══ MENU ══\n";
+    menu.repas.forEach(p=>{t+=(p.jour||p.jourDate||"")+": "+p.nom+(p.batch!=="Non"?" [BATCH]":"")+"\n";});
+    if(menu.entrees.length){t+="\n══ ENTRÉES ══\n";menu.entrees.forEach(e=>{t+="• "+e.nom+"\n";});}
+    t+="\n══ BATCH DIMANCHE ══\n";
+    batch.forEach(p=>{
+      const steps=(p.recette||"").split(/(?=\d+\.)/).filter(s=>s.toLowerCase().includes("batch")).map(s=>s.trim()).join(" ");
+      t+="• "+p.nom+": "+(steps||"voir recette")+"\n";
+    });
+    if(jour.length){t+="\n══ JOUR MÊME ══\n";jour.forEach(p=>{t+=(p.jour||"")+": "+p.nom+" ("+p.temps_prepa+"min)\n";});}
+    return t;
+  }
+
+  function copyText(){
+    const t=generateText();
+    if(navigator.clipboard){navigator.clipboard.writeText(t).then(()=>alert("Synthèse copiée !"));}
+    else{const ta=document.createElement("textarea");ta.value=t;document.body.appendChild(ta);ta.select();document.execCommand("copy");document.body.removeChild(ta);alert("Copiée !");}
+  }
+
+  function downloadPDF(){
+    if(!pdfRef.current||!window.html2pdf)return;
+    setGenerating(true);
+    const opt={
+      margin:[10,10,10,10],
+      filename:"la-table-familiale-semaine.pdf",
+      image:{type:"jpeg",quality:0.95},
+      html2canvas:{scale:2,useCORS:true},
+      jsPDF:{unit:"mm",format:"a4",orientation:"portrait"}
+    };
+    html2pdf().set(opt).from(pdfRef.current).save().then(()=>setGenerating(false)).catch(()=>setGenerating(false));
+  }
+
+  const dateStr=new Date().toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"});
+
+  return(
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.5)",zIndex:300,
+      display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={onClose}>
+      <div onClick={e=>e.stopPropagation()} style={{background:"#fff",borderRadius:16,padding:20,
+        width:"100%",maxWidth:440,maxHeight:"85vh",overflowY:"auto"}}>
+        <h3 style={{margin:"0 0 12px",fontSize:16,fontWeight:700,color:C.forest,textAlign:"center"}}>🔒 Menu verrouillé !</h3>
+
+        {/* PDF content (rendered but used for export) */}
+        <div ref={pdfRef} style={{background:"#fff",padding:16,fontSize:11,lineHeight:1.7}}>
+          <div style={{textAlign:"center",marginBottom:12}}>
+            <div style={{fontSize:16,fontWeight:800,color:"#1A3A0A"}}>🌿 La Table Familiale</div>
+            <div style={{fontSize:12,color:"#4A4A4A"}}>Semaine du {dateStr}</div>
+            <div style={{fontSize:10,color:"#7A7A7A"}}>Pour {profiles.join(", ")}</div>
+          </div>
+
+          <div style={{borderTop:"2px solid #2D6B0E",paddingTop:8,marginBottom:10}}>
+            <div style={{fontWeight:700,color:"#1A3A0A",fontSize:12,marginBottom:6}}>📋 MENU DE LA SEMAINE</div>
+            {menu.repas.map(p=>(<div key={p.id} style={{padding:"3px 0",borderBottom:"1px solid #F0EDE5"}}>
+              <strong style={{color:"#2D6B0E"}}>{p.jourDate||p.jour}</strong>: {p.nom}
+              {p.batch!=="Non"&&<span style={{color:"#B8860B",fontSize:10}}> [{p.batch}]</span>}
+            </div>))}
+          </div>
+
+          {menu.entrees.length>0&&<div style={{marginBottom:10}}>
+            <div style={{fontWeight:700,color:"#B8860B",fontSize:12,marginBottom:4}}>🥕 ENTRÉES (pool libre)</div>
+            {menu.entrees.map(e=><div key={e.id}>• {e.nom} ({e.genre}, {e.temps_prepa}min)</div>)}
+          </div>}
+
+          {batch.length>0&&<div style={{marginBottom:10}}>
+            <div style={{fontWeight:700,color:"#B8860B",fontSize:12,marginBottom:4}}>👨‍🍳 BATCH COOKING — Dimanche</div>
+            {batch.map(p=>{
+              const steps=(p.recette||"").split(/(?=\d+\.)/).filter(s=>s.toLowerCase().includes("batch")).map(s=>s.trim());
+              return(<div key={p.id} style={{marginBottom:4}}>
+                <strong>{p.nom}</strong> ({p.temps_batch!=="—"?p.temps_batch+"min":""})<br/>
+                {steps.length>0&&<span style={{color:"#B8860B"}}>{steps[0]}</span>}
+              </div>);
+            })}
+            <div style={{marginTop:6,padding:6,background:"#FFF3F0",borderRadius:4,fontSize:10,color:"#C62828"}}>
+              ⚠️ Riz = cuire au dernier moment · Viande = marinade uniquement, NE PAS cuire
+            </div>
+          </div>}
+
+          {jour.length>0&&<div style={{marginBottom:10}}>
+            <div style={{fontWeight:700,color:"#4A4A4A",fontSize:12,marginBottom:4}}>🔵 JOUR MÊME</div>
+            {jour.map(p=><div key={p.id}>{p.jourDate||p.jour}: {p.nom} ({p.temps_prepa}min)</div>)}
+          </div>}
+        </div>
+
+        {/* Action buttons */}
+        <div style={{display:"flex",gap:8,marginTop:12}}>
+          <button onClick={downloadPDF} disabled={generating} style={{flex:1,padding:12,borderRadius:10,border:"none",
+            background:`linear-gradient(135deg,${C.forest},${C.fL})`,color:"#fff",fontSize:13,fontWeight:700,
+            cursor:generating?"wait":"pointer",opacity:generating?.6:1}}>
+            {generating?"⏳ Génération...":"📄 Télécharger PDF"}</button>
+          <button onClick={copyText} style={{padding:"12px 14px",borderRadius:10,border:`1px solid ${C.bdr}`,
+            background:"#fff",fontSize:13,cursor:"pointer"}}>📋</button>
+        </div>
+        <button onClick={onClose} style={{width:"100%",marginTop:8,padding:10,borderRadius:10,
+          border:`1px solid ${C.bdr}`,background:"#fff",fontSize:13,cursor:"pointer",color:C.tM}}>Fermer</button>
+      </div>
+    </div>
+  );
+}
+
+
+// ── ROOT: Load data then render App ──
+function Root(){
+  const [loaded,setLoaded]=useState(false);
+  const [error,setError]=useState(null);
+  useEffect(()=>{
+    fetch("data.json").then(r=>r.json()).then(raw=>{
+      const ei=(a,isE)=>({
+        id:(isE?"e":"p")+a[0],nom:a[1],type:a[2],genre:a[3],saison:a[4],
+        temps_prepa:a[5],batch:a[6],temps_batch:a[7],
+        ingredients:a[8]||[],recette:a[10]||"",
+        macros:{
+          Damien:a[9]?.D?{kcal:a[9].D[0],prot:a[9].D[1],lip:a[9].D[2],gluc:a[9].D[3]}:null,
+          Maroie:a[9]?.M?{kcal:a[9].M[0],prot:a[9].M[1],lip:a[9].M[2],gluc:a[9].M[3]}:null,
+          "Maël":a[9]?.E?{kcal:a[9].E[0],prot:a[9].E[1],lip:a[9].E[2],gluc:a[9].E[3]}:null,
+        },
+      });
+      DATA={
+        plats:raw.p.map(p=>ei(p,false)),
+        entrees:raw.e.map(e=>ei(e,true)),
+        stock:raw.s.map(([n,a])=>({nom:n,articles:a.map(x=>({nom:x}))})),
+        profils:Object.fromEntries(Object.entries(raw.pr).map(([n,[cal,prot,lip,gluc,age,poids,taille,imc,act,obj,rep]])=>
+          [n,{nom:n,calories:cal,proteines:prot,lipides:lip,glucides:gluc,age,poids,taille,imc,activite:act,objectif:obj,repartition:rep}])),
+      };
+      setLoaded(true);
+    }).catch(e=>setError(e.message));
+  },[]);
+  if(error)return(<div style={{padding:40,textAlign:"center"}}>
+    <p style={{color:"#C62828",fontSize:16}}>Erreur: {error}</p>
+    <p style={{color:"#7A7A7A",fontSize:12}}>Vérifiez que data.json est présent.</p></div>);
+  if(!loaded)return(<div style={{display:"flex",flexDirection:"column",alignItems:"center",
+    justifyContent:"center",height:"100vh",background:"#F7F5EF"}}>
+    <div style={{fontSize:48}}>🌿</div>
+    <p style={{color:"#7A7A7A",fontSize:14,marginTop:12}}>Chargement...</p></div>);
+  return <App/>;
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<Root/>);
+  </script>
+
+  <script>
+    // ═══════ PUSH NOTIFICATIONS ═══════
+    const VAPID_PUBLIC_KEY = "BMQO2VO5Giv8BxgjWzdARnyYkAxrxeY4ww7sybm9gahbxMQM6u6RkNNPG0GLmf-AgU_MXsLiX8Eny-2ENsru16o";
+
+    function urlBase64ToUint8Array(base64String) {
+      const padding = "=".repeat((4 - base64String.length % 4) % 4);
+      const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+      const rawData = atob(base64);
+      const outputArray = new Uint8Array(rawData.length);
+      for (let i = 0; i < rawData.length; i++) outputArray[i] = rawData.charCodeAt(i);
+      return outputArray;
+    }
+
+    async function subscribePush(reg) {
+      try {
+        const existing = await reg.pushManager.getSubscription();
+        if (existing) { savePushSubscription(existing); return; }
+        const permission = await Notification.requestPermission();
+        if (permission !== "granted") { console.log("🔕 Notifications refusées"); return; }
+        const subscription = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+        });
+        savePushSubscription(subscription);
+        console.log("🔔 Push subscription active");
+      } catch (err) { console.warn("Push subscribe error:", err); }
+    }
+
+    function savePushSubscription(subscription) {
+      if (!window._fb) return;
+      const sub = subscription.toJSON();
+      const key = btoa(sub.endpoint).replace(/[.#$/\[\]]/g, "_").slice(-40);
+      window._fb.ref("push_subscriptions/" + key).set(sub);
+      console.log("💾 Subscription sauvegardée dans Firebase");
+    }
+
+    // Register SW + subscribe push
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js").then(reg => {
+        console.log("📱 Service Worker enregistré");
+        if (reg.active) {
+          subscribePush(reg);
+        } else {
+          reg.addEventListener("updatefound", () => {
+            const nw = reg.installing;
+            if (nw) nw.addEventListener("statechange", () => {
+              if (nw.state === "activated") subscribePush(reg);
+            });
+          });
+        }
+      }).catch(err => console.warn("SW error:", err));
+    }
+  </script>
+</body>
+</html>

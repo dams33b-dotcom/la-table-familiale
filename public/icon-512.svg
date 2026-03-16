@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="80" fill="#1A3A0A"/>
+  <text x="96" y="290" text-anchor="middle" font-size="200" fill="white">🌿</text>
+  <text x="96" y="400" text-anchor="middle" font-size="48" fill="#B8860B" font-weight="bold" font-family="system-ui">Table</text>
+</svg>

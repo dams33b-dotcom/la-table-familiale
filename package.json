@@ -1,0 +1,9 @@
+{
+  "name": "la-table-familiale",
+  "version": "3.1.0",
+  "private": true,
+  "dependencies": {
+    "web-push": "^3.6.7",
+    "@netlify/functions": "^2.6.0"
+  }
+}
