@@ -441,6 +441,7 @@ function App(){
         {tab===5&&<ProfilsTab/>}
         {tab===6&&<SaladeTab ratings={saladRat} photos={saladPhotos} customSalads={saladCustom}
           deletedIds={saladDel} activeProfiles={saladProf} bestsellerIds={saladBs}
+          menu={menu} setMenu={sv.menu}
           onRate={sv.sRat} onPhoto={sv.sPhoto} onCustom={sv.sCustom}
           onDel={sv.sDel} onProf={sv.sProf} onBs={sv.sBs}/>}
       </main>
@@ -471,12 +472,12 @@ function MenuTab({menu:rawMenu,setMenu,locked,profiles,setProfiles,ratings,salad
   const menu=rawMenu?{...rawMenu,repas:rawMenu.repas||[],entrees:rawMenu.entrees||[],salades:rawMenu.salades||[]}:null;
   const [nbR,setNbR]=useState(menu?.repas?.length||7);
   const [nbE,setNbE]=useState(menu?.entrees?.length||2);
-  const [nbS,setNbS]=useState(menu?.salades?.length||0);
   const [saison,setSaison]=useState("Toutes saisons");
   const [noteF,setNoteF]=useState(0);
   const [confirm,setConfirm]=useState(false);
   const [replIdx,setReplIdx]=useState(null);
   const [replSIdx,setReplSIdx]=useState(null);
+  const [replEIdx,setReplEIdx]=useState(null);
 
   // Pool salades (depuis BASE_SALADES — module Eat Salade Maison)
   const filteredS=useMemo(()=>BASE_SALADES.filter(s=>{
@@ -507,10 +508,8 @@ function MenuTab({menu:rawMenu,setMenu,locked,profiles,setProfiles,ratings,salad
     const weekDays=getWeekDays(new Date());
     const repas=sh.map((p,i)=>({...p,jour:weekDays[i%7].full,jourShort:weekDays[i%7].name,jourIdx:i%7,jourDate:weekDays[i%7].dateStr}));
     const ent=[...filteredE].sort(()=>Math.random()-.5).slice(0,nbE);
-    // Salades midi (depuis BASE_SALADES, converties en format menu)
-    const shS=[...filteredS].sort(()=>Math.random()-.5).slice(0,nbS);
-    shS.sort((a,b)=>(bo[a.batch]??1)-(bo[b.batch]??1));
-    const salades=shS.map((s,i)=>({...buildSaladForMenu(s),jour:weekDays[i%7].full,jourShort:weekDays[i%7].name,jourIdx:i%7,jourDate:weekDays[i%7].dateStr}));
+    // Conserver les salades existantes (ajoutées manuellement depuis l'onglet Salade)
+    const salades=menu?.salades||[];
     setMenu({repas,entrees:ent,salades,at:new Date().toISOString(),startDate:new Date().toISOString()});
   }
   function removeS(idx){if(locked)return;
@@ -532,6 +531,14 @@ function MenuTab({menu:rawMenu,setMenu,locked,profiles,setProfiles,ratings,salad
     if(!cands.length)return;
     const r=[...menu.repas];r[idx]={...cands[Math.floor(Math.random()*cands.length)],jour:r[idx].jour,jourShort:r[idx].jourShort,jourIdx:r[idx].jourIdx,jourDate:r[idx].jourDate};
     setMenu({...menu,repas:r});setReplIdx(null);}
+  function removeE(idx){if(locked)return;
+    const e=menu.entrees.filter((_,i)=>i!==idx);
+    setMenu({...menu,entrees:e});}
+  function replaceE(idx,genre){if(locked)return;
+    const cands=filteredE.filter(e=>e.genre===genre&&!menu.entrees.some(r=>r.id===e.id));
+    if(!cands.length)return;
+    const e=[...menu.entrees];e[idx]=cands[Math.floor(Math.random()*cands.length)];
+    setMenu({...menu,entrees:e});setReplEIdx(null);}
   function toggleProf(name){
     const n=profiles.includes(name)?profiles.filter(p=>p!==name):[...profiles,name];
     if(!n.length)return;setProfiles(n);}
@@ -548,7 +555,7 @@ function MenuTab({menu:rawMenu,setMenu,locked,profiles,setProfiles,ratings,salad
               color:profiles.includes(n)?"#fff":PC[n]}}>{n}</button>
           ))}
         </div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:12}}>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
           <div>
             <label style={{fontSize:11,color:C.tM,fontWeight:600}}>Repas: <strong style={{color:C.forest,fontSize:15}}>{nbR}</strong></label>
             <input type="range" min={2} max={14} value={nbR} onChange={e=>setNbR(+e.target.value)} style={{width:"100%",accentColor:C.fL}}/>
@@ -556,10 +563,6 @@ function MenuTab({menu:rawMenu,setMenu,locked,profiles,setProfiles,ratings,salad
           <div>
             <label style={{fontSize:11,color:C.tM,fontWeight:600}}>Entrées: <strong style={{color:C.forest,fontSize:15}}>{nbE}</strong></label>
             <input type="range" min={0} max={8} value={nbE} onChange={e=>setNbE(+e.target.value)} style={{width:"100%",accentColor:C.fL}}/>
-          </div>
-          <div>
-            <label style={{fontSize:11,color:C.tM,fontWeight:600}}>🥗 Midi: <strong style={{color:C.forest,fontSize:15}}>{nbS}</strong></label>
-            <input type="range" min={0} max={14} value={nbS} onChange={e=>setNbS(+e.target.value)} style={{width:"100%",accentColor:C.fL}}/>
           </div>
         </div>
 
@@ -585,7 +588,7 @@ function MenuTab({menu:rawMenu,setMenu,locked,profiles,setProfiles,ratings,salad
           border:"none",background:locked?C.tL:`linear-gradient(135deg,${C.forest},${C.fL})`,
           color:"#fff",fontSize:14,fontWeight:700,cursor:locked?"not-allowed":"pointer",
           boxShadow:locked?"none":"0 3px 10px rgba(26,58,10,.3)"}}>
-          {locked?"🔒 Verrouillé":`🔄 Générer ${nbR} repas, ${nbE} entrées${nbS>0?`, ${nbS} salades`:""}`}
+          {locked?"🔒 Verrouillé":`🔄 Générer ${nbR} repas, ${nbE} entrées`}
         </button>
 
         {confirm&&<div style={{marginTop:10,padding:12,background:C.dangerBg,borderRadius:10}}>
@@ -651,14 +654,33 @@ function MenuTab({menu:rawMenu,setMenu,locked,profiles,setProfiles,ratings,salad
         </div>
 
         {menu.entrees.length>0&&<>
-          <h3 style={{fontSize:13,color:C.gold,fontWeight:700,marginBottom:8,textTransform:"uppercase",letterSpacing:.5,textAlign:"center"}}>🥕 Entrées</h3>
+          <h3 style={{fontSize:13,color:C.gold,fontWeight:700,marginBottom:8,textTransform:"uppercase",letterSpacing:.5,textAlign:"center"}}>🥕 Entrées ({menu.entrees.length})</h3>
           <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:16}}>
-            {menu.entrees.map(e=>(
-              <div key={e.id} onClick={()=>onSel(e)} style={{background:"#fff",borderRadius:10,padding:"10px 12px",
-                border:`1px solid ${C.bdr}`,cursor:"pointer",display:"flex",alignItems:"center",gap:10}}>
-                <span style={{fontSize:20}}>🥕</span>
-                <div style={{flex:1}}><div style={{fontSize:13,fontWeight:600}}>{e.nom}</div>
-                <div style={{fontSize:10,color:C.tL}}>{e.genre} · {e.temps_prepa}min</div></div>
+            {menu.entrees.map((e,idx)=>(
+              <div key={e.id+"-e-"+idx}>
+                <div style={{background:"#fff",borderRadius:10,padding:"10px 12px",
+                  border:`1px solid ${C.bdr}`,display:"flex",alignItems:"center",gap:10}}>
+                  <div onClick={()=>onSel(e)} style={{display:"flex",alignItems:"center",gap:10,flex:1,cursor:"pointer"}}>
+                    <span style={{fontSize:20}}>🥕</span>
+                    <div style={{flex:1}}><div style={{fontSize:13,fontWeight:600}}>{e.nom}</div>
+                    <div style={{fontSize:10,color:C.tL}}>{e.genre} · {e.temps_prepa}min</div></div>
+                  </div>
+                  {!locked&&<div style={{display:"flex",gap:4}}>
+                    <button onClick={()=>setReplEIdx(replEIdx===idx?null:idx)} style={{padding:"3px 8px",borderRadius:6,
+                      border:`1px solid ${C.bdr}`,background:"#fff",fontSize:10,cursor:"pointer",color:C.tM}}>🔄</button>
+                    <button onClick={()=>removeE(idx)} style={{padding:"3px 8px",borderRadius:6,
+                      border:`1px solid ${C.danger}33`,background:C.dangerBg,fontSize:10,cursor:"pointer",color:C.danger}}>✕</button>
+                  </div>}
+                </div>
+                {replEIdx===idx&&!locked&&(
+                  <div style={{padding:8,background:"#fff",borderRadius:"0 0 10px 10px",border:`1px solid ${C.bdr}`,borderTop:"none",display:"flex",flexWrap:"wrap",gap:4}}>
+                    <span style={{fontSize:10,color:C.tL,width:"100%",marginBottom:2}}>Remplacer par :</span>
+                    {CUISINES.map(cui=>{const cnt=filteredE.filter(e2=>e2.genre===cui&&!menu.entrees.some(r=>r.id===e2.id)).length;
+                      return <button key={cui} onClick={()=>replaceE(idx,cui)} disabled={!cnt}
+                        style={{padding:"3px 8px",borderRadius:12,fontSize:10,border:`1px solid ${C.bdr}`,
+                          background:cnt?"#fff":"#f5f5f5",cursor:cnt?"pointer":"default",
+                          color:cnt?C.text:C.tL,opacity:cnt?1:.5}}>{EC[cui]||"🌍"} {cui} ({cnt})</button>;})}
+                  </div>)}
               </div>
             ))}
           </div>
@@ -1529,9 +1551,12 @@ function SalCard({salad,rating,photo,activeProfiles,onClick}){
   );
 }
 
-function SalDetail({salad,rating,photo,activeProfiles,onClose,onRate,onPhotoChange,onDelete,onToggleBestSeller}){
+function SalDetail({salad,rating,photo,activeProfiles,menu,onAddToMenu,menuSaladIds,onClose,onRate,onPhotoChange,onDelete,onToggleBestSeller}){
+  const [showDayPicker,setShowDayPicker]=useState(false);
   const cc=SALAD_CUISINE_COLORS[salad.cuisine]||"#6b7280";
   const profileNutri=activeProfiles.map(k=>{const p=SALAD_PROFILES[k];const n=salCalcNutri(salad.composition,p.mult);return{...p,key:k,...n};});
+  const alreadyInMenu=(menuSaladIds||[]).includes(salad.id);
+  const weekDays=React.useMemo(()=>getWeekDays(menu?.startDate?new Date(menu.startDate):new Date()),[menu]);
   const renderRecipe=text=>{
     const parts=text.split(/(\*\*[^*]+\*\*)/g);
     return parts.map((p,i)=>p.startsWith("**")&&p.endsWith("**")?
@@ -1581,7 +1606,22 @@ function SalDetail({salad,rating,photo,activeProfiles,onClose,onRate,onPhotoChan
         }),
         React.createElement("h3",{style:{fontSize:12,fontWeight:700,color:C.forest,margin:"16px 0 8px",textTransform:"uppercase",letterSpacing:.8}},"Recette"),
         React.createElement("div",{style:{background:"#f9fafb",borderRadius:10,padding:12,fontSize:12.5,lineHeight:1.7,color:"#374151"}},renderRecipe(salad.recette)),
-        React.createElement("div",{style:{display:"flex",gap:6,marginTop:16}},
+        !alreadyInMenu&&React.createElement("div",{style:{marginTop:16}},
+          !showDayPicker?
+            React.createElement("button",{onClick:()=>setShowDayPicker(true),style:{width:"100%",padding:"11px 14px",borderRadius:10,border:"2px solid "+C.fL+"40",background:C.fL+"08",color:C.forest,fontSize:13,fontWeight:700,cursor:"pointer"}},"📋 Ajouter au menu"):
+            React.createElement("div",{style:{background:C.fL+"08",borderRadius:10,padding:10,border:"1.5px solid "+C.fL+"30"}},
+              React.createElement("div",{style:{fontSize:11,fontWeight:600,color:C.forest,marginBottom:8}},"Choisir le jour :"),
+              React.createElement("div",{style:{display:"flex",gap:4,flexWrap:"wrap"}},
+                weekDays.map((d,i)=>React.createElement("button",{key:i,onClick:()=>{onAddToMenu(salad,i);setShowDayPicker(false);},
+                  style:{padding:"7px 10px",borderRadius:8,border:"1px solid "+C.fL+"30",background:"#fff",color:C.forest,fontSize:12,fontWeight:600,cursor:"pointer",flex:"1 0 auto",minWidth:50,textAlign:"center"}},d.name))
+              ),
+              React.createElement("button",{onClick:()=>setShowDayPicker(false),style:{marginTop:6,padding:"5px 10px",borderRadius:6,border:"none",background:"transparent",color:"#9ca3af",fontSize:11,cursor:"pointer"}},"Annuler")
+            )
+        ),
+        alreadyInMenu&&React.createElement("div",{style:{marginTop:16,padding:"10px 14px",borderRadius:10,background:"#f0fdf4",border:"1px solid #bbf7d0",textAlign:"center"}},
+          React.createElement("span",{style:{fontSize:12,fontWeight:600,color:"#16a34a"}},"✓ Déjà dans le menu")
+        ),
+        React.createElement("div",{style:{display:"flex",gap:6,marginTop:12}},
           salad.cuisine!=="Best Seller"?
             React.createElement("button",{onClick:onToggleBestSeller,style:{flex:1,padding:"10px 14px",borderRadius:10,border:"1.5px solid "+C.gold+"40",background:C.gold+"08",color:C.gold,fontSize:12,fontWeight:700,cursor:"pointer"}},"⭐ Passer en Best Seller"):
             React.createElement("button",{onClick:onToggleBestSeller,style:{flex:1,padding:"10px 14px",borderRadius:10,border:"1.5px solid "+C.gold,background:C.gold+"14",color:C.gold,fontSize:12,fontWeight:700,cursor:"pointer"}},"⭐ Best Seller ✓"),
@@ -1687,13 +1727,26 @@ function SalComposer({onBack,onSave}){
   );
 }
 
-function SaladeTab({ratings,photos,customSalads,deletedIds,activeProfiles,bestsellerIds,onRate,onPhoto,onCustom,onDel,onProf,onBs}){
+function SaladeTab({ratings,photos,customSalads,deletedIds,activeProfiles,bestsellerIds,menu,setMenu,onRate,onPhoto,onCustom,onDel,onProf,onBs}){
   const [view,setView]=useState("library");
   const [selectedSalad,setSelectedSalad]=useState(null);
   const [search,setSearch]=useState("");
   const [filterCuisine,setFilterCuisine]=useState("all");
   const [filterSaison,setFilterSaison]=useState("all");
   const [filterMinStars,setFilterMinStars]=useState(0);
+
+  // IDs des salades déjà dans le menu (pour masquer le bouton "Ajouter")
+  const menuSaladIds=React.useMemo(()=>(menu?.salades||[]).map(s=>s.id),[menu]);
+
+  // Handler : ajouter une salade au menu pour un jour donné
+  const addSaladToMenu=React.useCallback((salad,jourIdx)=>{
+    const base=menu&&menu.repas?menu:{repas:[],entrees:[],salades:[],at:new Date().toISOString(),startDate:new Date().toISOString()};
+    const wd=getWeekDays(base.startDate?new Date(base.startDate):new Date());
+    const built=buildSaladForMenu(salad);
+    const entry={...built,jour:wd[jourIdx%7].full,jourShort:wd[jourIdx%7].name,jourIdx:jourIdx%7,jourDate:wd[jourIdx%7].dateStr};
+    const salades=[...(base.salades||[]),entry];
+    setMenu({...base,salades});
+  },[menu,setMenu]);
 
   const allSalads=React.useMemo(()=>{
     return[...BASE_SALADES,...customSalads].filter(s=>!deletedIds.includes(s.id))
@@ -1789,7 +1842,8 @@ function SaladeTab({ratings,photos,customSalads,deletedIds,activeProfiles,bestse
     view==="detail"&&selectedSalad&&(()=>{
       const liveSalad=allSalads.find(s=>s.id===selectedSalad.id)||selectedSalad;
       return React.createElement(SalDetail,{salad:liveSalad,rating:ratings[liveSalad.id]||0,photo:photos[liveSalad.id],
-        activeProfiles,onClose:()=>{setView("library");setSelectedSalad(null);},
+        activeProfiles,menu,onAddToMenu:addSaladToMenu,menuSaladIds,
+        onClose:()=>{setView("library");setSelectedSalad(null);},
         onRate:n=>onRate(liveSalad.id,n),onPhotoChange:url=>onPhoto(liveSalad.id,url),
         onDelete:()=>handleDelete(liveSalad.id),onToggleBestSeller:()=>handleToggleBestSeller(liveSalad.id)});
     })()
