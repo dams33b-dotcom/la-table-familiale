@@ -9,7 +9,6 @@ const FAMILY_ID = "madateam";
 
 // Catégories d'ingrédients considérés comme "frais"
 const FRESH_KEYWORDS = [
-  // Légumes
   "salade", "tomate", "concombre", "avocat", "courgette", "aubergine",
   "poivron", "épinard", "poireau", "brocoli", "chou", "carotte",
   "oignon", "champignon", "fenouil", "radis", "navet", "céleri",
@@ -17,20 +16,16 @@ const FRESH_KEYWORDS = [
   "betterave", "endive", "cresson", "roquette", "mâche", "laitue",
   "ciboulette", "persil", "basilic", "menthe", "coriandre", "aneth",
   "romarin", "thym", "estragon", "patate douce", "butternut", "potimarron",
-  // Fruits
   "mangue", "pêche", "poire", "pomme", "pastèque", "melon",
   "fraise", "framboise", "myrtille", "citron", "orange", "banane",
   "kiwi", "raisin", "abricot", "cerise", "figue", "grenade",
   "pamplemousse", "clémentine", "nectarine", "prune",
-  // Frais (rayon frais)
   "crème fraîche", "crème", "fêta", "feta", "mozzarella", "chèvre",
   "ricotta", "mascarpone", "parmesan", "gruyère", "emmental",
   "comté", "beaufort", "reblochon", "roquefort", "camembert", "brie",
   "fromage", "lait", "yaourt", "beurre", "œuf", "oeuf",
   "pain", "pâte feuilletée", "pâte brisée", "pâte à pizza",
-  "tortilla", "naan", "galette", "crêpe",
-  "tofu", "houmous",
-  // Protéines fraîches
+  "tortilla", "naan", "galette", "crêpe", "tofu", "houmous",
   "poulet", "saumon", "truite", "crevette", "cabillaud", "thon frais",
   "maquereau", "sardine", "gambas", "noix de saint-jacques",
   "poisson", "filet",
@@ -38,7 +33,6 @@ const FRESH_KEYWORDS = [
 
 // ═══════ HELPERS ═══════
 
-/** Lire une clé Firebase via l'API REST */
 async function firebaseGet(key: string): Promise<any> {
   const url = `${FIREBASE_DB_URL}/${FAMILY_ID}/${key}.json`;
   const res = await fetch(url);
@@ -46,13 +40,20 @@ async function firebaseGet(key: string): Promise<any> {
   return res.json();
 }
 
-/** Vérifier si un ingrédient est "frais" */
+async function firebaseSet(key: string, value: any): Promise<void> {
+  const url = `${FIREBASE_DB_URL}/${FAMILY_ID}/${key}.json`;
+  await fetch(url, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(value),
+  });
+}
+
 function isFresh(ingredientName: string): boolean {
   const lower = ingredientName.toLowerCase();
   return FRESH_KEYWORDS.some((kw) => lower.includes(kw));
 }
 
-/** Récupérer toutes les subscriptions push */
 async function getSubscriptions(): Promise<webpush.PushSubscription[]> {
   const subs = await firebaseGet("push_subscriptions");
   if (!subs) return [];
@@ -61,17 +62,9 @@ async function getSubscriptions(): Promise<webpush.PushSubscription[]> {
   ) as webpush.PushSubscription[];
 }
 
-/** Envoyer une notification à toutes les subscriptions */
-async function sendToAll(
-  title: string,
-  body: string,
-  tag: string
-): Promise<number> {
+async function sendToAll(title: string, body: string, tag: string): Promise<number> {
   const subs = await getSubscriptions();
-  if (subs.length === 0) {
-    console.log("Aucune subscription push trouvée");
-    return 0;
-  }
+  if (subs.length === 0) { console.log("Aucune subscription"); return 0; }
 
   const payload = JSON.stringify({ title, body, tag, url: "/" });
   let sent = 0;
@@ -81,207 +74,189 @@ async function sendToAll(
       await webpush.sendNotification(sub, payload);
       sent++;
     } catch (err: any) {
-      console.warn(`Erreur envoi push: ${err.statusCode || err.message}`);
-      // Si subscription expirée (410 Gone), on pourrait la supprimer
-      if (err.statusCode === 410) {
-        console.log("Subscription expirée, à nettoyer");
-      }
+      console.warn(`Push error: ${err.statusCode || err.message}`);
     }
   }
-
   return sent;
 }
 
-/** Obtenir l'heure de Paris (fuseau Europe/Paris) */
-function getParisTime(): { hour: number; minute: number; dayOfWeek: number } {
+function getParisDate(): Date {
   const now = new Date();
-  const paris = new Intl.DateTimeFormat("fr-FR", {
-    timeZone: "Europe/Paris",
-    hour: "numeric",
-    minute: "numeric",
-    weekday: "long",
-  }).formatToParts(now);
-
-  const hour = parseInt(paris.find((p) => p.type === "hour")?.value || "0");
-  const minute = parseInt(paris.find((p) => p.type === "minute")?.value || "0");
-  const weekdayName = paris.find((p) => p.type === "weekday")?.value || "";
-
-  const dayMap: Record<string, number> = {
-    lundi: 1, mardi: 2, mercredi: 3, jeudi: 4,
-    vendredi: 5, samedi: 6, dimanche: 0,
-  };
-
-  return { hour, minute, dayOfWeek: dayMap[weekdayName] ?? -1 };
+  const parisStr = now.toLocaleString("en-US", { timeZone: "Europe/Paris" });
+  return new Date(parisStr);
 }
 
-// ═══════ LES 3 NOTIFICATIONS ═══════
+function daysDiff(d1: Date, d2: Date): number {
+  const date1 = new Date(d1.getFullYear(), d1.getMonth(), d1.getDate());
+  const date2 = new Date(d2.getFullYear(), d2.getMonth(), d2.getDate());
+  return Math.round((date2.getTime() - date1.getTime()) / (86400000));
+}
 
-/** 🧊 Notification achats frais — Jeudi 9h */
-async function handleAchatsFrais(): Promise<void> {
-  const menu = await firebaseGet("ltf2_menu");
-  const locked = await firebaseGet("ltf2_lock");
+function hoursDiff(d1: Date, d2: Date): number {
+  return (d2.getTime() - d1.getTime()) / (3600000);
+}
 
-  if (!locked || !menu?.repas) {
-    console.log("🧊 Menu non verrouillé ou vide, skip");
-    return;
-  }
+// Anti-doublon : vérifier/marquer les notifs envoyées
+async function wasAlreadySent(notifKey: string): Promise<boolean> {
+  const sent = await firebaseGet("push_sent/" + notifKey);
+  return !!sent;
+}
 
-  // Ingrédients des repas fin de semaine (jourIdx >= 3 = Jeudi à Dimanche)
+async function markAsSent(notifKey: string): Promise<void> {
+  await firebaseSet("push_sent/" + notifKey, new Date().toISOString());
+}
+
+// ═══════ NOTIFICATION 1 — 🧊 ACHATS FRAIS (J+4 après verrouillage, 9h) ═══════
+
+async function handleAchatsFrais(parisNow: Date, lockDate: Date, menu: any): Promise<void> {
+  const daysSinceLock = daysDiff(lockDate, parisNow);
+  if (daysSinceLock !== 4 || parisNow.getHours() !== 9) return;
+
+  const notifKey = `frais_${lockDate.toISOString().slice(0, 10)}`;
+  if (await wasAlreadySent(notifKey)) return;
+
   const freshIngredients = new Set<string>();
-
-  // Ingrédients déjà dans les repas début de semaine (pas besoin de les racheter)
   const earlyWeekIngredients = new Set<string>();
 
-  for (const repas of menu.repas) {
+  for (const repas of menu.repas || []) {
     if (!repas.ingredients) continue;
     const idx = repas.jourIdx ?? 0;
-
     for (const ing of repas.ingredients) {
       const name = ing[0];
-      if (idx < 3) {
-        earlyWeekIngredients.add(name.toLowerCase());
-      } else if (isFresh(name)) {
-        freshIngredients.add(name);
-      }
+      if (idx < 3) earlyWeekIngredients.add(name.toLowerCase());
+      else if (isFresh(name)) freshIngredients.add(name);
     }
   }
 
-  // Retirer les ingrédients frais déjà achetés en début de semaine
   const finalList: string[] = [];
   for (const name of freshIngredients) {
-    if (!earlyWeekIngredients.has(name.toLowerCase())) {
-      finalList.push(name);
+    if (!earlyWeekIngredients.has(name.toLowerCase())) finalList.push(name);
+  }
+
+  if (finalList.length === 0) { console.log("🧊 Aucun ingrédient frais"); return; }
+
+  const body = `Achats frais à faire :\n${finalList.join(", ")}`;
+  const sent = await sendToAll("🧊 Achats frais", body, "achats-frais");
+  if (sent > 0) await markAsSent(notifKey);
+  console.log(`🧊 Envoyé à ${sent} appareil(s)`);
+}
+
+// ═══════ NOTIFICATION 2 — 👨‍🍳 BATCH COOKING (3h après lock + J+1 à 9h) ═══════
+
+async function handleBatchCooking(parisNow: Date, lockDate: Date, menu: any): Promise<void> {
+  const batchPlats = (menu.repas || []).filter(
+    (r: any) => r.batch === "Oui" || r.batch === "Partiel"
+  );
+  if (batchPlats.length === 0) return;
+
+  const names = batchPlats.map((r: any) => r.nom).join(", ");
+
+  // Alerte 1 : 3h après verrouillage
+  const hoursAfterLock = hoursDiff(lockDate, parisNow);
+  const notifKey1 = `batch3h_${lockDate.toISOString().slice(0, 16)}`;
+
+  if (hoursAfterLock >= 3 && hoursAfterLock < 4) {
+    if (!(await wasAlreadySent(notifKey1))) {
+      const body = `Batch cooking à préparer :\n${names}`;
+      const sent = await sendToAll("👨‍🍳 Batch cooking", body, "batch-3h");
+      if (sent > 0) await markAsSent(notifKey1);
+      console.log(`👨‍🍳 Batch 3h: ${sent} appareil(s)`);
     }
   }
 
-  if (finalList.length === 0) {
-    console.log("🧊 Pas d'ingrédients frais à acheter");
-    return;
-  }
+  // Alerte 2 : Lendemain à 9h
+  const daysSinceLock = daysDiff(lockDate, parisNow);
+  const notifKey2 = `batchJ1_${lockDate.toISOString().slice(0, 10)}`;
 
-  const body = `Achats frais cette semaine :\n${finalList.join(", ")}`;
-  const sent = await sendToAll("🧊 Achats frais", body, "achats-frais");
-  console.log(`🧊 Notification achats frais envoyée à ${sent} appareil(s)`);
+  if (daysSinceLock === 1 && parisNow.getHours() === 9) {
+    if (!(await wasAlreadySent(notifKey2))) {
+      const body = `Rappel batch cooking aujourd'hui :\n${names}`;
+      const sent = await sendToAll("👨‍🍳 Batch — rappel", body, "batch-j1");
+      if (sent > 0) await markAsSent(notifKey2);
+      console.log(`👨‍🍳 Batch J+1: ${sent} appareil(s)`);
+    }
+  }
 }
 
-/** 👨‍🍳 Notification batch cooking — Dimanche 9h */
-async function handleBatchCooking(): Promise<void> {
-  const menu = await firebaseGet("ltf2_menu");
-  const locked = await firebaseGet("ltf2_lock");
+// ═══════ NOTIFICATION 3 — ⏰ CUISSON LONGUE (tous les jours à 18h) ═══════
 
-  if (!locked || !menu?.repas) {
-    console.log("👨‍🍳 Menu non verrouillé ou vide, skip");
-    return;
-  }
+async function handleCuissonLongue(parisNow: Date, menu: any): Promise<void> {
+  if (parisNow.getHours() !== 18) return;
 
-  const batchPlats = menu.repas.filter(
-    (r: any) => r.batch === "Oui" || r.batch === "Partiel"
-  );
-
-  if (batchPlats.length === 0) {
-    console.log("👨‍🍳 Aucun plat batch cette semaine");
-    return;
-  }
-
-  const names = batchPlats.map((r: any) => r.nom).join(", ");
-  const body = `Batch cooking aujourd'hui :\n${names}`;
-  const sent = await sendToAll("👨‍🍳 Batch cooking", body, "batch-cooking");
-  console.log(`👨‍🍳 Notification batch envoyée à ${sent} appareil(s)`);
-}
-
-/** ⏰ Notification cuisson longue — Le soir */
-async function handleCuissonLongue(
-  parisHour: number,
-  parisMinute: number,
-  dayOfWeek: number
-): Promise<void> {
-  const menu = await firebaseGet("ltf2_menu");
-  const locked = await firebaseGet("ltf2_lock");
-
-  if (!locked || !menu?.repas) return;
-
-  // Mapper jour de la semaine → jourIdx du menu
-  // Le menu commence au jour de génération, mais les jours sont Lundi=0 ... Dimanche=6
-  // On cherche le repas dont le jourIdx correspond au jour actuel
   const jourNames = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
-  const todayName = jourNames[dayOfWeek]?.toLowerCase();
+  const todayName = jourNames[parisNow.getDay()];
 
-  const todayRepas = menu.repas.find((r: any) => {
-    const jourShort = (r.jourShort || r.jour || "").toLowerCase();
-    return jourShort.startsWith(todayName);
+  const todayRepas = (menu.repas || []).find((r: any) => {
+    const js = (r.jourShort || r.jour || "").toLowerCase();
+    return js.startsWith(todayName);
   });
 
   if (!todayRepas) return;
-
   const tempsPrepa = todayRepas.temps_prepa || 0;
-  if (tempsPrepa <= 25) return; // Pas de notif pour les plats rapides
+  if (tempsPrepa <= 25) return;
 
-  // Heure de lancement = 19h45 - temps de cuisson
-  // Convertir en minutes depuis minuit pour comparer
-  const targetMinutes = 19 * 60 + 45 - tempsPrepa;
-  const currentMinutes = parisHour * 60 + parisMinute;
+  const todayStr = parisNow.toISOString().slice(0, 10);
+  const notifKey = `cuisson_${todayStr}`;
+  if (await wasAlreadySent(notifKey)) return;
 
-  // On vérifie toutes les heures, donc on accepte une fenêtre de ±30 min
-  if (Math.abs(currentMinutes - targetMinutes) <= 30) {
-    const heureL = Math.floor(targetMinutes / 60);
-    const minL = targetMinutes % 60;
-    const heureLStr = `${heureL}h${minL.toString().padStart(2, "0")}`;
-    const body = `Lancer "${todayRepas.nom}" maintenant (${tempsPrepa} min de cuisson) pour manger à 19h45`;
-    const sent = await sendToAll(
-      `⏰ ${todayRepas.nom}`,
-      body,
-      "cuisson-longue"
-    );
-    console.log(`⏰ Notification cuisson longue envoyée à ${sent} appareil(s)`);
-  }
+  const body = `"${todayRepas.nom}" prend ${tempsPrepa} min — pensez à lancer la préparation !`;
+  const sent = await sendToAll(`⏰ ${todayRepas.nom}`, body, "cuisson-longue");
+  if (sent > 0) await markAsSent(notifKey);
+  console.log(`⏰ Cuisson: ${sent} appareil(s)`);
 }
 
 // ═══════ HANDLER PRINCIPAL ═══════
 
 export default async function handler() {
-  // Config VAPID
   const publicKey = process.env.VAPID_PUBLIC_KEY;
   const privateKey = process.env.VAPID_PRIVATE_KEY;
   const email = process.env.VAPID_EMAIL || "mailto:contact@example.com";
 
   if (!publicKey || !privateKey) {
-    console.error("❌ Clés VAPID manquantes dans les variables d'environnement");
+    console.error("❌ Clés VAPID manquantes");
     return new Response("VAPID keys missing", { status: 500 });
   }
 
   webpush.setVapidDetails(email, publicKey, privateKey);
 
-  const { hour, minute, dayOfWeek } = getParisTime();
-  console.log(
-    `⏱️ Heure Paris: ${hour}h${minute.toString().padStart(2, "0")}, jour: ${dayOfWeek}`
-  );
+  const parisNow = getParisDate();
+  const hour = parisNow.getHours();
+  const minute = parisNow.getMinutes();
+  const dayName = parisNow.toLocaleDateString("fr-FR", { weekday: "long" });
+  console.log(`⏱️ Paris: ${dayName} ${hour}h${String(minute).padStart(2, "0")}`);
+
+  const locked = await firebaseGet("ltf2_lock");
+  if (!locked) {
+    console.log("🔓 Menu non verrouillé");
+    return new Response("Not locked", { status: 200 });
+  }
+
+  const menu = await firebaseGet("ltf2_menu");
+  if (!menu?.repas) {
+    console.log("📭 Pas de menu");
+    return new Response("No menu", { status: 200 });
+  }
+
+  // Date de verrouillage
+  const lockAtStr = await firebaseGet("ltf2_lock_at");
+  const lockDate = lockAtStr
+    ? new Date(new Date(lockAtStr).toLocaleString("en-US", { timeZone: "Europe/Paris" }))
+    : new Date(new Date(menu.at || menu.startDate || Date.now()).toLocaleString("en-US", { timeZone: "Europe/Paris" }));
+
+  console.log(`🔒 Verrouillé le: ${lockDate.toLocaleDateString("fr-FR")} ${lockDate.getHours()}h`);
 
   try {
-    // 🧊 Jeudi 9h → Achats frais
-    if (dayOfWeek === 4 && hour === 9) {
-      await handleAchatsFrais();
-    }
-
-    // 👨‍🍳 Dimanche 9h → Batch cooking
-    if (dayOfWeek === 0 && hour === 9) {
-      await handleBatchCooking();
-    }
-
-    // ⏰ Tous les soirs (17h-20h) → Cuisson longue
-    if (hour >= 17 && hour <= 20) {
-      await handleCuissonLongue(hour, minute, dayOfWeek);
-    }
+    await handleAchatsFrais(parisNow, lockDate, menu);
+    await handleBatchCooking(parisNow, lockDate, menu);
+    await handleCuissonLongue(parisNow, menu);
   } catch (err) {
-    console.error("❌ Erreur dans send-notifications:", err);
+    console.error("❌ Erreur:", err);
     return new Response("Error", { status: 500 });
   }
 
-  return new Response(`OK — ${hour}h${minute.toString().padStart(2, "0")}`, {
-    status: 200,
-  });
+  return new Response(`OK — ${dayName} ${hour}h${String(minute).padStart(2, "0")}`, { status: 200 });
 }
 
-// Exécuter toutes les heures
 export const config: Config = {
   schedule: "0 * * * *",
 };
