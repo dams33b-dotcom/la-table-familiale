@@ -1,0 +1,2181 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#1A3A0A">
+  <title>La Table Familiale</title>
+  <style>
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    body{margin:0;padding:0;font-family:system-ui,-apple-system,sans-serif;background:#F7F5EF}
+    input,select,textarea,button{font-family:inherit}
+    input[type="range"]{-webkit-appearance:none;height:6px;border-radius:3px;background:#E8E4DA;outline:none}
+    input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:#2D6B0E;cursor:pointer}
+    ::-webkit-scrollbar{display:none}
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+  <script>
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyCReVEupBc9WGP7heEVzWeNIIxJbfUfo8o",
+      authDomain: "la-table-familiale.firebaseapp.com",
+      databaseURL: "https://la-table-familiale-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "la-table-familiale",
+      storageBucket: "la-table-familiale.firebasestorage.app",
+      messagingSenderId: "181019053837",
+      appId: "1:181019053837:web:040703dd5fd2fa4fb0ea44"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const FAMILY_ID = "madateam";
+    window._fb = { db, ref: (path) => db.ref(FAMILY_ID + "/" + path) };
+    console.log("🔥 Firebase connecté");
+  </script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+  <script type="text/babel">
+const {useState,useEffect,useMemo,useCallback}=React;
+
+// ── STORAGE (Firebase Realtime DB + localStorage fallback) ──
+function sGet(k,fb){
+  try{const v=localStorage.getItem(k);return v?JSON.parse(v):fb;}catch{return fb;}
+}
+function sSet(k,v){
+  try{
+    localStorage.setItem(k,JSON.stringify(v));
+    // Sync to Firebase
+    if(window._fb){window._fb.ref(k).set(v).catch(e=>console.warn("Firebase write error:",e));}
+  }catch(e){console.error(e);}
+}
+// Listen for Firebase changes (sync from other devices)
+function fbListen(k,callback){
+  if(!window._fb)return;
+  window._fb.ref(k).on("value",snap=>{
+    const val=snap.val();
+    if(val!==null&&val!==undefined){
+      localStorage.setItem(k,JSON.stringify(val));
+      callback(val);
+    }
+  });
+}
+
+// ── DATA (loaded via fetch) ──
+let DATA=null;
+
+
+// Data: p=plats, e=entrees, s=stock, pr=profils
+// Item: [id,nom,type,genre,saison,temps_prepa,batch,temps_batch,ings[],macros{},recette]
+// Ing: [nom,unite,qD,qM,qE], Macros: {D:[kcal,p,l,g],M:[..],E:[..]}
+// Profil: [cal,prot,lip,gluc,age,poids,taille,imc,activite,objectif,repartition]
+
+const C = {
+  forest:"#1A3A0A",fL:"#2D6B0E",gold:"#B8860B",blue:"#1565C0",pink:"#AD1457",
+  bg:"#F7F5EF",text:"#1A1A1A",tM:"#4A4A4A",tL:"#7A7A7A",
+  bdr:"#E8E4DA",bdrL:"#F0EDE5",danger:"#C62828",dangerBg:"#FFF3F0",
+  ok:"#2E7D32",okBg:"#F0FFF0",
+};
+const PC={Damien:C.fL,Maroie:C.pink,"Maël":C.blue};
+const ET={"Tartine/toast":"🍞","Crêpe/wrap":"🌮","Végétarien/végétalien":"🥬",
+  "Salade/bowl":"🥗","Poisson/fruit de mer":"🐟","Poulet halal":"🍗",
+  "Quiche/tarte/pizza":"🥧","Gratin":"🧀","Cake salé":"🍰","Burger":"🍔","Risotto":"🍚","Entrée":"🥕"};
+const EC={"Française":"🇫🇷","Méditerranéenne":"🌊","Asiatique":"🥢","Indienne":"🇮🇳","Orientale":"🌙","Autres":"🌍"};
+const JOURS_ALL=["Dimanche","Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi"];
+// ═══════ MODULE SALADE — Données ═══════
+const SALAD_PROFILES = {
+  damien: { nom: "Damien", emoji: "👨", color: "#1A3A0A", kcal: 900, prot: 40, mult: 1.4 },
+  maroie: { nom: "Maroie", emoji: "👩", color: "#AD1457", kcal: 500, prot: 18, mult: 0.8 },
+  mael:   { nom: "Maël",   emoji: "👦", color: "#1565C0", kcal: 700, prot: 25, mult: 1.1 },
+};
+const SALAD_CATEGORIES = {
+  bases:{label:"Bases",emoji:"🌾"},verdures:{label:"Verdures",emoji:"🥬"},
+  legumes_crus:{label:"Légumes crus",emoji:"🥕"},legumes_cuits:{label:"Légumes cuits",emoji:"🍳"},
+  marines_pickles:{label:"Marinés & Pickles",emoji:"🥒"},fromages:{label:"Fromages",emoji:"🧀"},
+  herbes_fraiches:{label:"Herbes fraîches",emoji:"🌿"},proteines:{label:"Protéines",emoji:"🥚"},
+  toppings:{label:"Toppings",emoji:"🥜"},sauces:{label:"Sauces",emoji:"🫒"},
+};
+
+const SALAD_INGREDIENTS = {"bases":[{"id":"base_quinoa","nom":"Quinoa","emoji":"🌾","portion_g":80,"cal_100g":120,"prot_100g":4.4,"conservation_frigo_jours":5,"batch":true},{"id":"base_riz","nom":"Riz","emoji":"🍚","portion_g":80,"cal_100g":130,"prot_100g":2.7,"conservation_frigo_jours":1,"batch":false},{"id":"base_boulgour","nom":"Boulgour","emoji":"🌾","portion_g":80,"cal_100g":83,"prot_100g":3.1,"conservation_frigo_jours":5,"batch":true},{"id":"base_pates","nom":"Pâtes courtes","emoji":"🍝","portion_g":80,"cal_100g":131,"prot_100g":5.0,"conservation_frigo_jours":4,"batch":true},{"id":"base_lentilles","nom":"Lentilles","emoji":"🫘","portion_g":80,"cal_100g":116,"prot_100g":9.0,"conservation_frigo_jours":5,"batch":true},{"id":"base_pdt","nom":"Pomme de terre","emoji":"🥔","portion_g":150,"cal_100g":77,"prot_100g":2.0,"conservation_frigo_jours":4,"batch":true},{"id":"base_patate_douce","nom":"Patate douce","emoji":"🍠","portion_g":150,"cal_100g":86,"prot_100g":1.6,"conservation_frigo_jours":4,"batch":true},{"id":"base_nouilles_riz","nom":"Vermicelles riz","emoji":"🍜","portion_g":60,"cal_100g":109,"prot_100g":0.9,"conservation_frigo_jours":2,"batch":false}],"verdures":[{"id":"verd_roquette","nom":"Roquette","emoji":"🥬","portion_g":40,"cal_100g":25,"prot_100g":2.6,"conservation_frigo_jours":4},{"id":"verd_epinards","nom":"Épinards","emoji":"🌿","portion_g":50,"cal_100g":23,"prot_100g":2.9,"conservation_frigo_jours":4},{"id":"verd_mache","nom":"Mâche","emoji":"🥬","portion_g":40,"cal_100g":11,"prot_100g":1.8,"conservation_frigo_jours":3},{"id":"verd_laitue","nom":"Salade verte","emoji":"🥬","portion_g":50,"cal_100g":15,"prot_100g":1.4,"conservation_frigo_jours":5},{"id":"verd_chou_blanc","nom":"Chou blanc","emoji":"🥬","portion_g":50,"cal_100g":25,"prot_100g":1.3,"conservation_frigo_jours":10},{"id":"verd_chou_rouge","nom":"Chou rouge","emoji":"🟣","portion_g":50,"cal_100g":31,"prot_100g":1.4,"conservation_frigo_jours":10}],"legumes_crus":[{"id":"lcru_tomate","nom":"Tomates cerises","emoji":"🍅","portion_g":80,"cal_100g":18,"prot_100g":0.9,"conservation_frigo_jours":5},{"id":"lcru_concombre","nom":"Concombre","emoji":"🥒","portion_g":80,"cal_100g":12,"prot_100g":0.7,"conservation_frigo_jours":7},{"id":"lcru_carotte","nom":"Carottes","emoji":"🥕","portion_g":60,"cal_100g":41,"prot_100g":0.9,"conservation_frigo_jours":14},{"id":"lcru_avocat","nom":"Avocat","emoji":"🥑","portion_g":70,"cal_100g":160,"prot_100g":2.0,"conservation_frigo_jours":3},{"id":"lcru_poivron","nom":"Poivrons","emoji":"🫑","portion_g":60,"cal_100g":31,"prot_100g":1.0,"conservation_frigo_jours":7},{"id":"lcru_oignon_rouge","nom":"Oignon rouge","emoji":"🧅","portion_g":20,"cal_100g":40,"prot_100g":1.1,"conservation_frigo_jours":30},{"id":"lcru_radis","nom":"Radis","emoji":"🔴","portion_g":40,"cal_100g":16,"prot_100g":0.7,"conservation_frigo_jours":7},{"id":"lcru_betterave","nom":"Betterave","emoji":"🟣","portion_g":80,"cal_100g":43,"prot_100g":1.6,"conservation_frigo_jours":10},{"id":"lcru_champignon","nom":"Champignons","emoji":"🍄","portion_g":50,"cal_100g":22,"prot_100g":3.1,"conservation_frigo_jours":5},{"id":"lcru_brocoli","nom":"Brocoli cru","emoji":"🥦","portion_g":60,"cal_100g":34,"prot_100g":2.8,"conservation_frigo_jours":5},{"id":"lcru_mangue","nom":"Mangue","emoji":"🥭","portion_g":70,"cal_100g":60,"prot_100g":0.8,"conservation_frigo_jours":5},{"id":"lcru_nectarine","nom":"Nectarine","emoji":"🍑","portion_g":80,"cal_100g":44,"prot_100g":1.1,"conservation_frigo_jours":4},{"id":"lcru_pomme","nom":"Pomme","emoji":"🍏","portion_g":60,"cal_100g":52,"prot_100g":0.3,"conservation_frigo_jours":21},{"id":"lcru_pasteque","nom":"Pastèque","emoji":"🍉","portion_g":100,"cal_100g":30,"prot_100g":0.6,"conservation_frigo_jours":5}],"legumes_cuits":[{"id":"lcuit_patdouce","nom":"Patate douce rôtie","emoji":"🍠","portion_g":120,"cal_100g":90,"prot_100g":1.6,"conservation_frigo_jours":4,"batch":true},{"id":"lcuit_haricots_verts","nom":"Haricots verts","emoji":"🫛","portion_g":80,"cal_100g":31,"prot_100g":1.8,"conservation_frigo_jours":4},{"id":"lcuit_poivrons_grilles","nom":"Poivrons grillés","emoji":"🫑","portion_g":60,"cal_100g":34,"prot_100g":1.0,"conservation_frigo_jours":5,"batch":true},{"id":"lcuit_mais","nom":"Maïs","emoji":"🌽","portion_g":60,"cal_100g":86,"prot_100g":2.5,"conservation_frigo_jours":3},{"id":"lcuit_champignon_saute","nom":"Champignons sautés","emoji":"🍄","portion_g":60,"cal_100g":35,"prot_100g":3.1,"conservation_frigo_jours":3},{"id":"lcuit_brocoli_blanchi","nom":"Brocoli blanchi","emoji":"🥦","portion_g":80,"cal_100g":35,"prot_100g":2.4,"conservation_frigo_jours":4},{"id":"lcuit_asperges","nom":"Asperges","emoji":"🌱","portion_g":80,"cal_100g":20,"prot_100g":2.2,"conservation_frigo_jours":3}],"marines_pickles":[{"id":"marin_poivrons","nom":"Poivrons marinés","emoji":"🫑","portion_g":40,"cal_100g":40,"prot_100g":0.9,"conservation_frigo_jours":30},{"id":"marin_artichauts","nom":"Artichauts marinés","emoji":"🌿","portion_g":40,"cal_100g":62,"prot_100g":2.9,"conservation_frigo_jours":30},{"id":"marin_oignon_rouge","nom":"Pickles oignon","emoji":"🧅","portion_g":20,"cal_100g":30,"prot_100g":0.8,"conservation_frigo_jours":14,"batch":true},{"id":"marin_pickles_concombre","nom":"Pickles concombre","emoji":"🥒","portion_g":30,"cal_100g":18,"prot_100g":0.5,"conservation_frigo_jours":14,"batch":true},{"id":"marin_pickles_carotte","nom":"Pickles carottes","emoji":"🥕","portion_g":30,"cal_100g":35,"prot_100g":0.7,"conservation_frigo_jours":14,"batch":true},{"id":"marin_pickles_radis","nom":"Pickles radis","emoji":"🔴","portion_g":20,"cal_100g":20,"prot_100g":0.6,"conservation_frigo_jours":10,"batch":true}],"fromages":[{"id":"from_feta","nom":"Fêta","emoji":"🧀","portion_g":40,"cal_100g":264,"prot_100g":14.2,"conservation_frigo_jours":14},{"id":"from_chevre","nom":"Chèvre","emoji":"🧀","portion_g":40,"cal_100g":290,"prot_100g":19.0,"conservation_frigo_jours":14},{"id":"from_parmesan","nom":"Parmesan","emoji":"🧀","portion_g":20,"cal_100g":431,"prot_100g":38.5,"conservation_frigo_jours":30},{"id":"from_mozzarella","nom":"Mozzarella","emoji":"🧀","portion_g":60,"cal_100g":280,"prot_100g":17.0,"conservation_frigo_jours":5},{"id":"from_roquefort","nom":"Roquefort","emoji":"🧀","portion_g":25,"cal_100g":369,"prot_100g":21.5,"conservation_frigo_jours":14},{"id":"from_halloumi","nom":"Halloumi","emoji":"🧀","portion_g":50,"cal_100g":321,"prot_100g":25.0,"conservation_frigo_jours":14},{"id":"from_cream_cheese","nom":"Cream cheese","emoji":"🧀","portion_g":30,"cal_100g":342,"prot_100g":6.2,"conservation_frigo_jours":14}],"herbes_fraiches":[{"id":"herb_basilic","nom":"Basilic","emoji":"🌿","portion_g":5,"cal_100g":23,"prot_100g":3.2,"conservation_frigo_jours":5},{"id":"herb_coriandre","nom":"Coriandre","emoji":"🌿","portion_g":5,"cal_100g":23,"prot_100g":2.1,"conservation_frigo_jours":7},{"id":"herb_menthe","nom":"Menthe","emoji":"🌿","portion_g":5,"cal_100g":44,"prot_100g":3.3,"conservation_frigo_jours":7},{"id":"herb_persil","nom":"Persil","emoji":"🌿","portion_g":5,"cal_100g":36,"prot_100g":3.0,"conservation_frigo_jours":7},{"id":"herb_ciboulette","nom":"Ciboulette","emoji":"🌿","portion_g":3,"cal_100g":30,"prot_100g":3.3,"conservation_frigo_jours":7},{"id":"herb_aneth","nom":"Aneth","emoji":"🌿","portion_g":3,"cal_100g":43,"prot_100g":3.5,"conservation_frigo_jours":5}],"proteines":[{"id":"prot_oeuf","nom":"Œuf dur","emoji":"🥚","portion_g":60,"cal_100g":155,"prot_100g":12.6,"conservation_frigo_jours":7,"batch":true},{"id":"prot_thon","nom":"Thon","emoji":"🐟","portion_g":80,"cal_100g":132,"prot_100g":29.1,"conservation_frigo_jours":3},{"id":"prot_truite_fumee","nom":"Truite fumée","emoji":"🐟","portion_g":60,"cal_100g":117,"prot_100g":18.6,"conservation_frigo_jours":5},{"id":"prot_sardines","nom":"Sardines","emoji":"🐟","portion_g":80,"cal_100g":208,"prot_100g":24.6,"conservation_frigo_jours":3},{"id":"prot_maquereaux","nom":"Maquereaux","emoji":"🐟","portion_g":80,"cal_100g":205,"prot_100g":18.6,"conservation_frigo_jours":3},{"id":"prot_crevettes","nom":"Crevettes","emoji":"🦐","portion_g":80,"cal_100g":99,"prot_100g":20.9,"conservation_frigo_jours":2},{"id":"prot_poulet","nom":"Poulet halal","emoji":"🍗","portion_g":100,"cal_100g":165,"prot_100g":31.0,"conservation_frigo_jours":3,"batch":false},{"id":"prot_pois_chiches","nom":"Pois chiches","emoji":"🫘","portion_g":80,"cal_100g":164,"prot_100g":8.9,"conservation_frigo_jours":5,"batch":true},{"id":"prot_anchois","nom":"Anchois","emoji":"🐟","portion_g":15,"cal_100g":210,"prot_100g":28.9,"conservation_frigo_jours":60},{"id":"prot_houmous","nom":"Houmous","emoji":"🫘","portion_g":40,"cal_100g":166,"prot_100g":7.9,"conservation_frigo_jours":7}],"toppings":[{"id":"top_noix","nom":"Noix","emoji":"🥜","portion_g":15,"cal_100g":654,"prot_100g":15.2,"conservation_frigo_jours":90},{"id":"top_graines_courge","nom":"Gr. courge","emoji":"🌰","portion_g":10,"cal_100g":559,"prot_100g":30.2,"conservation_frigo_jours":90},{"id":"top_graines_sesame","nom":"Gr. sésame","emoji":"🌰","portion_g":8,"cal_100g":573,"prot_100g":17.7,"conservation_frigo_jours":180},{"id":"top_graines_melange","nom":"Mix graines","emoji":"🌰","portion_g":10,"cal_100g":550,"prot_100g":22.0,"conservation_frigo_jours":90},{"id":"top_olives","nom":"Olives","emoji":"🫒","portion_g":20,"cal_100g":115,"prot_100g":0.8,"conservation_frigo_jours":30},{"id":"top_capres","nom":"Câpres","emoji":"🟢","portion_g":10,"cal_100g":23,"prot_100g":2.4,"conservation_frigo_jours":180},{"id":"top_croutons","nom":"Croûtons","emoji":"🍞","portion_g":15,"cal_100g":407,"prot_100g":12.0,"conservation_frigo_jours":30},{"id":"top_dattes","nom":"Dattes","emoji":"🌴","portion_g":20,"cal_100g":282,"prot_100g":2.5,"conservation_frigo_jours":60},{"id":"top_cornichons","nom":"Cornichons","emoji":"🥒","portion_g":20,"cal_100g":14,"prot_100g":0.3,"conservation_frigo_jours":90},{"id":"top_algues","nom":"Algues","emoji":"🌊","portion_g":3,"cal_100g":35,"prot_100g":5.8,"conservation_frigo_jours":365},{"id":"top_edamame","nom":"Edamame","emoji":"🫛","portion_g":40,"cal_100g":121,"prot_100g":11.9,"conservation_frigo_jours":3},{"id":"top_cajou","nom":"Cajou","emoji":"🥜","portion_g":15,"cal_100g":553,"prot_100g":18.2,"conservation_frigo_jours":90}],"sauces":[{"id":"sauce_citron_ho","nom":"Citron-HO","emoji":"🍋","portion_ml":20,"cal_100g":400,"prot_100g":0,"conservation_frigo_jours":7},{"id":"sauce_balsamique","nom":"Balsamique","emoji":"🍷","portion_ml":20,"cal_100g":370,"prot_100g":0,"conservation_frigo_jours":14},{"id":"sauce_tahini","nom":"Tahini","emoji":"🫘","portion_ml":25,"cal_100g":320,"prot_100g":8,"conservation_frigo_jours":5},{"id":"sauce_soja_sesame","nom":"Soja-sésame","emoji":"🥢","portion_ml":20,"cal_100g":180,"prot_100g":3,"conservation_frigo_jours":14},{"id":"sauce_moutarde","nom":"Moutarde","emoji":"🟡","portion_ml":20,"cal_100g":380,"prot_100g":1,"conservation_frigo_jours":14},{"id":"sauce_huile_noix","nom":"Huile noix","emoji":"🥜","portion_ml":20,"cal_100g":400,"prot_100g":0,"conservation_frigo_jours":14},{"id":"sauce_cesar","nom":"César","emoji":"🧀","portion_ml":25,"cal_100g":420,"prot_100g":5,"conservation_frigo_jours":5},{"id":"sauce_xerez","nom":"Xérès","emoji":"🍷","portion_ml":20,"cal_100g":390,"prot_100g":0,"conservation_frigo_jours":14},{"id":"sauce_pesto","nom":"Pesto","emoji":"🌿","portion_ml":20,"cal_100g":350,"prot_100g":5,"conservation_frigo_jours":7},{"id":"sauce_coleslaw","nom":"Coleslaw","emoji":"🥬","portion_ml":25,"cal_100g":350,"prot_100g":1,"conservation_frigo_jours":5}]};
+const BASE_SALADES = [
+  {id:"sal_01",nom:"Bol de Quinoa Salé",cuisine:"Autres",saison:"Toutes saisons",temps:10,batch:"Partiel",composition:{bases:["base_quinoa"],verdures:[],legumes_crus:["lcru_tomate","lcru_concombre","lcru_avocat"],legumes_cuits:[],marines_pickles:[],fromages:["from_feta"],herbes_fraiches:[],proteines:["prot_pois_chiches"],toppings:[],sauces:["sauce_citron_ho"]},recette:"1. **Batch : cuire quinoa 15 min, refroidir.** 2. Couper avocat, tomates, concombre. 3. Assembler + pois chiches. 4. Fêta émiettée. 5. Vinaigrette citron."},
+  {id:"sal_02",nom:"Bowl poké truite fumée",cuisine:"Asiatique",saison:"Toutes saisons",temps:12,batch:"Partiel",composition:{bases:["base_riz"],verdures:[],legumes_crus:["lcru_avocat","lcru_concombre","lcru_carotte"],legumes_cuits:[],marines_pickles:[],fromages:[],herbes_fraiches:[],proteines:["prot_truite_fumee"],toppings:["top_graines_sesame","top_edamame","top_algues"],sauces:["sauce_soja_sesame"]},recette:"1. Cuire riz vinaigré (⚠️ jour même). 2. Trancher truite, avocat, concombre. 3. Dresser en quartiers. 4. Sauce soja-sésame."},
+  {id:"sal_03",nom:"Bowl méditerranéen",cuisine:"Méditerranéenne",saison:"Toutes saisons",temps:12,batch:"Partiel",composition:{bases:["base_quinoa"],verdures:[],legumes_crus:["lcru_tomate","lcru_concombre","lcru_poivron"],legumes_cuits:[],marines_pickles:[],fromages:["from_feta"],herbes_fraiches:[],proteines:["prot_pois_chiches","prot_houmous"],toppings:["top_olives"],sauces:["sauce_citron_ho"]},recette:"1. **Batch : cuire quinoa, rincer pois chiches.** 2. Légumes en dés. 3. Fêta + houmous + olives. 4. Vinaigrette citron."},
+  {id:"sal_04",nom:"Buddha bowl patate douce",cuisine:"Autres",saison:"Automne",temps:12,batch:"Partiel",composition:{bases:["base_lentilles"],verdures:["verd_epinards"],legumes_crus:["lcru_avocat"],legumes_cuits:["lcuit_patdouce"],marines_pickles:[],fromages:[],herbes_fraiches:[],proteines:[],toppings:["top_graines_courge"],sauces:["sauce_tahini"]},recette:"1. **Batch : cuire lentilles 15 min. Rôtir patate douce 25 min.** 2. Épinards + avocat. 3. Sauce tahini."},
+  {id:"sal_05",nom:"Buddha bowl thaï crevettes",cuisine:"Asiatique",saison:"Toutes saisons",temps:15,batch:"Partiel",composition:{bases:["base_riz"],verdures:[],legumes_crus:["lcru_avocat","lcru_carotte","lcru_concombre"],legumes_cuits:[],marines_pickles:[],fromages:[],herbes_fraiches:["herb_coriandre"],proteines:["prot_crevettes"],toppings:["top_graines_sesame"],sauces:["sauce_soja_sesame"]},recette:"1. Cuire riz (⚠️ jour même). 2. Poêler crevettes 3 min soja-piment. 3. Julienne légumes. 4. Coriandre + sésame."},
+  {id:"sal_06",nom:"Salade thaï vermicelles",cuisine:"Asiatique",saison:"Été",temps:12,batch:"Partiel",composition:{bases:["base_nouilles_riz"],verdures:["verd_chou_blanc"],legumes_crus:["lcru_avocat","lcru_carotte","lcru_concombre"],legumes_cuits:[],marines_pickles:[],fromages:[],herbes_fraiches:["herb_coriandre","herb_menthe"],proteines:[],toppings:["top_cajou"],sauces:["sauce_soja_sesame"]},recette:"1. Réhydrater nouilles 5 min. 2. Émincer chou, râper carottes. 3. Avocat + herbes + cajou. 4. Sauce soja-sésame."},
+  {id:"sal_07",nom:"Poké bowl thon-avocat",cuisine:"Asiatique",saison:"Toutes saisons",temps:12,batch:"Partiel",composition:{bases:["base_riz"],verdures:[],legumes_crus:["lcru_avocat","lcru_concombre","lcru_carotte"],legumes_cuits:["lcuit_mais"],marines_pickles:[],fromages:[],herbes_fraiches:[],proteines:["prot_thon"],toppings:["top_graines_sesame","top_algues"],sauces:["sauce_soja_sesame"]},recette:"1. Cuire riz vinaigré (⚠️ jour même). 2. Thon émietté + légumes. 3. Algues + sésame + soja."},
+  {id:"sal_08",nom:"Quinoa méditerranéenne",cuisine:"Méditerranéenne",saison:"Été",temps:10,batch:"Partiel",composition:{bases:["base_quinoa"],verdures:[],legumes_crus:["lcru_tomate","lcru_concombre","lcru_oignon_rouge"],legumes_cuits:[],marines_pickles:[],fromages:["from_feta"],herbes_fraiches:["herb_basilic"],proteines:[],toppings:["top_olives"],sauces:["sauce_balsamique"]},recette:"1. **Batch : cuire quinoa 15 min, refroidir.** 2. Légumes en dés + olives. 3. Fêta + basilic. 4. Vinaigrette balsamique."},
+  {id:"sal_09",nom:"Salade niçoise",cuisine:"Française",saison:"Été",temps:12,batch:"Partiel",composition:{bases:[],verdures:[],legumes_crus:["lcru_tomate","lcru_concombre"],legumes_cuits:["lcuit_haricots_verts"],marines_pickles:[],fromages:[],herbes_fraiches:[],proteines:["prot_thon","prot_oeuf","prot_anchois"],toppings:["top_olives"],sauces:["sauce_xerez"]},recette:"1. **Batch : cuire œufs durs 9 min.** 2. Haricots verts 5 min vapeur. 3. Légumes + thon + anchois + olives. 4. Vinaigrette xérès."},
+  {id:"sal_10",nom:"César au poulet",cuisine:"Française",saison:"Toutes saisons",temps:15,batch:"Partiel",composition:{bases:[],verdures:["verd_laitue","verd_roquette"],legumes_crus:[],legumes_cuits:[],marines_pickles:[],fromages:["from_parmesan"],herbes_fraiches:[],proteines:["prot_poulet","prot_anchois"],toppings:["top_croutons"],sauces:["sauce_cesar"]},recette:"1. Griller poulet (⚠️ jour même). 2. Sauce César maison. 3. Salade + roquette + croûtons + parmesan."},
+  {id:"sal_11",nom:"Pêches-fêta-roquette",cuisine:"Méditerranéenne",saison:"Été",temps:8,batch:"Non",composition:{bases:[],verdures:["verd_roquette"],legumes_crus:["lcru_nectarine"],legumes_cuits:[],marines_pickles:[],fromages:["from_feta"],herbes_fraiches:[],proteines:[],toppings:["top_noix"],sauces:["sauce_balsamique"]},recette:"1. Roquette + nectarines en quartiers. 2. Fêta émiettée + noix. 3. Vinaigrette balsamique-miel."},
+  {id:"sal_12",nom:"Tunisienne complète",cuisine:"Orientale",saison:"Été",temps:12,batch:"Partiel",composition:{bases:[],verdures:[],legumes_crus:["lcru_tomate","lcru_concombre","lcru_poivron"],legumes_cuits:[],marines_pickles:[],fromages:[],herbes_fraiches:[],proteines:["prot_thon","prot_oeuf","prot_anchois"],toppings:["top_olives","top_capres"],sauces:["sauce_citron_ho"]},recette:"1. **Batch : cuire œufs durs 9 min.** 2. Légumes en petits dés + thon. 3. Olives + câpres + anchois. 4. Citron + cumin."},
+  {id:"sal_13",nom:"Salade de riz estivale",cuisine:"Française",saison:"Été",temps:10,batch:"Partiel",composition:{bases:["base_riz"],verdures:[],legumes_crus:["lcru_tomate","lcru_concombre"],legumes_cuits:["lcuit_mais"],marines_pickles:[],fromages:[],herbes_fraiches:[],proteines:["prot_thon","prot_oeuf"],toppings:["top_olives"],sauces:["sauce_moutarde"]},recette:"1. Cuire riz (⚠️ jour même). **Cuire œufs durs.** 2. Légumes + thon + maïs + olives. 3. Vinaigrette moutarde."},
+  {id:"sal_14",nom:"Pâtes méditerranéennes",cuisine:"Méditerranéenne",saison:"Été",temps:10,batch:"Partiel",composition:{bases:["base_pates"],verdures:[],legumes_crus:["lcru_tomate","lcru_poivron"],legumes_cuits:[],marines_pickles:[],fromages:["from_feta"],herbes_fraiches:["herb_basilic"],proteines:["prot_thon"],toppings:["top_olives"],sauces:["sauce_balsamique"]},recette:"1. **Batch : cuire pâtes al dente, refroidir.** 2. Thon + légumes + olives. 3. Fêta + basilic + balsamique."},
+  {id:"sal_15",nom:"PDT tiède cornichons",cuisine:"Française",saison:"Toutes saisons",temps:10,batch:"Partiel",composition:{bases:["base_pdt"],verdures:[],legumes_crus:[],legumes_cuits:[],marines_pickles:[],fromages:[],herbes_fraiches:["herb_ciboulette","herb_persil"],proteines:["prot_oeuf"],toppings:["top_cornichons"],sauces:["sauce_moutarde"]},recette:"1. **Batch : cuire PDT vapeur + œufs durs.** 2. PDT tièdes en rondelles. 3. Cornichons + mayo-moutarde. 4. Herbes."},
+  {id:"sal_16",nom:"Quinoa betterave-chèvre",cuisine:"Française",saison:"Automne",temps:10,batch:"Partiel",composition:{bases:["base_quinoa"],verdures:["verd_roquette"],legumes_crus:["lcru_betterave"],legumes_cuits:[],marines_pickles:[],fromages:["from_chevre"],herbes_fraiches:[],proteines:[],toppings:["top_noix"],sauces:["sauce_huile_noix"]},recette:"1. **Batch : cuire quinoa.** 2. Betteraves en dés + roquette. 3. Chèvre + noix. 4. Vinaigrette huile de noix."},
+  {id:"sal_17",nom:"Crevettes-avocat-mangue",cuisine:"Autres",saison:"Été",temps:12,batch:"Non",composition:{bases:[],verdures:["verd_roquette"],legumes_crus:["lcru_avocat","lcru_mangue","lcru_oignon_rouge"],legumes_cuits:[],marines_pickles:[],fromages:[],herbes_fraiches:["herb_coriandre"],proteines:["prot_crevettes"],toppings:[],sauces:["sauce_citron_ho"]},recette:"1. Poêler crevettes 3 min (⚠️ jour même). 2. Avocat + mangue + oignon rouge. 3. Roquette + coriandre + citron vert."},
+  {id:"sal_18",nom:"Boulgour-fêta-menthe",cuisine:"Méditerranéenne",saison:"Été",temps:10,batch:"Partiel",composition:{bases:["base_boulgour"],verdures:[],legumes_crus:["lcru_concombre","lcru_tomate"],legumes_cuits:[],marines_pickles:[],fromages:["from_feta"],herbes_fraiches:["herb_menthe"],proteines:[],toppings:["top_olives"],sauces:["sauce_citron_ho"]},recette:"1. **Batch : réhydrater boulgour 15 min.** 2. Concombre + tomates + olives. 3. Fêta + menthe + citron."},
+  {id:"sal_19",nom:"Maquereau-pomme-betterave",cuisine:"Française",saison:"Automne",temps:10,batch:"Non",composition:{bases:[],verdures:["verd_roquette"],legumes_crus:["lcru_betterave","lcru_pomme"],legumes_cuits:[],marines_pickles:[],fromages:[],herbes_fraiches:[],proteines:["prot_maquereaux"],toppings:["top_noix"],sauces:["sauce_huile_noix"]},recette:"1. Émietter maquereaux. 2. Betterave + pomme en dés. 3. Roquette + noix + vinaigrette noix."},
+  {id:"sal_20",nom:"Pois chiches-épinards-tahini",cuisine:"Orientale",saison:"Toutes saisons",temps:10,batch:"Partiel",composition:{bases:[],verdures:["verd_epinards"],legumes_crus:["lcru_tomate","lcru_concombre","lcru_oignon_rouge"],legumes_cuits:[],marines_pickles:[],fromages:[],herbes_fraiches:[],proteines:["prot_pois_chiches"],toppings:[],sauces:["sauce_tahini"]},recette:"1. **Batch : rôtir pois chiches à sec.** 2. Épinards + légumes. 3. Sauce tahini + zaatar."},
+  {id:"sal_21",nom:"Riz-sardines-câpres",cuisine:"Méditerranéenne",saison:"Toutes saisons",temps:10,batch:"Partiel",composition:{bases:["base_riz"],verdures:[],legumes_crus:["lcru_concombre"],legumes_cuits:[],marines_pickles:[],fromages:[],herbes_fraiches:["herb_persil"],proteines:["prot_sardines"],toppings:["top_olives","top_capres"],sauces:["sauce_xerez"]},recette:"1. Cuire riz (⚠️ jour même). 2. Sardines émiettées + câpres + olives. 3. Concombre + persil + vinaigrette xérès."},
+  {id:"sal_22",nom:"Fêta-pastèque-menthe",cuisine:"Méditerranéenne",saison:"Été",temps:8,batch:"Non",composition:{bases:[],verdures:["verd_roquette"],legumes_crus:["lcru_pasteque"],legumes_cuits:[],marines_pickles:[],fromages:["from_feta"],herbes_fraiches:["herb_menthe"],proteines:[],toppings:["top_olives"],sauces:["sauce_balsamique"]},recette:"1. Pastèque en cubes. 2. Fêta + menthe + roquette + olives. 3. Balsamique, pas de sel."},
+  {id:"sal_23",nom:"Bowl mangue-crevettes",cuisine:"Autres",saison:"Été",temps:12,batch:"Partiel",composition:{bases:["base_quinoa"],verdures:[],legumes_crus:["lcru_mangue","lcru_avocat"],legumes_cuits:[],marines_pickles:[],fromages:[],herbes_fraiches:["herb_coriandre"],proteines:["prot_crevettes"],toppings:["top_graines_sesame"],sauces:["sauce_soja_sesame"]},recette:"1. **Batch : cuire quinoa.** 2. Poêler crevettes soja-piment (⚠️ jour même). 3. Mangue + avocat. 4. Coriandre + sésame."},
+  {id:"sal_24",nom:"Dattes-roquette-parmesan",cuisine:"Orientale",saison:"Automne",temps:8,batch:"Non",composition:{bases:[],verdures:["verd_roquette"],legumes_crus:[],legumes_cuits:[],marines_pickles:[],fromages:["from_parmesan"],herbes_fraiches:[],proteines:[],toppings:["top_noix","top_dattes"],sauces:["sauce_huile_noix"]},recette:"1. Dattes dénoyautées. 2. Noix concassées + parmesan copeaux. 3. Roquette + vinaigrette huile noix-miel."},
+  // ═══ Salades migrées depuis DATA.plats (fusion Passe 2 étape 8) ═══
+  {id:"sal_25",nom:"Salade pêches-fêta-roquette",cuisine:"Méditerranéenne",saison:"Été",temps:8,batch:"Non",composition:{bases:[],verdures:["verd_roquette"],legumes_crus:["lcru_nectarine"],legumes_cuits:[],marines_pickles:[],fromages:["from_feta"],herbes_fraiches:[],proteines:[],toppings:["top_noix"],sauces:["sauce_balsamique"]},recette:"1. Laver la roquette. 2. Couper nectarines en quartiers. 3. Émietter la fêta. 4. Concasser les noix. 5. Vinaigrette : balsamique + miel. 6. Assembler."},
+  {id:"sal_26",nom:"Salade tunisienne complète",cuisine:"Orientale",saison:"Été",temps:12,batch:"Partiel",composition:{bases:[],verdures:[],legumes_crus:["lcru_tomate","lcru_concombre","lcru_poivron"],legumes_cuits:[],marines_pickles:[],fromages:[],herbes_fraiches:[],proteines:["prot_thon","prot_oeuf","prot_anchois"],toppings:["top_olives","top_capres"],sauces:["sauce_citron_ho"]},recette:"1. **Batch : cuire œufs durs 9 min.** 2. Couper tomates, concombre, poivrons en petits dés. 3. Égoutter le thon. 4. Assembler légumes + thon + olives + câpres + anchois. 5. Vinaigrette citron-cumin. 6. Œufs coupés sur le dessus."},
+  {id:"sal_27",nom:"Salade de riz estivale",cuisine:"Française",saison:"Été",temps:10,batch:"Partiel",composition:{bases:["base_riz"],verdures:[],legumes_crus:["lcru_tomate","lcru_concombre"],legumes_cuits:["lcuit_mais"],marines_pickles:[],fromages:[],herbes_fraiches:[],proteines:["prot_thon","prot_oeuf"],toppings:["top_olives"],sauces:["sauce_moutarde"]},recette:"1. **Batch : cuire riz, refroidir. Cuire œufs durs.** 2. Couper tomates cerises, concombre. 3. Égoutter thon et maïs. 4. Mélanger riz + légumes + thon + maïs + olives. 5. Vinaigrette moutarde. 6. Œufs coupés."},
+  {id:"sal_28",nom:"Salade de pâtes méditerranéenne",cuisine:"Méditerranéenne",saison:"Été",temps:10,batch:"Partiel",composition:{bases:["base_pates"],verdures:[],legumes_crus:["lcru_tomate","lcru_poivron"],legumes_cuits:[],marines_pickles:[],fromages:["from_feta"],herbes_fraiches:["herb_basilic"],proteines:["prot_thon"],toppings:["top_olives"],sauces:["sauce_balsamique"]},recette:"1. **Batch : cuire pâtes al dente, refroidir.** 2. Couper tomates cerises, poivrons en dés. 3. Mélanger pâtes + thon + légumes + olives. 4. Émietter fêta, basilic. 5. Vinaigrette balsamique."},
+  {id:"sal_29",nom:"Salade de pomme de terre tiède",cuisine:"Française",saison:"Toutes saisons",temps:10,batch:"Partiel",composition:{bases:["base_pdt"],verdures:[],legumes_crus:[],legumes_cuits:[],marines_pickles:[],fromages:[],herbes_fraiches:["herb_persil","herb_ciboulette"],proteines:["prot_oeuf"],toppings:["top_cornichons"],sauces:["sauce_moutarde"]},recette:"1. **Batch : cuire PDT vapeur, cuire œufs durs.** 2. Couper PDT tièdes en rondelles. 3. Sauce : moutarde + vinaigre. 4. Couper cornichons et œufs. 5. Mélanger, parsemer persil et ciboulette."},
+  {id:"sal_30",nom:"Salade quinoa betterave-chèvre-noix",cuisine:"Française",saison:"Automne",temps:10,batch:"Partiel",composition:{bases:["base_quinoa"],verdures:["verd_roquette"],legumes_crus:["lcru_betterave"],legumes_cuits:[],marines_pickles:[],fromages:["from_chevre"],herbes_fraiches:[],proteines:[],toppings:["top_noix"],sauces:["sauce_huile_noix"]},recette:"1. **Batch : cuire quinoa.** 2. Couper betteraves en dés. 3. Concasser noix. 4. Base roquette. 5. Ajouter quinoa, betteraves, tranches de chèvre, noix. 6. Vinaigrette huile noix-balsamique."},
+  {id:"sal_31",nom:"Salade crevettes-avocat-mangue",cuisine:"Autres",saison:"Été",temps:12,batch:"Non",composition:{bases:[],verdures:["verd_roquette"],legumes_crus:["lcru_avocat","lcru_mangue","lcru_oignon_rouge"],legumes_cuits:[],marines_pickles:[],fromages:[],herbes_fraiches:["herb_coriandre"],proteines:["prot_crevettes"],toppings:[],sauces:["sauce_citron_ho"]},recette:"1. Poêler crevettes 3 min (⚠️ jour même). 2. Couper avocat et mangue en dés. 3. Émincer oignon rouge. 4. Base roquette. 5. Disposer crevettes + avocat + mangue. 6. Coriandre, vinaigrette citron."},
+  {id:"sal_32",nom:"Salade boulgour-concombre-fêta-menthe",cuisine:"Méditerranéenne",saison:"Été",temps:10,batch:"Partiel",composition:{bases:["base_boulgour"],verdures:[],legumes_crus:["lcru_concombre","lcru_tomate"],legumes_cuits:[],marines_pickles:[],fromages:["from_feta"],herbes_fraiches:["herb_menthe"],proteines:[],toppings:["top_olives"],sauces:["sauce_citron_ho"]},recette:"1. **Batch : réhydrater boulgour 15 min, refroidir.** 2. Concombre en demi-rondelles, tomates cerises en deux. 3. Émietter fêta, ciseler menthe. 4. Mélanger + olives. 5. Vinaigrette citron."},
+  {id:"sal_33",nom:"Salade maquereau-pomme-betterave",cuisine:"Française",saison:"Automne",temps:10,batch:"Non",composition:{bases:[],verdures:["verd_roquette"],legumes_crus:["lcru_betterave","lcru_pomme"],legumes_cuits:[],marines_pickles:[],fromages:[],herbes_fraiches:[],proteines:["prot_maquereaux"],toppings:["top_noix"],sauces:["sauce_huile_noix"]},recette:"1. Émietter les maquereaux. 2. Couper betteraves et pomme en dés. 3. Concasser noix. 4. Base roquette. 5. Disposer tout. 6. Vinaigrette huile noix-moutarde."},
+  {id:"sal_34",nom:"Salade pois chiches-épinards-tahini",cuisine:"Orientale",saison:"Toutes saisons",temps:10,batch:"Partiel",composition:{bases:[],verdures:["verd_epinards"],legumes_crus:["lcru_tomate","lcru_concombre","lcru_oignon_rouge"],legumes_cuits:[],marines_pickles:[],fromages:[],herbes_fraiches:[],proteines:["prot_pois_chiches"],toppings:[],sauces:["sauce_tahini"]},recette:"1. **Batch : égoutter pois chiches, rôtir à sec (optionnel).** 2. Sauce tahini : tahini + citron + ail + eau. 3. Base épinards. 4. Ajouter pois chiches + tomates + concombre + oignon. 5. Sauce tahini, zaatar."},
+  {id:"sal_35",nom:"Salade riz-sardines-câpres-citron",cuisine:"Méditerranéenne",saison:"Toutes saisons",temps:10,batch:"Partiel",composition:{bases:["base_riz"],verdures:[],legumes_crus:["lcru_concombre"],legumes_cuits:[],marines_pickles:[],fromages:[],herbes_fraiches:["herb_persil"],proteines:["prot_sardines"],toppings:["top_olives","top_capres"],sauces:["sauce_xerez"]},recette:"1. **Batch : cuire riz, refroidir.** 2. Émietter sardines. 3. Concombre en dés, persil haché. 4. Mélanger riz + sardines + câpres + olives + concombre. 5. Vinaigrette xérès-citron."},
+];
+
+const SALAD_COMBOS = [
+  {nom:"Méditerranéen",style:"Méditerranéenne",desc:"Fraîcheur et soleil",base:"base_quinoa",ids:["lcru_tomate","lcru_concombre","from_feta","top_olives","herb_basilic","sauce_citron_ho"]},
+  {nom:"Asian Fusion",style:"Asiatique",desc:"Croquant umami",base:"base_riz",ids:["lcru_avocat","lcru_carotte","prot_truite_fumee","top_graines_sesame","herb_coriandre","sauce_soja_sesame"]},
+  {nom:"Protéiné Végé",style:"Orientale",desc:"Sans viande",base:"base_lentilles",ids:["verd_epinards","lcru_tomate","prot_pois_chiches","from_feta","herb_persil","sauce_tahini"]},
+  {nom:"Automne",style:"Française",desc:"Réconfort",base:"base_quinoa",ids:["verd_roquette","lcru_betterave","from_chevre","top_noix","sauce_huile_noix"]},
+  {nom:"Coleslaw",style:"Autres",desc:"Crémeux",base:null,ids:["verd_chou_blanc","verd_chou_rouge","lcru_carotte","marin_pickles_concombre","sauce_coleslaw"]},
+  {nom:"Antipasti",style:"Méditerranéenne",desc:"Italien",base:"base_pates",ids:["verd_roquette","marin_poivrons","marin_artichauts","from_mozzarella","herb_basilic","sauce_balsamique"]},
+];
+const SALAD_ALL_INGS=(()=>{const m={};Object.values(SALAD_INGREDIENTS).forEach(arr=>arr.forEach(i=>{m[i.id]=i;}));return m;})();
+const SALAD_CUISINE_COLORS={"Française":"#2563eb","Méditerranéenne":"#059669","Asiatique":"#dc2626","Orientale":"#d97706","Autres":"#7c3aed","Best Seller":"#B8860B"};
+
+// ═══ Helper : convertir une salade BASE_SALADES en format compatible menu ═══
+// Génère le champ `ingredients` au format [[nom, unité, qD, qM, qE]] depuis composition
+function buildSaladIngredients(salad){
+  const ings=[];
+  Object.values(salad.composition).forEach(ids=>ids.forEach(id=>{
+    const i=SALAD_ALL_INGS[id];if(!i)return;
+    const p=i.portion_g||i.portion_ml||0;const u=i.portion_g?"g":"ml";
+    const qD=Math.round(p*SALAD_PROFILES.damien.mult);
+    const qM=Math.round(p*SALAD_PROFILES.maroie.mult);
+    const qE=Math.round(p*SALAD_PROFILES.mael.mult);
+    ings.push([i.nom,u,qD,qM,qE]);
+  }));
+  return ings;
+}
+// Convertir une salade BASE_SALADES en objet compatible avec le menu (même shape que DATA.plats)
+function buildSaladForMenu(salad){
+  const ings=buildSaladIngredients(salad);
+  const cD=salCalcNutriGlobal(salad.composition,SALAD_PROFILES.damien.mult);
+  const cM=salCalcNutriGlobal(salad.composition,SALAD_PROFILES.maroie.mult);
+  const cE=salCalcNutriGlobal(salad.composition,SALAD_PROFILES.mael.mult);
+  return{
+    id:salad.id,nom:salad.nom,type:"Salade/bowl",genre:salad.cuisine,saison:salad.saison,
+    temps_prepa:salad.temps,batch:salad.batch,temps_batch:salad.batch!=="Non"?String(salad.temps):"—",
+    ingredients:ings,recette:salad.recette,
+    macros:{Damien:{kcal:cD.cal,prot:cD.prot,lip:0,gluc:0},Maroie:{kcal:cM.cal,prot:cM.prot,lip:0,gluc:0},"Maël":{kcal:cE.cal,prot:cE.prot,lip:0,gluc:0}},
+    _salId:salad.id, // lien vers BASE_SALADES pour le BatchTab
+    composition:salad.composition, // garder la composition pour le BatchTab
+  };
+}
+// Version globale de salCalcNutri (avant que la fonction dans le scope SaladeTab soit définie)
+function salCalcNutriGlobal(comp,mult){
+  let cal=0,prot=0;
+  Object.values(comp).forEach(ids=>ids.forEach(id=>{
+    const i=SALAD_ALL_INGS[id];if(!i)return;
+    const p=(i.portion_g||i.portion_ml||20)*mult;
+    cal+=(i.cal_100g*p)/100;prot+=((i.prot_100g||0)*p)/100;
+  }));
+  return{cal:Math.round(cal),prot:Math.round(prot*10)/10};
+}
+
+function getWeekDays(startDate){
+  const d=startDate||new Date();
+  const days=[];
+  for(let i=0;i<7;i++){
+    const day=new Date(d);day.setDate(d.getDate()+i);
+    const name=JOURS_ALL[day.getDay()];
+    const dateStr=day.toLocaleDateString("fr-FR",{day:"numeric",month:"long"});
+    const capDate=dateStr.charAt(0).toUpperCase()+dateStr.slice(1);
+    days.push({name,dateStr:name+" "+capDate,full:name+" "+capDate});
+  }
+  return days;
+}
+const TYPES=["Poisson/fruit de mer","Poulet halal","Végétarien/végétalien","Salade/bowl",
+  "Quiche/tarte/pizza","Tartine/toast","Gratin","Crêpe/wrap","Cake salé","Burger","Risotto"];
+const CUISINES=["Française","Méditerranéenne","Asiatique","Indienne","Orientale","Autres"];
+
+const IC={"Levure chimique":"SUCRÉ","Miel":"SUCRÉ","Pain de mie complet":"SUCRÉ",
+  "Sirop d\u0027érable":"SUCRÉ","Sucre de coco":"SUCRÉ",
+  "Beurre de cacahuète":"SALÉ","Couscous parfumé (cru)":"SALÉ","Croûtons":"SALÉ",
+  "Crème de coco":"SALÉ","Fajitas (tortillas)":"SALÉ","Farine":"SALÉ",
+  "Gaspacho (brique)":"SALÉ","Lentilles corail (crues)":"SALÉ","Macédoine (prête)":"SALÉ",
+  "Maquereaux (conserve)":"SALÉ","Maïs (conserve)":"SALÉ","Petits pois (conserve)":"SALÉ",
+  "Purée (sachet ou PDT)":"SALÉ","Pâtes 3 min (crues)":"SALÉ","Pâtes à lasagnes":"SALÉ",
+  "Quinoa (cru)":"SALÉ","Riz thaï & basmati (cru)":"SALÉ","Sardines (conserve)":"SALÉ",
+  "Sauce arrabiata":"SALÉ","Sauce pesto ail":"SALÉ","Sauce tomate":"SALÉ",
+  "Soupe tomate (brique)":"SALÉ","Thon (conserve)":"SALÉ","Tomate séchée":"SALÉ",
+  "Basilic frais":"HUI","Bouillon légumes":"HUI","Cornichons":"HUI","Cumin":"HUI",
+  "Curcuma":"HUI","Curry":"HUI","Gros sel":"HUI","Harissa / piment":"HUI",
+  "Herbes de Provence":"HUI","Huile de coco":"HUI","Huile olive":"HUI",
+  "Huile sésame toastée":"HUI","Mayonnaise":"HUI","Moutarde":"HUI",
+  "Paprika":"HUI","Piment":"HUI","Poivre":"HUI","Pâte de curry vert":"HUI",
+  "Sauce soja sucrée":"HUI","Sauce teriyaki":"HUI","Sel":"HUI",
+  "Sel, poivre":"HUI","Vinaigre balsamique":"HUI","Vinaigre de cidre":"HUI",
+  "Vinaigre de xérès":"HUI","Vinaigre vin rouge":"HUI",
+  "Beurre doux":"FRAIS","Beurre salé":"FRAIS","Brique chèvre":"FRAIS",
+  "Chèvre frais":"FRAIS","Crème fraîche":"FRAIS","Fromage râpé":"FRAIS",
+  "Fêta":"FRAIS","Houmous":"FRAIS","Jus de citron":"FRAIS","Jus de citron vert":"FRAIS",
+  "Lait de vache":"FRAIS","Mozzarella":"FRAIS","Pain":"FRAIS","Parmesan":"FRAIS",
+  "Parmesan (copeaux)":"FRAIS","Pâte feuilletée":"FRAIS","Pâte à pizza ronde":"FRAIS",
+  "Rillettes / jambon dinde":"FRAIS","Surimi":"FRAIS","Taboulé (prêt)":"FRAIS",
+  "Yaourt blanc":"FRAIS","Œufs":"FRAIS",
+  "Anchois":"PROT","Brandade morue (traiteur)":"PROT","Crevettes":"PROT",
+  "Hachis parmentier mer (traiteur)":"PROT","Merguez végétales":"PROT",
+  "Pavé de truite":"PROT","Poisson blanc (filet)":"PROT",
+  "Poulet halal (aiguillettes)":"PROT","Poulet halal (blanc)":"PROT",
+  "Saumon (pavé)":"PROT","Truite fumée":"PROT","Viande végétale hachée":"PROT",
+  "Dattes":"FRUITS","Mangue":"FRUITS","Nectarines / pêches":"FRUITS",
+  "Pastèque":"FRUITS","Poires":"FRUITS","Pomme (fruit)":"FRUITS",
+  "Amandes effilées":"FSEC","Cranberry (séchée)":"FSEC","Graines de courge":"FSEC",
+  "Graines de sésame":"FSEC","Huile de noix":"FSEC","Mélange de graines":"FSEC",
+  "Noisettes":"FSEC","Noix":"FSEC","Noix de cajou":"FSEC",
+  "Noix de muscade":"FSEC","Pignons de pin":"FSEC","Raisins secs":"FSEC",
+  "Ail":"LEG","Algues (nori)":"LEG","Aubergines":"LEG","Avocat":"LEG",
+  "Betteraves (cuites)":"LEG","Brocolis":"LEG","Brocolis / chou-fleur":"LEG",
+  "Carottes":"LEG","Champignons":"LEG","Chou blanc":"LEG",
+  "Citron (zeste + jus)":"LEG","Concombre":"LEG","Courgettes":"LEG",
+  "Haricots verts frais":"LEG","Oignons":"LEG","Olives":"LEG",
+  "Persil":"LEG","Persil / ciboulette":"LEG","Persil frais":"LEG",
+  "Poireaux":"LEG","Pois chiches (conserve)":"LEG","Pomme de terre":"LEG",
+  "Pousses de soja / germes":"LEG","Radis":"LEG","Roquette":"LEG",
+  "Salade verte":"LEG","Salade verte / romaine":"LEG","Tomates":"LEG",
+  "Tomates cerises":"LEG","Tomates pelées (conserve)":"LEG",
+  "Échalotes":"LEG","Épinards frais":"LEG",
+  "Beaufort":"SURG","Boulgour (cru)":"SURG","Boursin":"SURG",
+  "Butternut (courge)":"SURG","Coriandre fraîche":"SURG",
+  "Cream cheese / Philadelphia":"SURG","Crêpes salées (surgelées)":"SURG",
+  "Câpres":"SURG","Edamame / petits pois":"SURG","Farine de pois chiche":"SURG",
+  "Feuilleté St-Jacques (surgelé)":"SURG","Feuilleté chèvre (surgelé)":"SURG",
+  "Garam masala":"SURG","Gingembre frais":"SURG","Haricots noirs (conserve)":"SURG",
+  "Légumes grillés (surgelés)":"SURG","Menthe fraîche":"SURG","Muscade":"SURG",
+  "Nouilles de riz (sèches)":"SURG","Oignon rouge":"SURG","Oignon vert / cébette":"SURG",
+  "Pain burger":"SURG","Pain pita":"SURG","Patate douce":"SURG",
+  "Poisson bordelaise (surgelé)":"SURG","Poivrons":"SURG","Riz arborio (cru)":"SURG",
+  "Sole (filet)":"SURG","Tabasco":"SURG","Tahini":"SURG","Thym frais":"SURG",
+  "Tomme de brebis":"SURG","Vin blanc sec":"SURG","Zaatar":"SURG",
+  "Épinards (surgelés)":"SURG","Labneh":"SURG","Pâte miso":"SURG",
+  // ═══ Mappings ingrédients salade (module Eat Salade Maison) ═══
+  // Bases
+  "Quinoa":"SALÉ","Boulgour":"SALÉ","Pâtes courtes":"SALÉ","Lentilles":"SALÉ",
+  "Pomme de terre":"LEG","Patate douce":"LEG","Vermicelles riz":"SALÉ",
+  // Verdures
+  "Roquette":"LEG","Épinards":"LEG","Mâche":"LEG","Salade verte":"LEG",
+  "Chou blanc":"LEG","Chou rouge":"LEG",
+  // Légumes crus
+  "Tomates cerises":"LEG","Concombre":"LEG","Carottes":"LEG","Avocat":"LEG",
+  "Oignon rouge":"LEG","Radis":"LEG","Betterave":"LEG",
+  "Champignons":"LEG","Brocoli cru":"LEG","Mangue":"FRUITS",
+  "Nectarine":"FRUITS","Pomme":"FRUITS","Pastèque":"FRUITS",
+  // Légumes cuits
+  "Patate douce rôtie":"LEG","Haricots verts":"LEG","Poivrons grillés":"LEG",
+  "Maïs":"LEG","Champignons sautés":"LEG","Brocoli blanchi":"LEG","Asperges":"LEG",
+  // Marinés & Pickles
+  "Poivrons marinés":"FRAIS","Artichauts marinés":"FRAIS",
+  "Pickles oignon":"HUI","Pickles concombre":"HUI","Pickles carottes":"HUI","Pickles radis":"HUI",
+  // Fromages
+  "Chèvre":"FRAIS","Roquefort":"FRAIS","Halloumi":"FRAIS","Cream cheese":"FRAIS",
+  // Herbes
+  "Basilic":"LEG","Coriandre":"LEG","Menthe":"LEG","Persil":"LEG",
+  "Ciboulette":"LEG","Aneth":"LEG",
+  // Protéines
+  "Œuf dur":"FRAIS","Thon":"SALÉ","Truite fumée":"PROT","Sardines":"SALÉ",
+  "Maquereaux":"SALÉ","Crevettes":"PROT","Poulet halal":"PROT",
+  "Pois chiches":"LEG","Anchois":"SALÉ","Houmous":"FRAIS",
+  // Toppings
+  "Noix":"FSEC","Gr. courge":"FSEC","Gr. sésame":"FSEC","Mix graines":"FSEC",
+  "Olives":"LEG","Câpres":"HUI","Croûtons":"SALÉ","Dattes":"FRUITS",
+  "Cornichons":"HUI","Algues":"SURG","Edamame":"SURG","Cajou":"FSEC",
+  // Sauces
+  "Citron-HO":"HUI","Balsamique":"HUI","Tahini":"HUI","Soja-sésame":"HUI",
+  "Moutarde":"HUI","Huile noix":"FSEC","César":"FRAIS","Xérès":"HUI",
+  "Pesto":"HUI","Coleslaw":"FRAIS"};
+
+const CAT_ORDER=[["SUCRÉ","🍫"],["SALÉ","🧂"],["HUI","🫒"],["FRAIS","🧀"],
+  ["PROT","🥩"],["FRUITS","🍎"],["FSEC","🥜"],["LEG","🥬"],["SURG","❄️"]];
+const CN={"SUCRÉ":"SUCRÉ","SALÉ":"SALÉ","HUI":"HUILES ET CONDIMENTS",
+  "FRAIS":"FRAIS","PROT":"FRAIS PROTÉINES","FRUITS":"FRUITS","FSEC":"FRUITS SECS",
+  "LEG":"LÉGUMES","SURG":"SURGELÉS"};
+
+
+function App(){
+  const [tab,setTab]=useState(0);
+  const [ratings,setRatings]=useState({});
+  const [obs,setObs]=useState({});
+  const [menu,setMenu]=useState(null);
+  const [locked,setLocked]=useState(false);
+  const [history,setHistory]=useState([]);
+  const [profiles,setProfiles]=useState(["Damien","Maroie","Maël"]);
+  const [stockCk,setStockCk]=useState({});
+  const [courseCk,setCourseCk]=useState({});
+  const [selPlat,setSelPlat]=useState(null);
+  const [stockOrder,setStockOrder]=useState({});
+  const [customArt,setCustomArt]=useState({add:[],del:[],ren:{}});
+  const [photos,setPhotos]=useState({});
+  const [lockDialog,setLockDialog]=useState(false);
+  // ── Salade tab states ──
+  const [saladRat,setSaladRat]=useState({});
+  const [saladPhotos,setSaladPhotos]=useState({});
+  const [saladCustom,setSaladCustom]=useState([]);
+  const [saladDel,setSaladDel]=useState([]);
+  const [saladProf,setSaladProf]=useState(["damien","maroie","mael"]);
+  const [saladBs,setSaladBs]=useState([]);
+
+  useEffect(()=>{
+    // Load from localStorage first (instant)
+    setRatings(sGet("ltf2_rat",{}));setObs(sGet("ltf2_obs",{}));
+    setMenu(sGet("ltf2_menu",null));setLocked(sGet("ltf2_lock",false));
+    setHistory(sGet("ltf2_hist",[]));setProfiles(sGet("ltf2_prof",["Damien","Maroie","Maël"]));
+    setStockCk(sGet("ltf2_stk",{}));setCourseCk(sGet("ltf2_crs",{}));
+    setPhotos(sGet("ltf2_photos",{}));
+    setStockOrder(sGet("ltf2_sord",{}));
+    setCustomArt(sGet("ltf2_cart",{add:[],del:[],ren:{}}));
+    // Salade tab
+    setSaladRat(sGet("ltf2_salad_rat",{}));setSaladPhotos(sGet("ltf2_salad_photos",{}));
+    setSaladCustom(sGet("ltf2_salad_custom",[]));setSaladDel(sGet("ltf2_salad_del",[]));
+    setSaladProf(sGet("ltf2_salad_prof",["damien","maroie","mael"]));setSaladBs(sGet("ltf2_salad_bs",[]));
+    // Listen for Firebase changes (sync from Maroie's phone)
+    fbListen("ltf2_rat",setRatings);
+    fbListen("ltf2_obs",setObs);
+    fbListen("ltf2_menu",v=>{if(v)setMenu(v);});
+    fbListen("ltf2_lock",setLocked);
+    fbListen("ltf2_hist",v=>{if(v)setHistory(v);});
+    fbListen("ltf2_stk",setStockCk);
+    fbListen("ltf2_crs",setCourseCk);
+    fbListen("ltf2_photos",setPhotos);
+    fbListen("ltf2_sord",setStockOrder);
+    fbListen("ltf2_cart",v=>{if(v)setCustomArt(v);});
+    // Salade tab sync
+    fbListen("ltf2_salad_rat",v=>setSaladRat(v||{}));
+    fbListen("ltf2_salad_photos",v=>setSaladPhotos(v||{}));
+    fbListen("ltf2_salad_custom",v=>setSaladCustom(v||[]));
+    fbListen("ltf2_salad_del",v=>setSaladDel(v||[]));
+    fbListen("ltf2_salad_prof",v=>setSaladProf(v||["damien","maroie","mael"]));
+    fbListen("ltf2_salad_bs",v=>setSaladBs(v||[]));
+  },[]);
+
+  const sv={
+    menu:m=>{setMenu(m);sSet("ltf2_menu",m);},
+    rat:(id,v)=>{const n={...ratings,[id]:v};setRatings(n);sSet("ltf2_rat",n);},
+    obs:(id,t)=>{const n={...obs,[id]:t};setObs(n);sSet("ltf2_obs",n);},
+    lock:()=>{
+      const n=!locked;setLocked(n);sSet("ltf2_lock",n);
+      if(n){sSet("ltf2_lock_at",new Date().toISOString());}
+      if(n&&menu){const h=[{date:new Date().toISOString(),menu:JSON.parse(JSON.stringify(menu))},...history].slice(0,4);
+        setHistory(h);sSet("ltf2_hist",h);}
+    },
+    prof:p=>{setProfiles(p);sSet("ltf2_prof",p);},
+    stk:s=>{setStockCk(s);sSet("ltf2_stk",s);},
+    crs:c=>{setCourseCk(c);sSet("ltf2_crs",c);},
+    photo:(id,url)=>{const n={...photos,[id]:url};setPhotos(n);sSet("ltf2_photos",n);},
+    sord:o=>{setStockOrder(o);sSet("ltf2_sord",o);},
+    cart:c=>{setCustomArt(c);sSet("ltf2_cart",c);},
+    // Salade tab savers
+    sRat:(id,v)=>{setSaladRat(p=>{const n={...p,[id]:v};sSet("ltf2_salad_rat",n);return n;});},
+    sPhoto:(id,url)=>{setSaladPhotos(p=>{const n={...p};if(url)n[id]=url;else delete n[id];sSet("ltf2_salad_photos",n);return n;});},
+    sCustom:c=>{setSaladCustom(c);sSet("ltf2_salad_custom",c);},
+    sDel:d=>{setSaladDel(d);sSet("ltf2_salad_del",d);},
+    sProf:p=>{setSaladProf(p);sSet("ltf2_salad_prof",p);},
+    sBs:b=>{setSaladBs(b);sSet("ltf2_salad_bs",b);},
+  };
+
+  const TABS=[{i:"📋",l:"Menu"},{i:"🍽",l:"Repas"},{i:"🛒",l:"Courses"},
+    {i:"👨‍🍳",l:"Batch"},{i:"📦",l:"Stock"},{i:"👨‍👩‍👦",l:"Profils"},{i:"🥗",l:"Salade"}];
+
+  return (
+    <div style={{background:C.bg,minHeight:"100vh",color:C.text,fontFamily:"system-ui,-apple-system,sans-serif"}}>
+      {/* HEADER */}
+      <header style={{background:`linear-gradient(135deg,${C.forest},${C.fL})`,color:"#fff",
+        padding:"12px 16px 8px",position:"sticky",top:0,zIndex:100,boxShadow:"0 2px 8px rgba(0,0,0,.15)",textAlign:"center"}}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"center",position:"relative"}}>
+          <div>
+            <h1 style={{margin:0,fontSize:17,fontWeight:700}}>🌿 La Table Familiale</h1>
+            <p style={{margin:"1px 0 0",fontSize:10,opacity:.8}}>
+              {DATA.plats.length} plats · {DATA.entrees.length} entrées · {BASE_SALADES.length} salades</p>
+          </div>
+          {menu&&<button onClick={()=>{if(!locked){sv.lock();setLockDialog(true);}else{sv.lock();}}} style={{background:locked?C.gold:"rgba(255,255,255,.15)",
+            border:"none",borderRadius:8,padding:"5px 10px",color:"#fff",fontSize:12,cursor:"pointer",position:"absolute",right:0}}>
+            {locked?"🔒":"🔓"}</button>}
+        </div>
+      </header>
+
+      {/* NAV EN HAUT (sous le header) */}
+      <nav style={{background:"#fff",borderBottom:`1px solid ${C.bdr}`,display:"flex",
+        justifyContent:"space-around",padding:"6px 0",position:"sticky",top:55,zIndex:99,
+        boxShadow:"0 1px 4px rgba(0,0,0,.04)"}}>
+        {TABS.map((t,i)=>(
+          <button key={i} onClick={()=>setTab(i)} style={{background:"none",border:"none",
+            cursor:"pointer",padding:"4px 8px",display:"flex",flexDirection:"column",alignItems:"center",gap:2,
+            opacity:tab===i?1:.4,borderBottom:tab===i?`2px solid ${C.fL}`:"2px solid transparent",
+            transition:"all .2s"}}>
+            <span style={{fontSize:16}}>{t.i}</span>
+            <span style={{fontSize:9,fontWeight:tab===i?700:400,color:tab===i?C.fL:C.tL}}>{t.l}</span>
+          </button>
+        ))}
+      </nav>
+
+      {/* CONTENT */}
+      <main style={{paddingBottom:20}}>
+        {tab===0&&<MenuTab menu={menu} setMenu={sv.menu} locked={locked} profiles={profiles}
+          setProfiles={sv.prof} ratings={ratings} saladRat={saladRat} photos={photos} onSel={setSelPlat}/>}
+        {tab===1&&<CatalogTab ratings={ratings} profiles={profiles} photos={photos} onSel={setSelPlat}/>}
+        {tab===2&&<CoursesTab menu={menu} profiles={profiles} stockCk={stockCk} courseCk={courseCk} setCk={sv.crs} stockOrder={stockOrder}/>}
+        {tab===3&&<BatchTab menu={menu}/>}
+        {tab===4&&<StockTab stockCk={stockCk} setStockCk={sv.stk} stockOrder={stockOrder} setStockOrder={sv.sord} customArt={customArt} setCustomArt={sv.cart}/>}
+        {tab===5&&<ProfilsTab/>}
+        {tab===6&&<SaladeTab ratings={saladRat} photos={saladPhotos} customSalads={saladCustom}
+          deletedIds={saladDel} activeProfiles={saladProf} bestsellerIds={saladBs}
+          onRate={sv.sRat} onPhoto={sv.sPhoto} onCustom={sv.sCustom}
+          onDel={sv.sDel} onProf={sv.sProf} onBs={sv.sBs}/>}
+      </main>
+
+      {lockDialog&&<LockDialog menu={menu} profiles={profiles} onClose={()=>setLockDialog(false)}/>}
+
+      {selPlat&&<Modal plat={selPlat} photos={photos} onClose={()=>setSelPlat(null)} profiles={profiles}
+        rating={ratings[selPlat.id]||0} onRate={v=>sv.rat(selPlat.id,v)}
+        obs={obs[selPlat.id]||""} onObs={t=>sv.obs(selPlat.id,t)}
+        photo={photos[selPlat.id]||""} onPhoto={u=>sv.photo(selPlat.id,u)}/>}
+    </div>
+  );
+}
+
+function Tag({text,color}){
+  return <span style={{fontSize:10,padding:"2px 7px",borderRadius:10,background:color+"14",
+    color,fontWeight:500,whiteSpace:"nowrap"}}>{text}</span>;
+}
+function Chip({label,on,click}){
+  return <button onClick={click} style={{padding:"4px 10px",borderRadius:16,
+    border:`1px solid ${on?C.fL:C.bdr}`,background:on?C.fL:"#fff",
+    color:on?"#fff":C.tM,fontSize:10,fontWeight:on?600:400,cursor:"pointer",whiteSpace:"nowrap"}}>{label}</button>;
+}
+
+// ═══════ TAB 1 — MENU ═══════
+function MenuTab({menu,setMenu,locked,profiles,setProfiles,ratings,saladRat,photos,onSel}){
+  const [nbR,setNbR]=useState(menu?.repas?.length||7);
+  const [nbE,setNbE]=useState(menu?.entrees?.length||2);
+  const [nbS,setNbS]=useState(menu?.salades?.length||0);
+  const [saison,setSaison]=useState("Toutes saisons");
+  const [noteF,setNoteF]=useState(0);
+  const [confirm,setConfirm]=useState(false);
+  const [replIdx,setReplIdx]=useState(null);
+  const [replSIdx,setReplSIdx]=useState(null);
+
+  // Pool salades (depuis BASE_SALADES — module Eat Salade Maison)
+  const filteredS=useMemo(()=>BASE_SALADES.filter(s=>{
+    if(saison==="Toutes saisons") return true;
+    if(saison==="Printemps") return s.saison==="Toutes saisons"||s.saison==="Été";
+    return s.saison==="Toutes saisons"||s.saison===saison;
+  }).filter(s=>noteF===0||((saladRat||{})[s.id]||0)>=noteF),[saison,noteF,saladRat]);
+
+  const filtered=useMemo(()=>DATA.plats.filter(p=>{
+    if(p.type==="Salade/bowl") return false; // Salades = midi uniquement (onglet 7)
+    if(saison==="Toutes saisons") return true;
+    if(saison==="Printemps") return p.saison==="Toutes saisons"||p.saison==="Été";
+    return p.saison==="Toutes saisons"||p.saison===saison;
+  }).filter(p=>noteF===0||(ratings[p.id]||0)>=noteF),[saison,noteF,ratings]);
+
+  const filteredE=useMemo(()=>DATA.entrees.filter(e=>{
+    if(saison==="Toutes saisons") return true;
+    if(saison==="Printemps") return e.saison==="Toutes saisons"||e.saison==="Été";
+    return e.saison==="Toutes saisons"||e.saison===saison;
+  }),[saison]);
+
+  function generate(){
+    if(menu&&!confirm){setConfirm(true);return;}
+    setConfirm(false);
+    const sh=[...filtered].sort(()=>Math.random()-.5).slice(0,nbR);
+    const bo={Oui:0,Partiel:1,Non:2};
+    sh.sort((a,b)=>(bo[a.batch]??1)-(bo[b.batch]??1));
+    const weekDays=getWeekDays(new Date());
+    const repas=sh.map((p,i)=>({...p,jour:weekDays[i%7].full,jourShort:weekDays[i%7].name,jourIdx:i%7,jourDate:weekDays[i%7].dateStr}));
+    const ent=[...filteredE].sort(()=>Math.random()-.5).slice(0,nbE);
+    // Salades midi (depuis BASE_SALADES, converties en format menu)
+    const shS=[...filteredS].sort(()=>Math.random()-.5).slice(0,nbS);
+    shS.sort((a,b)=>(bo[a.batch]??1)-(bo[b.batch]??1));
+    const salades=shS.map((s,i)=>({...buildSaladForMenu(s),jour:weekDays[i%7].full,jourShort:weekDays[i%7].name,jourIdx:i%7,jourDate:weekDays[i%7].dateStr}));
+    setMenu({repas,entrees:ent,salades,at:new Date().toISOString(),startDate:new Date().toISOString()});
+  }
+  function removeS(idx){if(locked)return;
+    const wd=getWeekDays(menu.startDate?new Date(menu.startDate):new Date());
+    const s=(menu.salades||[]).filter((_,i)=>i!==idx).map((s,i)=>({...s,jour:wd[i%7].full,jourShort:wd[i%7].name,jourIdx:i%7,jourDate:wd[i%7].dateStr}));
+    setMenu({...menu,salades:s});}
+  function replaceS(idx,cuisine){if(locked)return;
+    const cands=filteredS.filter(p=>p.cuisine===cuisine&&!(menu.salades||[]).some(s=>s.id===p.id));
+    if(!cands.length)return;
+    const picked=buildSaladForMenu(cands[Math.floor(Math.random()*cands.length)]);
+    const s=[...(menu.salades||[])];s[idx]={...picked,jour:s[idx].jour,jourShort:s[idx].jourShort,jourIdx:s[idx].jourIdx,jourDate:s[idx].jourDate};
+    setMenu({...menu,salades:s});setReplSIdx(null);}
+  function removeR(idx){if(locked)return;
+    const wd=getWeekDays(menu.startDate?new Date(menu.startDate):new Date());
+    const r=menu.repas.filter((_,i)=>i!==idx).map((r,i)=>({...r,jour:wd[i%7].full,jourShort:wd[i%7].name,jourIdx:i%7,jourDate:wd[i%7].dateStr}));
+    setMenu({...menu,repas:r});}
+  function replaceR(idx,type){if(locked)return;
+    const cands=filtered.filter(p=>p.type===type&&!menu.repas.some(r=>r.id===p.id));
+    if(!cands.length)return;
+    const r=[...menu.repas];r[idx]={...cands[Math.floor(Math.random()*cands.length)],jour:r[idx].jour,jourShort:r[idx].jourShort,jourIdx:r[idx].jourIdx,jourDate:r[idx].jourDate};
+    setMenu({...menu,repas:r});setReplIdx(null);}
+  function toggleProf(name){
+    const n=profiles.includes(name)?profiles.filter(p=>p!==name):[...profiles,name];
+    if(!n.length)return;setProfiles(n);}
+
+  return (
+    <div style={{padding:14}}>
+      <div style={{background:"#fff",borderRadius:14,padding:16,marginBottom:14,border:`1px solid ${C.bdr}`}}>
+        <h2 style={{margin:"0 0 12px",fontSize:16,fontWeight:700,color:C.forest}}>Générer le menu</h2>
+        <div style={{display:"flex",gap:6,marginBottom:12,justifyContent:"center"}}>
+          {["Damien","Maroie","Maël"].map(n=>(
+            <button key={n} onClick={()=>toggleProf(n)} style={{padding:"5px 12px",borderRadius:18,fontSize:12,
+              cursor:"pointer",border:`2px solid ${PC[n]}`,fontWeight:600,
+              background:profiles.includes(n)?PC[n]:"transparent",
+              color:profiles.includes(n)?"#fff":PC[n]}}>{n}</button>
+          ))}
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:12}}>
+          <div>
+            <label style={{fontSize:11,color:C.tM,fontWeight:600}}>Repas: <strong style={{color:C.forest,fontSize:15}}>{nbR}</strong></label>
+            <input type="range" min={2} max={14} value={nbR} onChange={e=>setNbR(+e.target.value)} style={{width:"100%",accentColor:C.fL}}/>
+          </div>
+          <div>
+            <label style={{fontSize:11,color:C.tM,fontWeight:600}}>Entrées: <strong style={{color:C.forest,fontSize:15}}>{nbE}</strong></label>
+            <input type="range" min={0} max={8} value={nbE} onChange={e=>setNbE(+e.target.value)} style={{width:"100%",accentColor:C.fL}}/>
+          </div>
+          <div>
+            <label style={{fontSize:11,color:C.tM,fontWeight:600}}>🥗 Midi: <strong style={{color:C.forest,fontSize:15}}>{nbS}</strong></label>
+            <input type="range" min={0} max={14} value={nbS} onChange={e=>setNbS(+e.target.value)} style={{width:"100%",accentColor:C.fL}}/>
+          </div>
+        </div>
+
+        {/* FILTRE SAISON simplifié : 4 saisons + Toutes */}
+        <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:12,justifyContent:"center"}}>
+          {["Toutes saisons","Printemps","Été","Automne","Hiver"].map(s=>(
+            <button key={s} onClick={()=>setSaison(s)} style={{padding:"5px 12px",borderRadius:18,fontSize:11,
+              cursor:"pointer",border:`1px solid ${saison===s?C.fL:C.bdr}`,fontWeight:saison===s?700:400,
+              background:saison===s?C.fL:"#fff",color:saison===s?"#fff":C.tM}}>
+              {s==="Printemps"?"🌸":s==="Été"?"☀️":s==="Automne"?"🍂":s==="Hiver"?"❄️":"🌿"} {s}
+            </button>
+          ))}
+          <span style={{fontSize:11,color:C.tL,alignSelf:"center"}}>{filtered.length} plats</span>
+        </div>
+
+        <div style={{textAlign:"center",marginBottom:12}}><select value={noteF} onChange={e=>setNoteF(+e.target.value)} style={{padding:"5px 10px",
+          borderRadius:8,border:`1px solid ${C.bdr}`,fontSize:12,background:"#fff"}}>
+          <option value={0}>Toutes notes</option>
+          {[1,2,3,4,5].map(n=><option key={n} value={n}>≥ {"⭐".repeat(n)}</option>)}
+        </select></div>
+
+        <button onClick={generate} disabled={locked} style={{width:"100%",padding:12,borderRadius:10,
+          border:"none",background:locked?C.tL:`linear-gradient(135deg,${C.forest},${C.fL})`,
+          color:"#fff",fontSize:14,fontWeight:700,cursor:locked?"not-allowed":"pointer",
+          boxShadow:locked?"none":"0 3px 10px rgba(26,58,10,.3)"}}>
+          {locked?"🔒 Verrouillé":`🔄 Générer ${nbR} repas, ${nbE} entrées${nbS>0?`, ${nbS} salades`:""}`}
+        </button>
+
+        {confirm&&<div style={{marginTop:10,padding:12,background:C.dangerBg,borderRadius:10}}>
+          <p style={{margin:"0 0 8px",fontSize:12,color:C.danger,fontWeight:600}}>⚠️ Remplacer le menu ?</p>
+          <div style={{display:"flex",gap:6}}>
+            <button onClick={generate} style={{flex:1,padding:8,borderRadius:8,border:"none",
+              background:C.danger,color:"#fff",fontSize:12,fontWeight:600,cursor:"pointer"}}>Oui</button>
+            <button onClick={()=>setConfirm(false)} style={{flex:1,padding:8,borderRadius:8,
+              border:`1px solid ${C.bdr}`,background:"#fff",fontSize:12,cursor:"pointer"}}>Non</button>
+          </div>
+        </div>}
+      </div>
+
+      {menu&&<>
+        <h3 style={{fontSize:13,color:C.forest,fontWeight:700,marginBottom:8,textTransform:"uppercase",letterSpacing:.5,textAlign:"center"}}>
+          🍽 Repas ({menu.repas.length})
+        </h3>
+        <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:20}}>
+          {menu.repas.map((p,idx)=>{
+            const fresh=idx>=Math.max(0,menu.repas.length-(menu.repas.length>4?3:1));
+            return(<div key={p.id+"-"+idx}>
+              <div style={{background:"#fff",borderRadius:10,padding:"10px 12px",border:`1px solid ${C.bdr}`,position:"relative"}}>
+                <div style={{position:"absolute",top:-7,left:12,background:fresh?"#E3F2FD":C.okBg,
+                  padding:"1px 8px",borderRadius:8,fontSize:9,fontWeight:700,
+                  color:fresh?C.blue:C.ok,border:`1px solid ${fresh?C.blue+"33":C.ok+"33"}`}}>
+                  {p.jourDate||p.jour} {fresh&&"🧊"}</div>
+                <div onClick={()=>onSel(p)} style={{cursor:"pointer",marginTop:6}}>
+                  <div style={{display:"flex",alignItems:"center",gap:8}}>
+                    {photos[p.id]?<img src={photos[p.id]} style={{width:40,height:40,borderRadius:8,objectFit:"cover",flexShrink:0}} onError={e=>{e.target.style.display="none"}}/>:<span style={{fontSize:24}}>{ET[p.type]||"🍽"}</span>}
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontSize:13,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.nom}</div>
+                      <div style={{display:"flex",gap:3,marginTop:3,flexWrap:"wrap"}}>
+                        <Tag text={p.type.split("/")[0]} color={C.fL}/>
+                        <Tag text={`${p.temps_prepa}min`} color={C.tM}/>
+                        {p.batch!=="Non"&&<Tag text={`${p.batch==="Oui"?"🟢":"🟡"} Batch`} color={C.gold}/>}
+                      </div>
+                    </div>
+                  </div>
+                  {p.macros&&<div style={{display:"flex",gap:6,marginTop:5,flexWrap:"wrap"}}>
+                    {profiles.map(name=>p.macros[name]&&(
+                      <span key={name} style={{fontSize:10,padding:"1px 6px",borderRadius:8,
+                        background:PC[name]+"15",color:PC[name],fontWeight:600}}>
+                        {name[0]}: {p.macros[name].prot}g P · {p.macros[name].kcal}kcal</span>
+                    ))}</div>}
+                </div>
+                {!locked&&<div style={{display:"flex",justifyContent:"flex-end",gap:4,marginTop:6}}>
+                  <button onClick={()=>setReplIdx(replIdx===idx?null:idx)} style={{padding:"3px 8px",borderRadius:6,
+                    border:`1px solid ${C.bdr}`,background:"#fff",fontSize:10,cursor:"pointer",color:C.tM}}>🔄</button>
+                  <button onClick={()=>removeR(idx)} style={{padding:"3px 8px",borderRadius:6,
+                    border:`1px solid ${C.danger}33`,background:C.dangerBg,fontSize:10,cursor:"pointer",color:C.danger}}>✕</button>
+                </div>}
+              </div>
+              {replIdx===idx&&!locked&&(
+                <div style={{padding:8,background:"#fff",borderRadius:"0 0 10px 10px",border:`1px solid ${C.bdr}`,borderTop:"none",display:"flex",flexWrap:"wrap",gap:4}}>
+                  {TYPES.map(type=>{const cnt=filtered.filter(p2=>p2.type===type&&!menu.repas.some(r=>r.id===p2.id)).length;
+                    return <button key={type} onClick={()=>replaceR(idx,type)} disabled={!cnt}
+                      style={{padding:"3px 8px",borderRadius:12,fontSize:10,border:`1px solid ${C.bdr}`,
+                        background:cnt?"#fff":"#f5f5f5",cursor:cnt?"pointer":"default",
+                        color:cnt?C.text:C.tL,opacity:cnt?1:.5}}>{ET[type]||"🍽"} {type.split("/")[0]} ({cnt})</button>;})}
+                </div>)}
+            </div>);
+          })}
+        </div>
+
+        {menu.entrees.length>0&&<>
+          <h3 style={{fontSize:13,color:C.gold,fontWeight:700,marginBottom:8,textTransform:"uppercase",letterSpacing:.5,textAlign:"center"}}>🥕 Entrées</h3>
+          <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:16}}>
+            {menu.entrees.map(e=>(
+              <div key={e.id} onClick={()=>onSel(e)} style={{background:"#fff",borderRadius:10,padding:"10px 12px",
+                border:`1px solid ${C.bdr}`,cursor:"pointer",display:"flex",alignItems:"center",gap:10}}>
+                <span style={{fontSize:20}}>🥕</span>
+                <div style={{flex:1}}><div style={{fontSize:13,fontWeight:600}}>{e.nom}</div>
+                <div style={{fontSize:10,color:C.tL}}>{e.genre} · {e.temps_prepa}min</div></div>
+              </div>
+            ))}
+          </div>
+        </>}
+
+        {/* ═══ EAT SALADE — MIDI ═══ */}
+        {(menu.salades||[]).length>0&&<>
+          <h3 style={{fontSize:13,color:C.fL,fontWeight:700,marginBottom:8,textTransform:"uppercase",letterSpacing:.5,textAlign:"center"}}>🥗 Eat Salade — Midi ({menu.salades.length})</h3>
+          <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:16}}>
+            {menu.salades.map((s,idx)=>{
+              const fresh=s.jourIdx>=3;
+              return(<div key={s.id+"-s-"+idx}>
+                <div style={{background:"#fff",borderRadius:10,padding:"10px 12px",border:`1px solid ${C.fL}22`,position:"relative"}}>
+                  <div style={{position:"absolute",top:-7,left:12,background:fresh?"#E3F2FD":C.fL+"15",
+                    padding:"1px 8px",borderRadius:8,fontSize:9,fontWeight:700,
+                    color:fresh?C.blue:C.fL,border:`1px solid ${fresh?C.blue+"33":C.fL+"33"}`}}>
+                    {s.jourDate||s.jour} {fresh&&"🧊"}</div>
+                  <div onClick={()=>onSel(s)} style={{cursor:"pointer",marginTop:6}}>
+                    <div style={{display:"flex",alignItems:"center",gap:8}}>
+                      {photos[s.id]?<img src={photos[s.id]} style={{width:40,height:40,borderRadius:8,objectFit:"cover",flexShrink:0}} onError={e=>{e.target.style.display="none"}}/>:<span style={{fontSize:24}}>🥗</span>}
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{fontSize:13,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.nom}</div>
+                        <div style={{display:"flex",gap:3,marginTop:3,flexWrap:"wrap"}}>
+                          <Tag text={s.genre} color={C.fL}/>
+                          <Tag text={`${s.temps_prepa}min`} color={C.tM}/>
+                          {s.batch!=="Non"&&<Tag text="🍳 Batch" color={C.gold}/>}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  {!locked&&<div style={{display:"flex",justifyContent:"flex-end",gap:4,marginTop:6}}>
+                    <button onClick={()=>setReplSIdx(replSIdx===idx?null:idx)} style={{padding:"3px 8px",borderRadius:6,
+                      border:`1px solid ${C.bdr}`,background:"#fff",fontSize:10,cursor:"pointer",color:C.tM}}>🔄</button>
+                    <button onClick={()=>removeS(idx)} style={{padding:"3px 8px",borderRadius:6,
+                      border:`1px solid ${C.danger}33`,background:C.dangerBg,fontSize:10,cursor:"pointer",color:C.danger}}>✕</button>
+                  </div>}
+                </div>
+                {replSIdx===idx&&!locked&&(
+                  <div style={{padding:8,background:"#fff",borderRadius:"0 0 10px 10px",border:`1px solid ${C.bdr}`,borderTop:"none",display:"flex",flexWrap:"wrap",gap:4}}>
+                    <span style={{fontSize:10,color:C.tL,width:"100%",marginBottom:2}}>Remplacer par :</span>
+                    {CUISINES.map(cui=>{const cnt=filteredS.filter(p=>p.cuisine===cui&&!(menu.salades||[]).some(r=>r.id===p.id)).length;
+                      return <button key={cui} onClick={()=>replaceS(idx,cui)} disabled={!cnt}
+                        style={{padding:"3px 8px",borderRadius:12,fontSize:10,border:`1px solid ${C.bdr}`,
+                          background:cnt?"#fff":"#f5f5f5",cursor:cnt?"pointer":"default",
+                          color:cnt?C.text:C.tL,opacity:cnt?1:.5}}>{EC[cui]||"🌍"} {cui} ({cnt})</button>;})}
+                  </div>)}
+              </div>);
+            })}
+          </div>
+        </>}
+      </>}
+
+      {!menu&&<div style={{textAlign:"center",padding:"30px 16px",color:C.tL}}>
+        <span style={{fontSize:40}}>📋</span><p style={{marginTop:10,fontSize:13}}>Aucun menu. Générez ci-dessus.</p></div>}
+    </div>
+  );
+}
+
+// ═══════ TAB 2 — CATALOGUE ═══════
+function CatalogTab({ratings,profiles,photos,onSel}){
+  const [search,setSearch]=useState("");
+  const [tF,setTF]=useState("all");
+  const [cF,setCF]=useState("all");
+  const [showE,setShowE]=useState(false);
+  const [sF,setSF]=useState("Toutes saisons");
+  const items=useMemo(()=>{
+    let list=showE?DATA.entrees:DATA.plats;
+    if(sF!=="Toutes saisons"){
+      if(sF==="Printemps") list=list.filter(p=>p.saison==="Toutes saisons"||p.saison==="Été");
+      else list=list.filter(p=>p.saison==="Toutes saisons"||p.saison===sF);
+    }
+    if(tF!=="all")list=list.filter(p=>p.type===tF);
+    if(cF!=="all")list=list.filter(p=>p.genre===cF);
+    if(search.trim()){const q=search.toLowerCase();list=list.filter(p=>p.nom.toLowerCase().includes(q));}
+    return list;
+  },[showE,sF,tF,cF,search]);
+
+  return(<div style={{padding:14,maxWidth:600,margin:"0 auto",textAlign:"center"}}>
+    <div style={{position:"relative",marginBottom:10}}>
+      <span style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",fontSize:14}}>🔍</span>
+      <input type="text" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Rechercher..."
+        style={{width:"100%",padding:"8px 10px 8px 32px",borderRadius:10,border:`1px solid ${C.bdr}`,fontSize:13,background:"#fff",boxSizing:"border-box"}}/>
+    </div>
+    <div style={{display:"flex",gap:6,marginBottom:10,justifyContent:"center"}}>
+      <button onClick={()=>setShowE(false)} style={{flex:1,padding:7,borderRadius:8,border:`2px solid ${C.fL}`,
+        background:!showE?C.fL:"transparent",color:!showE?"#fff":C.fL,fontSize:12,fontWeight:600,cursor:"pointer"}}>🍽 Plats ({DATA.plats.length})</button>
+      <button onClick={()=>setShowE(true)} style={{flex:1,padding:7,borderRadius:8,border:`2px solid ${C.gold}`,
+        background:showE?C.gold:"transparent",color:showE?"#fff":C.gold,fontSize:12,fontWeight:600,cursor:"pointer"}}>🥕 Entrées ({DATA.entrees.length})</button>
+    </div>
+    <div style={{display:"flex",gap:4,marginBottom:8,justifyContent:"center",flexWrap:"wrap"}}>
+      {["Toutes saisons","Printemps","Été","Automne","Hiver"].map(s=>(
+        <Chip key={s} label={`${s==="Printemps"?"🌸":s==="Été"?"☀️":s==="Automne"?"🍂":s==="Hiver"?"❄️":"🌿"} ${s}`}
+          on={sF===s} click={()=>setSF(s)}/>
+      ))}
+    </div>
+    <div style={{display:"flex",gap:4,marginBottom:8,overflowX:"auto",paddingBottom:4,justifyContent:"center",flexWrap:"wrap"}}>
+      <Chip label="Tous" on={tF==="all"} click={()=>setTF("all")}/>
+      {TYPES.map(t=><Chip key={t} label={`${ET[t]||""} ${t.split("/")[0]}`} on={tF===t} click={()=>setTF(t)}/>)}
+    </div>
+    <div style={{display:"flex",gap:4,marginBottom:12,overflowX:"auto",paddingBottom:4,justifyContent:"center",flexWrap:"wrap"}}>
+      <Chip label="Toutes" on={cF==="all"} click={()=>setCF("all")}/>
+      {CUISINES.map(c=><Chip key={c} label={`${EC[c]||""} ${c}`} on={cF===c} click={()=>setCF(c)}/>)}
+    </div>
+    <p style={{fontSize:11,color:C.tL,marginBottom:8}}>{items.length} résultat{items.length>1?"s":""}</p>
+    <div style={{display:"flex",flexDirection:"column",gap:6}}>
+      {items.map(p=>(<div key={p.id} onClick={()=>onSel(p)} style={{background:"#fff",borderRadius:10,padding:"10px 12px",
+        border:`1px solid ${C.bdr}`,cursor:"pointer",display:"flex",alignItems:"center",gap:10}}>
+        {photos[p.id]?<img src={photos[p.id]} style={{width:40,height:40,borderRadius:8,objectFit:"cover",flexShrink:0}} onError={e=>{e.target.style.display="none"}}/>:<span style={{fontSize:24,flexShrink:0}}>{ET[p.type]||"🍽"}</span>}
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:13,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.nom}</div>
+          <div style={{display:"flex",gap:3,marginTop:2,flexWrap:"wrap"}}>
+            <Tag text={p.genre} color={C.tM}/><Tag text={`${p.temps_prepa}min`} color={C.tM}/>
+            {p.batch!=="Non"&&<Tag text="Batch" color={C.gold}/>}
+          </div>
+        </div><span style={{fontSize:14,color:C.tL}}>›</span>
+      </div>))}
+    </div>
+  </div>);
+}
+
+// ═══════ TAB 3 — COURSES ═══════
+function CoursesTab({menu,profiles,stockCk,courseCk,setCk,stockOrder}){
+  const grouped=useMemo(()=>{
+    if(!menu)return[];
+    const all=[...(menu.repas||[]),...(menu.entrees||[]),...(menu.salades||[])];
+    const map={};
+    all.forEach(plat=>{(plat.ingredients||[]).forEach(([nom,unite,qD,qM,qE])=>{
+      const k=nom+"__"+unite;
+      if(!map[k])map[k]={nom,unite,qD:0,qM:0,qE:0,cat:IC[nom]||"DIVERS"};
+      map[k].qD+=(qD||0);map[k].qM+=(qM||0);map[k].qE+=(qE||0);
+    });});
+    const items=Object.values(map).map(it=>{
+      let tot=0;
+      if(profiles.includes("Damien"))tot+=it.qD;
+      if(profiles.includes("Maroie"))tot+=it.qM;
+      if(profiles.includes("Maël"))tot+=it.qE;
+      return{...it,tot};
+    }).filter(i=>i.tot>0);
+    const early=new Set(),late=new Set();
+    (menu.repas||[]).forEach(r=>{(r.ingredients||[]).forEach(([n])=>{if(r.jourIdx<3)early.add(n);else late.add(n);});});
+    const freshOnly=new Set([...late].filter(n=>!early.has(n)));
+    const result=[];
+    CAT_ORDER.forEach(([ck,emoji])=>{
+      const ciRaw=items.filter(i=>i.cat===ck);
+      // Sort by stock order if available, else alphabetical
+      const catFullName=CN[ck]||ck;
+      const order=stockOrder&&stockOrder[catFullName];
+      const ci=order?ciRaw.sort((a,b)=>{const ia=order.indexOf(a.nom);const ib=order.indexOf(b.nom);
+        if(ia===-1&&ib===-1)return a.nom.localeCompare(b.nom,"fr");if(ia===-1)return 1;if(ib===-1)return -1;return ia-ib;}):
+        ciRaw.sort((a,b)=>a.nom.localeCompare(b.nom,"fr"));
+      const si=[];
+      const sc=DATA.stock.find(c=>c.nom===(CN[ck]||ck));
+      if(sc)sc.articles.forEach(art=>{if(stockCk[sc.nom+"__"+art.nom])
+        if(!ci.some(i=>i.nom.toLowerCase().includes(art.nom.toLowerCase())||art.nom.toLowerCase().includes(i.nom.toLowerCase())))
+          si.push({nom:art.nom,unite:"",tot:null,isStock:true,cat:ck});});
+      const combined=[...ci,...si];
+      if(combined.length)result.push({key:ck,name:CN[ck]||ck,emoji,items:combined,freshOnly});
+    });
+    return result;
+  },[menu,profiles,stockCk]);
+
+  const total=grouped.reduce((s,g)=>s+g.items.length,0);
+  const checked=Object.values(courseCk).filter(Boolean).length;
+  if(!menu)return<div style={{padding:20,textAlign:"center",color:C.tL}}><span style={{fontSize:40}}>🛒</span><p>Générez un menu.</p></div>;
+  return(<div style={{padding:14,maxWidth:600,margin:"0 auto",textAlign:"center"}}>
+    <div style={{background:"#fff",padding:"10px 14px",borderRadius:10,marginBottom:10,border:`1px solid ${C.bdr}`,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+      <div style={{textAlign:"center",flex:1}}><h2 style={{margin:0,fontSize:15,fontWeight:700,color:C.forest}}>🛒 Courses</h2>
+        <p style={{margin:"1px 0 0",fontSize:10,color:C.tL}}>Pour {profiles.join(", ")} · Ordre Intermarché</p></div>
+      <span style={{padding:"4px 10px",borderRadius:16,fontSize:12,fontWeight:700,
+        background:checked===total&&total?C.okBg:C.bg,color:checked===total&&total?C.ok:C.tM}}>{checked}/{total}</span>
+    </div>
+    <div style={{display:"flex",gap:10,marginBottom:12,padding:"6px 10px",background:"#fff",borderRadius:8,border:`1px solid ${C.bdrL}`,fontSize:10}}>
+      <span>🧊 = Jeu/Ven</span><span>📦 = Stock</span></div>
+    {grouped.map(({key,name,emoji,items,freshOnly})=>(
+      <div key={key} style={{marginBottom:14}}>
+        <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:5,padding:"5px 10px",background:C.forest+"0A",borderRadius:8}}>
+          <span style={{fontSize:16}}>{emoji}</span><span style={{fontSize:12,fontWeight:700,color:C.forest}}>{name}</span>
+          <span style={{fontSize:10,color:C.tL,marginLeft:"auto"}}>{items.length}</span></div>
+        {items.map(item=>{const k=item.isStock?`stk__${name}__${item.nom}`:`ing__${item.nom}__${item.unite}`;
+          const ck=courseCk[k];const isFO=freshOnly?.has(item.nom)&&!item.isStock;
+          return(<div key={k} onClick={()=>{const n={...courseCk,[k]:!ck};setCk(n);}}
+            style={{background:ck?C.okBg:"#fff",padding:"8px 10px",borderRadius:7,border:`1px solid ${ck?C.ok+"33":C.bdrL}`,
+              marginBottom:2,display:"flex",alignItems:"center",gap:8,cursor:"pointer"}}>
+            <div style={{width:18,height:18,borderRadius:4,flexShrink:0,border:`2px solid ${ck?C.ok:C.bdr}`,
+              background:ck?C.ok:"transparent",display:"flex",alignItems:"center",justifyContent:"center"}}>
+              {ck&&<span style={{color:"#fff",fontSize:11,fontWeight:700}}>✓</span>}</div>
+            <span style={{flex:1,fontSize:12,fontWeight:500,textDecoration:ck?"line-through":"none",color:ck?C.tL:C.text}}>{item.nom}</span>
+            {item.tot!=null&&<span style={{fontSize:12,fontWeight:700,color:C.fL,whiteSpace:"nowrap"}}>{fmtQ(item.tot,item.unite)}</span>}
+            {item.isStock&&<span style={{fontSize:8,padding:"1px 5px",borderRadius:5,background:C.gold+"20",color:C.gold,fontWeight:700}}>📦</span>}
+            {isFO&&<span style={{fontSize:8,padding:"1px 5px",borderRadius:5,background:"#E3F2FD",color:C.blue,fontWeight:700}}>🧊</span>}
+          </div>);})}
+      </div>
+    ))}
+    {total>0&&<div style={{marginTop:6,padding:"10px 12px",background:"#fff",borderRadius:10,border:`1px solid ${C.bdr}`,fontSize:11,color:C.tM}}>
+      <strong>{grouped.length}</strong> rayons · <strong>{total}</strong> articles</div>}
+  </div>);
+}
+function fmtQ(v,u){if(v==null)return"—";const r=Math.round(v*10)/10;const d=Number.isInteger(r)?r:r.toFixed(1);return u&&u!=="—"?`${d} ${u}`:`${d}`;}
+
+// ═══════ TAB 4 — BATCH (restructuré : soir → salades → récap stratégie) ═══════
+function BatchTab({menu}){
+  const [openId,setOpenId]=useState(null);
+  if(!menu)return<div style={{padding:20,textAlign:"center",color:C.tL}}><span style={{fontSize:40}}>👨‍🍳</span><p>Générez un menu.</p></div>;
+
+  const batchDay=(()=>{try{const d=new Date(menu.startDate||menu.at);const j=d.toLocaleDateString('fr-FR',{weekday:'long'});return j.charAt(0).toUpperCase()+j.slice(1);}catch(e){return"Dimanche";}})();
+  const hasRiz=p=>p.ingredients?.some(i=>i[0]?.toLowerCase().includes("riz"));
+
+  // ── Repas soir ──
+  const batchR=menu.repas.filter(r=>r.batch==="Oui"||r.batch==="Partiel");
+  const jourR=menu.repas.filter(r=>r.batch==="Non");
+  // ── Entrées ──
+  const batchE=(menu.entrees||[]).filter(e=>e.batch==="Oui"||e.batch==="Partiel");
+  const jourE=(menu.entrees||[]).filter(e=>!e.batch||e.batch==="Non");
+  // ── Salades midi ──
+  const saladeBatch=(menu.salades||[]).filter(s=>s.batch!=="Non");
+  const saladeJour=(menu.salades||[]).filter(s=>s.batch==="Non");
+  const SALAD_BATCH_EXCLUDE=["prot_crevettes","prot_poulet","lcuit_champignon_saute","base_riz","base_nouilles_riz"];
+
+  // ── Extraction étapes batch depuis recette ──
+  function getBatchSteps(recette){
+    if(!recette)return{batch:[],jourMeme:[]};
+    const steps=recette.split(/(?=\d+\.)/).filter(s=>s.trim());
+    return{batch:steps.filter(s=>s.toLowerCase().includes("batch")),jourMeme:steps.filter(s=>!s.toLowerCase().includes("batch"))};
+  }
+
+  // ── Build strategy repas soir + entrées ──
+  function buildStrategy(batchPlats,batchEntrees){
+    const tasks={four:[],feculents:[],legumineuses:[],oeufs:new Set(),decoupe:[],marinades:[],sauces:[],cuisson_longue:[],entrees:[]};
+    batchPlats.forEach(p=>{
+      const r=(p.recette||"").toLowerCase();
+      const ings=(p.ingredients||[]).map(i=>i[0].toLowerCase());
+      const allIngs=ings.join(" ");
+      const hasPoulet=ings.some(i=>i.includes("poulet"));
+      const hasViande=ings.some(i=>i.includes("viande")||i.includes("merguez"));
+      const isFour=r.includes("four")||["gratin","lasagne","quiche","tarte","pizza","cake"].some(x=>r.includes(x)||p.type.toLowerCase().includes(x));
+      if(isFour&&!hasPoulet)tasks.four.push({nom:p.nom,time:parseInt(p.temps_batch)||parseInt(p.temps_prepa)||20});
+      if(hasPoulet||hasViande)tasks.marinades.push({nom:p.nom,detail:hasPoulet?"Marinade poulet":"Marinade viande"});
+      const fecs=["pâtes","quinoa","boulgour","couscous"].filter(f=>allIngs.includes(f));
+      if(fecs.length)tasks.feculents.push({nom:p.nom,fec:fecs.join(", "),time:parseInt(p.temps_batch)||15});
+      const legs=["lentilles","pois chiche","haricots"].filter(f=>allIngs.includes(f));
+      if(legs.length&&!fecs.length)tasks.legumineuses.push({nom:p.nom,leg:legs.join(", ")});
+      if(r.includes("œufs durs")||r.includes("œufs mollets")||r.includes("œuf dur")||r.includes("œuf mollet"))tasks.oeufs.add("repas");
+      const legDec=ings.filter(i=>["carotte","poivron","oignon","courgette","concombre","poireau","brocoli","champignon","chou","betterave","patate","aubergine","tomate"].some(l=>i.includes(l)));
+      if(legDec.length>=2)tasks.decoupe.push({nom:p.nom,count:legDec.length});
+      const totalTime=parseInt(p.temps_prepa)||0;
+      if(totalTime>25||parseInt(p.temps_batch)>30)tasks.cuisson_longue.push({nom:p.nom,time:totalTime});
+    });
+    (batchEntrees||[]).forEach(e=>{tasks.entrees.push({nom:e.nom,time:parseInt(e.temps_batch)||parseInt(e.temps_prepa)||10,batch:e.batch});});
+    return tasks;
+  }
+  const strategy=buildStrategy(batchR,batchE);
+  const totalBatchTimeSoir=[...batchR,...batchE].reduce((s,p)=>{const t=parseInt(p.temps_batch)||0;return s+t;},0);
+
+  // ── Build salade batch items ──
+  function buildSaladBatchItems(){
+    const items={};
+    saladeBatch.forEach(s=>{
+      // Les salades du menu ont maintenant un champ composition (ajouté par buildSaladForMenu)
+      const comp=s.composition;
+      if(!comp)return;
+      Object.values(comp).flat().forEach(id=>{
+        if(SALAD_BATCH_EXCLUDE.includes(id))return;
+        const ing=SALAD_ALL_INGS[id];
+        if(!ing||ing.batch!==true)return;
+        if(!items[id]){
+          let cat="Autre";
+          if(["base_quinoa","base_boulgour","base_pates","base_lentilles","base_pdt","base_patate_douce"].includes(id))cat="feculents";
+          else if(id==="prot_oeuf")cat="oeufs";
+          else if(id==="prot_pois_chiches")cat="legumineuses";
+          else if(["lcuit_patdouce","lcuit_poivrons_grilles"].includes(id))cat="four";
+          else if(id.startsWith("marin_"))cat="pickles";
+          items[id]={nom:ing.nom,emoji:ing.emoji||"",cat,qty_g:0,count:0,salades:[]};
+        }
+        items[id].qty_g+=Math.round((ing.portion_g||ing.portion_ml||0)*3.3);
+        items[id].count++;
+        items[id].salades.push(s.nom);
+      });
+    });
+    return items;
+  }
+  const saladBatchItems=saladeBatch.length>0?buildSaladBatchItems():{};
+  const sbBycat={feculents:[],oeufs:[],legumineuses:[],four:[],pickles:[]};
+  Object.entries(saladBatchItems).forEach(([id,it])=>{if(sbBycat[it.cat])sbBycat[it.cat].push({...it,id});});
+  const SBCAT_LABELS={feculents:{e:"🌾",l:"Féculents"},oeufs:{e:"🥚",l:"Œufs"},legumineuses:{e:"🫘",l:"Légumineuses"},four:{e:"🍠",l:"Rôtissage four"},pickles:{e:"🥒",l:"Pickles"}};
+
+  // ── Estimation quantités repas soir ──
+  function getRepasQty(n){n=n.toLowerCase();if(n.includes("quinoa"))return 240;if(n.includes("pâtes"))return 240;if(n.includes("boulgour"))return 240;if(n.includes("lentilles"))return 240;if(n.includes("couscous"))return 240;return 200;}
+
+  // ── Récap : construire les totaux combinés ──
+  function buildRecap(){
+    const rc={feculents:{},oeufs:{repas:0,salades:0},legumineuses:{},four:{},pickles:{},entreesPrep:[],marinades:[],decoupe:[],cuisson_longue:[]};
+    strategy.feculents.forEach(f=>{const k=f.fec.toLowerCase();if(!rc.feculents[k])rc.feculents[k]={nom:f.fec,repas:0,salades:0};rc.feculents[k].repas+=getRepasQty(f.fec);});
+    sbBycat.feculents.forEach(it=>{const k=it.nom.toLowerCase();if(!rc.feculents[k])rc.feculents[k]={nom:it.nom,repas:0,salades:0};rc.feculents[k].salades+=it.qty_g;});
+    if(strategy.oeufs.size>0)rc.oeufs.repas=batchR.filter(p=>(p.recette||"").toLowerCase().includes("œuf")).length*3;
+    const salOeufs=sbBycat.oeufs.find(si=>si.id==="prot_oeuf");
+    if(salOeufs)rc.oeufs.salades=salOeufs.count*3;
+    strategy.legumineuses.forEach(f=>{const k=f.leg.toLowerCase();if(!rc.legumineuses[k])rc.legumineuses[k]={nom:f.leg,repas:0,salades:0};rc.legumineuses[k].repas+=240;});
+    sbBycat.legumineuses.forEach(it=>{const k=it.nom.toLowerCase();if(!rc.legumineuses[k])rc.legumineuses[k]={nom:it.nom,repas:0,salades:0};rc.legumineuses[k].salades+=it.qty_g;});
+    sbBycat.four.forEach(it=>{rc.four[it.id]={nom:it.nom,emoji:it.emoji,qty:it.qty_g,count:it.count};});
+    sbBycat.pickles.forEach(it=>{rc.pickles[it.id]={nom:it.nom,emoji:it.emoji,qty:it.qty_g,count:it.count};});
+    rc.entreesPrep=strategy.entrees;rc.marinades=strategy.marinades;rc.decoupe=strategy.decoupe;rc.cuisson_longue=strategy.cuisson_longue;
+    return rc;
+  }
+  const recap=buildRecap();
+  const totalSaladBatchTime=saladeBatch.length*5;
+  const totalStratTime=Math.max(totalBatchTimeSoir+totalSaladBatchTime,30);
+
+  return(
+    <div style={{padding:14,maxWidth:600,margin:"0 auto"}}>
+      {/* ═══ HEADER ═══ */}
+      <div style={{background:"#fff",borderRadius:12,padding:14,marginBottom:14,border:`1px solid ${C.bdr}`,textAlign:"center"}}>
+        <h2 style={{margin:"0 0 4px",fontSize:16,fontWeight:700,color:C.forest}}>👨‍🍳 Batch Cooking — {batchDay}</h2>
+        <p style={{margin:0,fontSize:11,color:C.tL}}>
+          {batchR.length} plat{batchR.length>1?"s":""} · {batchE.length} entrée{batchE.length>1?"s":""} · {saladeBatch.length} salade{saladeBatch.length>1?"s":""}
+        </p>
+      </div>
+
+      {/* ═══ 1. NOMS PLATS + ENTRÉES À BATCHER ═══ */}
+      {(batchR.length>0||batchE.length>0)&&<div style={{background:"#fff",borderRadius:10,padding:12,marginBottom:10,border:`1px solid ${C.gold}33`}}>
+        <div style={{fontSize:12,fontWeight:700,color:C.gold,marginBottom:6}}>🍽 Repas du soir à batcher</div>
+        {batchR.map(p=>(
+          <div key={p.id} style={{fontSize:11,color:C.tM,paddingLeft:8,marginBottom:2,display:"flex",alignItems:"center",gap:6}}>
+            <span style={{fontSize:14}}>{ET[p.type]||"🍽"}</span><span style={{flex:1}}>{p.nom}</span>
+            <span style={{fontSize:9,padding:"1px 6px",borderRadius:6,marginLeft:"auto",background:p.batch==="Oui"?C.okBg:C.gold+"15",color:p.batch==="Oui"?C.ok:C.gold,fontWeight:700}}>{p.batch==="Oui"?"Complet":"Partiel"}</span>
+          </div>
+        ))}
+        {batchE.length>0&&<>
+          <div style={{fontSize:11,fontWeight:600,color:C.gold,marginTop:6,marginBottom:4}}>🥕 Entrées</div>
+          {batchE.map(e=>(
+            <div key={e.id} style={{fontSize:11,color:C.tM,paddingLeft:8,marginBottom:2,display:"flex",alignItems:"center",gap:6}}>
+              <span style={{fontSize:14}}>🥕</span><span style={{flex:1}}>{e.nom}</span>
+              <span style={{fontSize:9,padding:"1px 6px",borderRadius:6,marginLeft:"auto",background:e.batch==="Oui"?C.okBg:C.gold+"15",color:e.batch==="Oui"?C.ok:C.gold,fontWeight:700}}>{e.batch==="Oui"?"Complet":"Partiel"}</span>
+            </div>
+          ))}
+        </>}
+      </div>}
+
+      {/* ═══ 2. DÉTAIL BATCH SOIR (temps + étapes) ═══ */}
+      {(batchR.length>0||batchE.length>0)&&<div style={{background:C.gold+"08",borderRadius:10,padding:12,marginBottom:10,border:`1px solid ${C.gold}22`}}>
+        <div style={{fontSize:12,fontWeight:700,color:C.gold,marginBottom:8}}>📋 Détail batch soir</div>
+        {batchR.map(p=>{
+          const {batch:bSteps}=getBatchSteps(p.recette);
+          const isOpen=openId===p.id;
+          return(<div key={p.id} style={{marginBottom:6}}>
+            <div style={{display:"flex",alignItems:"center",gap:6}}>
+              <span style={{fontSize:14}}>{ET[p.type]||"🍽"}</span>
+              <span style={{fontSize:11,fontWeight:600,flex:1}}>{p.nom}</span>
+              <span style={{fontSize:10,color:C.gold}}>⏱ {p.temps_batch!=="—"?p.temps_batch:p.temps_prepa} min</span>
+            </div>
+            {hasRiz(p)&&<div style={{marginTop:4,padding:"4px 8px",borderRadius:6,background:C.dangerBg,fontSize:10,color:C.danger}}>⚠️ Riz : cuire au dernier moment !</div>}
+            <button onClick={()=>setOpenId(isOpen?null:p.id)} style={{marginTop:4,background:"none",border:"none",cursor:"pointer",fontSize:10,color:C.fL,fontWeight:600,padding:0}}>▸ {isOpen?"Masquer":"Voir détail"}</button>
+            {isOpen&&bSteps.length>0&&<div style={{padding:"6px 8px",borderRadius:6,background:C.gold+"12",marginTop:4}}>
+              {bSteps.map((s,i)=><div key={i} style={{fontSize:10,color:C.text,lineHeight:1.5}}>{s.trim()}</div>)}
+            </div>}
+          </div>);
+        })}
+        {batchE.length>0&&<div style={{borderTop:`1px solid ${C.bdr}`,marginTop:8,paddingTop:8}}>
+          <div style={{fontSize:11,fontWeight:600,color:C.gold,marginBottom:4}}>🥕 Entrées</div>
+          {batchE.map(e=>(
+            <div key={e.id} style={{fontSize:11,color:C.tM,display:"flex",gap:6,marginBottom:2}}>
+              <span style={{flex:1}}>{e.nom}</span>
+              <span style={{fontSize:10,color:C.gold}}>⏱ {e.temps_batch||e.temps_prepa} min</span>
+            </div>
+          ))}
+        </div>}
+      </div>}
+
+      {/* ═══ Jour même (repas + entrées) ═══ */}
+      {(jourR.length>0||jourE.length>0)&&<div style={{marginBottom:10}}>
+        <div style={{fontSize:11,fontWeight:600,color:C.tL,textAlign:"center",marginBottom:4}}>🔵 Jour même ({jourR.length+jourE.length})</div>
+        {jourR.map(p=>(<div key={p.id} style={{background:"#fff",borderRadius:8,padding:"6px 10px",border:`1px solid ${C.bdr}`,marginBottom:3,display:"flex",alignItems:"center",gap:6,fontSize:11}}>
+          <span>{ET[p.type]||"🍽"}</span><span style={{flex:1}}>{p.nom}</span><span style={{fontSize:10,color:C.tL}}>{p.jour} · {p.temps_prepa}min</span>
+        </div>))}
+        {jourE.map(e=>(<div key={e.id} style={{background:"#fff",borderRadius:8,padding:"6px 10px",border:`1px solid ${C.bdr}`,marginBottom:3,display:"flex",alignItems:"center",gap:6,fontSize:11}}>
+          <span>🥕</span><span style={{flex:1}}>{e.nom}</span><span style={{fontSize:10,color:C.tL}}>{e.temps_prepa}min</span>
+        </div>))}
+      </div>}
+
+      {/* ═══ 3. NOMS SALADES À BATCHER ═══ */}
+      {saladeBatch.length>0&&<div style={{background:"#fff",borderRadius:10,padding:12,marginBottom:10,border:`1px solid ${C.ok}33`}}>
+        <div style={{fontSize:12,fontWeight:700,color:C.fL,marginBottom:6}}>🥗 Salades midi à batcher ({saladeBatch.length})</div>
+        {saladeBatch.map(s=>{
+          const estTime=parseInt(s.temps_batch)||parseInt(s.temps_prepa)||10;
+          return(<div key={s.id} style={{fontSize:11,color:C.tM,paddingLeft:8,marginBottom:2,display:"flex",alignItems:"center",gap:6}}>
+            <span>🥗</span><span style={{flex:1}}>{s.nom}</span>
+            <span style={{fontSize:10,color:C.fL}}>~{estTime} min batch</span>
+          </div>);
+        })}
+        {saladeJour.length>0&&<div style={{marginTop:6,fontSize:10,color:C.tL}}>+ {saladeJour.length} salade{saladeJour.length>1?"s":""} jour même</div>}
+      </div>}
+
+      {/* ═══ 4. BLOC BATCH SALADES (quantités seules) ═══ */}
+      {saladeBatch.length>0&&Object.values(sbBycat).some(a=>a.length>0)&&
+      <div style={{background:"#F0FFF0",borderRadius:10,padding:12,marginBottom:10,border:`1px solid ${C.ok}33`}}>
+        <div style={{fontSize:12,fontWeight:700,color:C.fL,marginBottom:8}}>📦 Préparations salades — quantités</div>
+        {Object.entries(SBCAT_LABELS).map(([cat,{e,l}])=>{
+          const items=sbBycat[cat];if(!items||!items.length)return null;
+          return(<div key={cat} style={{marginBottom:8}}>
+            <div style={{fontSize:11,fontWeight:700,color:C.text}}>{e} {l} :</div>
+            {items.map(it=>{
+              const unit=cat==="oeufs"?(it.count*3)+"":it.qty_g+"g";
+              return(<div key={it.id} style={{fontSize:11,color:C.tM,paddingLeft:12}}>• {it.emoji} {it.nom} — {unit}{it.count>1?" (×"+it.count+" salades)":""}</div>);
+            })}
+          </div>);
+        })}
+      </div>}
+
+      {/* ═══ 5. RÉCAPITULATIF STRATÉGIE — QUANTITÉS TOTALES + PLANNING ═══ */}
+      {(batchR.length>0||batchE.length>0||saladeBatch.length>0)&&<div style={{marginTop:6,background:C.gold+"12",borderRadius:12,padding:14,border:`1px solid ${C.gold}33`}}>
+        <h3 style={{margin:"0 0 10px",fontSize:14,fontWeight:700,color:C.gold,textAlign:"center"}}>📋 Récapitulatif — {batchDay}</h3>
+        <div style={{fontSize:10,color:C.tL,textAlign:"center",marginBottom:10}}>Quantités totales (entrées + plats soir + salades midi)</div>
+
+        {strategy.four.length>0&&<div style={{marginBottom:10}}>
+          <div style={{fontSize:11,fontWeight:700,color:C.text}}>1. 🔥 Cuissons au four :</div>
+          {strategy.four.map((t,i)=><div key={i} style={{fontSize:11,color:C.tM,paddingLeft:12}}>• {t.nom} — ~{t.time} min</div>)}
+          {Object.values(recap.four).map(it=><div key={it.nom} style={{fontSize:11,color:C.fL,paddingLeft:12}}>• {it.emoji} {it.nom} — {it.qty}g <span style={{fontSize:10,color:C.tL}}>(salades)</span></div>)}
+        </div>}
+
+        {Object.keys(recap.feculents).length>0&&<div style={{marginBottom:10}}>
+          <div style={{fontSize:11,fontWeight:700,color:C.text}}>2. 🍝 Féculents :</div>
+          {Object.values(recap.feculents).map(f=>{
+            const total=f.repas+f.salades;const d=[];
+            if(f.repas>0)d.push("repas "+f.repas+"g");if(f.salades>0)d.push("salades "+f.salades+"g");
+            return<div key={f.nom} style={{fontSize:11,color:C.tM,paddingLeft:12}}>• {f.nom} — <strong style={{color:C.text}}>{total}g</strong>{d.length>1&&<span style={{fontSize:10,color:C.gold}}> ({d.join(" + ")})</span>}</div>;
+          })}
+        </div>}
+
+        {Object.keys(recap.legumineuses).length>0&&<div style={{marginBottom:10}}>
+          <div style={{fontSize:11,fontWeight:700,color:C.text}}>3. 🫘 Légumineuses :</div>
+          {Object.values(recap.legumineuses).map(f=>{
+            const total=f.repas+f.salades;const d=[];
+            if(f.repas>0)d.push("repas "+f.repas+"g");if(f.salades>0)d.push("salades "+f.salades+"g");
+            return<div key={f.nom} style={{fontSize:11,color:C.tM,paddingLeft:12}}>• {f.nom} — <strong style={{color:C.text}}>{total}g</strong>{d.length>1&&<span style={{fontSize:10,color:C.gold}}> ({d.join(" + ")})</span>}</div>;
+          })}
+        </div>}
+
+        {(recap.oeufs.repas+recap.oeufs.salades)>0&&<div style={{marginBottom:10}}>
+          <div style={{fontSize:11,fontWeight:700,color:C.text}}>4. 🥚 Œufs durs :</div>
+          {(()=>{const t=recap.oeufs.repas+recap.oeufs.salades;const d=[];
+            if(recap.oeufs.repas>0)d.push("repas "+recap.oeufs.repas);if(recap.oeufs.salades>0)d.push("salades "+recap.oeufs.salades);
+            return<div style={{fontSize:11,color:C.tM,paddingLeft:12}}>• Cuire <strong style={{color:C.text}}>{t} œufs</strong> (9 min){d.length>1&&<span style={{fontSize:10,color:C.gold}}> ({d.join(" + ")})</span>}</div>;
+          })()}
+        </div>}
+
+        {strategy.decoupe.length>0&&<div style={{marginBottom:10}}>
+          <div style={{fontSize:11,fontWeight:700,color:C.text}}>5. 🔪 Découpe légumes :</div>
+          {strategy.decoupe.map((t,i)=><div key={i} style={{fontSize:11,color:C.tM,paddingLeft:12}}>• {t.nom} — {t.count} légumes</div>)}
+        </div>}
+
+        {recap.marinades.length>0&&<div style={{marginBottom:10}}>
+          <div style={{fontSize:11,fontWeight:700,color:C.text}}>6. 🧂 Marinades (NE PAS cuire) :</div>
+          {recap.marinades.map((t,i)=><div key={i} style={{fontSize:11,color:C.tM,paddingLeft:12}}>• {t.detail} — {t.nom}</div>)}
+        </div>}
+
+        {Object.keys(recap.pickles).length>0&&<div style={{marginBottom:10}}>
+          <div style={{fontSize:11,fontWeight:700,color:C.text}}>7. 🥒 Pickles :</div>
+          {Object.values(recap.pickles).map(it=><div key={it.nom} style={{fontSize:11,color:C.tM,paddingLeft:12}}>• {it.emoji} {it.nom} — {it.qty}g{it.count>1?" (×"+it.count+")":""}</div>)}
+        </div>}
+
+        <div style={{marginBottom:10,fontSize:11,fontWeight:700,color:C.text}}>8. 🥣 Sauces & vinaigrettes (~5 min)</div>
+
+        {recap.entreesPrep.length>0&&<div style={{marginBottom:10}}>
+          <div style={{fontSize:11,fontWeight:700,color:C.text}}>9. 🥕 Entrées :</div>
+          {recap.entreesPrep.map((e,i)=><div key={i} style={{fontSize:11,color:C.tM,paddingLeft:12}}>• {e.nom} — ~{e.time} min</div>)}
+        </div>}
+
+        {recap.cuisson_longue.length>0&&<div style={{marginBottom:10,padding:"6px 10px",borderRadius:8,background:"#E3F2FD"}}>
+          <div style={{fontSize:10,fontWeight:700,color:C.blue}}>⏰ Cuisson longue (rappel 19h45 - temps) :</div>
+          {recap.cuisson_longue.map((t,i)=><div key={i} style={{fontSize:10,color:C.blue,paddingLeft:8}}>• {t.nom} ({t.time} min)</div>)}
+        </div>}
+
+        <div style={{marginTop:8,padding:"8px 10px",borderRadius:8,background:C.gold+"20",fontSize:12,fontWeight:700,color:C.gold,textAlign:"center"}}>
+          ⏱ ~{totalStratTime} min en parallélisant</div>
+      </div>}
+
+      {/* ═══ 6. RÈGLES ═══ */}
+      <div style={{marginTop:14,background:C.dangerBg,borderRadius:10,padding:12,fontSize:11}}>
+        <strong style={{color:C.danger}}>⚠️ Règles batch V2</strong>
+        <div style={{marginTop:4,color:C.tM,lineHeight:1.6}}>
+          ✅ Féculents (sauf riz), légumineuses, œufs durs, soupes, quiches/tartes, marinades, sauces<br/>
+          ❌ Pas de riz — cuire au dernier moment (10-12 min)<br/>
+          ❌ Pas de viande ni légumes seuls
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ═══════ TAB 5 — STOCK ═══════
+function StockTab({stockCk,setStockCk,stockOrder,setStockOrder,customArt,setCustomArt}){
+  const [search,setSearch]=useState("");
+  const [catF,setCatF]=useState("all");
+  const [dragCat,setDragCat]=useState(null);
+  const [dragIdx,setDragIdx]=useState(null);
+  const [dragOverIdx,setDragOverIdx]=useState(null);
+  const touchStart=React.useRef(null);
+  const [addingTo,setAddingTo]=useState(null);
+  const [newArtName,setNewArtName]=useState("");
+  const [renamingKey,setRenamingKey]=useState(null);
+  const [renameVal,setRenameVal]=useState("");
+  const nonAlim=["SANITAIRES","PRODUITS MÉNAGERS","DIVERS"];
+  const ECat={"SUCRÉ":"🍫","SALÉ":"🧂","HUILES ET CONDIMENTS":"🫒","SANITAIRES":"🧴",
+    "PRODUITS MÉNAGERS":"🧹","DIVERS":"📦","FRAIS":"🧀","FRAIS PROTÉINES":"🥩",
+    "FRUITS":"🍎","FRUITS SECS":"🥜","LÉGUMES":"🥬","SURGELÉS":"❄️"};
+
+  // Get ordered articles for a category
+  function getOrdered(cat){
+    // Base articles + custom added - custom deleted, with renames applied
+    let names=cat.articles.map(a=>a.nom);
+    // Add custom articles for this category
+    if(customArt.add){customArt.add.forEach(a=>{if(a.cat===cat.nom&&!names.includes(a.nom))names.push(a.nom);});}
+    // Remove deleted
+    if(customArt.del){names=names.filter(n=>!customArt.del.includes(cat.nom+"__"+n));}
+    // Apply renames
+    if(customArt.ren){names=names.map(n=>customArt.ren[cat.nom+"__"+n]||n);}
+    const order=stockOrder[cat.nom];
+    if(!order)return names;
+    const ordered=order.filter(n=>names.includes(n));
+    const newItems=names.filter(n=>!order.includes(n));
+    return [...ordered,...newItems];
+  }
+
+  function addArticle(catNom,nom){
+    if(!nom.trim())return;
+    const next={...customArt,add:[...(customArt.add||[]),{cat:catNom,nom:nom.trim()}]};
+    setCustomArt(next);setNewArtName("");setAddingTo(null);
+  }
+  function deleteArticle(catNom,artNom){
+    if(!confirm("Supprimer "+artNom+" ?"))return;
+    const next={...customArt,del:[...(customArt.del||[]),catNom+"__"+artNom]};
+    setCustomArt(next);
+  }
+  function renameArticle(catNom,oldName,newName){
+    if(!newName.trim())return;
+    const next={...customArt,ren:{...(customArt.ren||{}),[catNom+"__"+oldName]:newName.trim()}};
+    setCustomArt(next);setRenamingKey(null);setRenameVal("");
+  }
+
+  function moveArticle(catNom,fromIdx,toIdx){
+    if(fromIdx===toIdx)return;
+    const cat=DATA.stock.find(c=>c.nom===catNom);
+    if(!cat)return;
+    const ordered=getOrdered(cat);
+    const item=ordered[fromIdx];
+    const next=[...ordered];
+    next.splice(fromIdx,1);
+    next.splice(toIdx,0,item);
+    const newOrder={...stockOrder,[catNom]:next};
+    setStockOrder(newOrder);
+  }
+
+  const filtered=useMemo(()=>{
+    let cats=DATA.stock;
+    if(catF!=="all")cats=cats.filter(c=>c.nom===catF);
+    if(search.trim()){const q=search.toLowerCase();cats=cats.map(c=>({...c,articles:c.articles.filter(a=>a.nom.toLowerCase().includes(q))})).filter(c=>c.articles.length);}
+    return cats;
+  },[catF,search]);
+  const ckCount=Object.values(stockCk).filter(Boolean).length;
+  const isSearching=search.trim().length>0;
+
+  return(<div style={{padding:14,maxWidth:600,margin:"0 auto",textAlign:"center"}}>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+      <h2 style={{margin:0,fontSize:16,fontWeight:700,color:C.forest,textAlign:"center"}}>📦 Stock</h2>
+      {ckCount>0&&<span style={{padding:"3px 8px",borderRadius:12,fontSize:11,fontWeight:600,background:C.gold+"15",color:C.gold}}>{ckCount} à racheter</span>}
+    </div>
+    <div style={{position:"relative",marginBottom:8}}>
+      <span style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",fontSize:13}}>🔍</span>
+      <input type="text" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Chercher..."
+        style={{width:"100%",padding:"7px 10px 7px 30px",borderRadius:8,border:`1px solid ${C.bdr}`,fontSize:12,background:"#fff",boxSizing:"border-box"}}/>
+    </div>
+    {!isSearching&&<p style={{fontSize:10,color:C.tL,marginBottom:8}}>↕️ Maintenez et glissez pour réordonner</p>}
+    <div style={{display:"flex",gap:4,overflowX:"auto",paddingBottom:6,marginBottom:10,justifyContent:"center",flexWrap:"wrap"}}>
+      <Chip label="Tout" on={catF==="all"} click={()=>setCatF("all")}/>
+      {DATA.stock.map(c=><Chip key={c.nom} label={`${ECat[c.nom]||""} ${c.nom}`} on={catF===c.nom} click={()=>setCatF(c.nom)}/>)}
+    </div>
+    {filtered.map(cat=>{
+      const orderedNames=isSearching?cat.articles.map(a=>a.nom):getOrdered(cat);
+      return(<div key={cat.nom} style={{marginBottom:14}}>
+      <h3 style={{fontSize:12,fontWeight:700,color:C.forest,marginBottom:5,display:"flex",alignItems:"center",gap:4,justifyContent:"center"}}>
+        {ECat[cat.nom]||"📦"} {cat.nom} <span style={{fontSize:10,color:C.tL,fontWeight:400}}>({orderedNames.length})</span></h3>
+      {nonAlim.includes(cat.nom)&&addingTo===cat.nom?
+        <div style={{display:"flex",gap:4,marginBottom:6}}>
+          <input type="text" value={newArtName} onChange={e=>setNewArtName(e.target.value)}
+            placeholder="Nom du nouvel article..." autoFocus
+            style={{flex:1,padding:"6px 10px",borderRadius:6,border:`1px solid ${C.bdr}`,fontSize:12,boxSizing:"border-box"}}
+            onKeyDown={e=>{if(e.key==="Enter")addArticle(cat.nom,newArtName);}}/>
+          <button onClick={()=>addArticle(cat.nom,newArtName)} style={{padding:"6px 10px",borderRadius:6,
+            background:C.fL,color:"#fff",border:"none",fontSize:11,cursor:"pointer"}}>OK</button>
+          <button onClick={()=>{setAddingTo(null);setNewArtName("");}} style={{padding:"6px 8px",borderRadius:6,
+            border:`1px solid ${C.bdr}`,background:"#fff",fontSize:11,cursor:"pointer"}}>X</button>
+        </div>
+      :nonAlim.includes(cat.nom)&&<button onClick={()=>setAddingTo(cat.nom)} style={{marginBottom:6,padding:"5px 10px",
+        borderRadius:6,border:`1px dashed ${C.fL}`,background:"transparent",fontSize:11,cursor:"pointer",color:C.fL}}>
+        + Ajouter un article</button>}
+      {orderedNames.map((artNom,idx)=>{const k=cat.nom+"__"+artNom;const ck=stockCk[k];
+        const isDragging=dragCat===cat.nom&&dragIdx===idx;
+        const isDragOver=dragCat===cat.nom&&dragOverIdx===idx;
+        return <div key={artNom}
+          draggable={!isSearching}
+          onDragStart={e=>{setDragCat(cat.nom);setDragIdx(idx);e.dataTransfer.effectAllowed="move";}}
+          onDragOver={e=>{e.preventDefault();if(dragCat===cat.nom)setDragOverIdx(idx);}}
+          onDragEnd={()=>{if(dragCat===cat.nom&&dragIdx!==null&&dragOverIdx!==null)moveArticle(cat.nom,dragIdx,dragOverIdx);
+            setDragCat(null);setDragIdx(null);setDragOverIdx(null);}}
+          onTouchStart={e=>{touchStart.current={cat:cat.nom,idx,y:e.touches[0].clientY};}}
+          onTouchMove={e=>{
+            if(!touchStart.current||touchStart.current.cat!==cat.nom)return;
+            const touch=e.touches[0];
+            const el=document.elementFromPoint(touch.clientX,touch.clientY);
+            if(el){const row=el.closest("[data-didx]");
+              if(row){const newIdx=parseInt(row.dataset.didx);
+                if(!isNaN(newIdx)&&newIdx!==dragOverIdx){setDragCat(cat.nom);setDragIdx(touchStart.current.idx);setDragOverIdx(newIdx);}}}
+          }}
+          onTouchEnd={()=>{if(dragCat===cat.nom&&dragIdx!==null&&dragOverIdx!==null)moveArticle(cat.nom,dragIdx,dragOverIdx);
+            touchStart.current=null;setDragCat(null);setDragIdx(null);setDragOverIdx(null);}}
+          data-didx={idx}
+          style={{display:"flex",alignItems:"center",gap:8,padding:"7px 10px",
+            background:isDragOver?"#E8F5E9":isDragging?"#FFF8E1":ck?C.gold+"08":"#fff",
+            borderRadius:6,cursor:isSearching?"pointer":"grab",
+            border:`1px solid ${isDragOver?C.ok+"66":ck?C.gold+"33":C.bdrL}`,marginBottom:2,
+            opacity:isDragging?.5:1,transition:"background .15s, border .15s",
+            userSelect:"none",WebkitUserSelect:"none"}}>
+          {!isSearching&&<span style={{fontSize:10,color:C.tL,cursor:"grab",padding:"2px",flexShrink:0}}>☰</span>}
+          <div onClick={()=>{const n={...stockCk,[k]:!ck};setStockCk(n);}}
+            style={{display:"flex",alignItems:"center",gap:8,flex:1}}>
+            <div style={{width:18,height:18,borderRadius:4,border:`2px solid ${ck?C.gold:C.bdr}`,
+              background:ck?C.gold:"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+              {ck&&<span style={{color:"#fff",fontSize:11,fontWeight:700}}>✓</span>}</div>
+            {renamingKey===cat.nom+"__"+artNom?
+              <div style={{display:"flex",gap:4,flex:1}} onClick={e=>e.stopPropagation()}>
+                <input type="text" value={renameVal} onChange={e=>setRenameVal(e.target.value)} autoFocus
+                  style={{flex:1,padding:"3px 6px",borderRadius:4,border:`1px solid ${C.bdr}`,fontSize:11}}
+                  onKeyDown={e=>{if(e.key==="Enter")renameArticle(cat.nom,artNom,renameVal);}}/>
+                <button onClick={()=>renameArticle(cat.nom,artNom,renameVal)} style={{padding:"3px 6px",borderRadius:4,
+                  background:C.fL,color:"#fff",border:"none",fontSize:10,cursor:"pointer"}}>OK</button>
+                <button onClick={()=>setRenamingKey(null)} style={{padding:"3px 6px",borderRadius:4,
+                  border:`1px solid ${C.bdr}`,background:"#fff",fontSize:10,cursor:"pointer"}}>X</button>
+              </div>
+            :<><span style={{fontSize:12,textAlign:"left",flex:1}}>{artNom}</span>
+              {nonAlim.includes(cat.nom)&&<div style={{display:"flex",gap:2,flexShrink:0}} onClick={e=>e.stopPropagation()}>
+                <button onClick={()=>{setRenamingKey(cat.nom+"__"+artNom);setRenameVal(artNom);}} style={{padding:"2px 5px",borderRadius:4,
+                  border:`1px solid ${C.bdrL}`,background:"#fff",fontSize:9,cursor:"pointer",color:C.tL}}>✏️</button>
+                <button onClick={()=>deleteArticle(cat.nom,artNom)} style={{padding:"2px 5px",borderRadius:4,
+                  border:`1px solid ${C.danger}22`,background:C.dangerBg,fontSize:9,cursor:"pointer",color:C.danger}}>🗑</button>
+              </div>}</>}
+          </div>
+        </div>;})}
+    </div>);})}
+  </div>);
+}
+
+// ═══════ PUSH NOTIFICATION BUTTON ═══════
+function PushButton(){
+  const [status,setStatus]=useState("checking");
+  useEffect(()=>{
+    const check=()=>{
+      if(!("serviceWorker" in navigator)||!("PushManager" in window)){setStatus("unsupported");return;}
+      if(Notification.permission==="denied"){setStatus("denied");return;}
+      if(window._pushStatus==="subscribed"){setStatus("subscribed");return;}
+      if(window._pushStatus==="ready"){setStatus("ready");return;}
+      setStatus("checking");
+    };
+    check();
+    const t=setInterval(check,1000);
+    return()=>clearInterval(t);
+  },[]);
+
+  const handleClick=async()=>{
+    if(!window._pushSubscribe){setStatus("error");return;}
+    setStatus("requesting");
+    const result=await window._pushSubscribe();
+    if(result==="ok")setStatus("subscribed");
+    else if(result==="denied")setStatus("denied");
+    else setStatus("error");
+  };
+
+  if(status==="unsupported")return(
+    <div style={{marginTop:12,padding:12,background:"#FFF3E0",borderRadius:8,fontSize:11,color:"#E65100"}}>
+      ⚠️ Les notifications push ne sont pas supportées sur ce navigateur. Ouvrez l'app depuis l'écran d'accueil (PWA).
+    </div>);
+  if(status==="denied")return(
+    <div style={{marginTop:12,padding:12,background:"#FFEBEE",borderRadius:8,fontSize:11,color:"#C62828"}}>
+      🔕 Notifications refusées. Allez dans Réglages → Notifications → La Table Familiale pour les réactiver.
+    </div>);
+  if(status==="subscribed")return(
+    <div style={{marginTop:12,padding:12,background:"#E8F5E9",borderRadius:8,fontSize:11,color:"#2E7D32"}}>
+      ✅ Notifications activées ! Vous recevrez les rappels achats frais, batch et cuisson.
+    </div>);
+  if(status==="checking")return(
+    <div style={{marginTop:12,padding:12,background:"#F5F5F5",borderRadius:8,fontSize:11,color:"#757575"}}>
+      ⏳ Vérification des notifications...
+    </div>);
+  return(
+    <button onClick={handleClick} disabled={status==="requesting"} style={{
+      marginTop:12,width:"100%",padding:14,background:C.forest,color:"#fff",
+      border:"none",borderRadius:10,fontSize:14,fontWeight:700,cursor:"pointer",
+      opacity:status==="requesting"?0.6:1}}>
+      {status==="requesting"?"⏳ Activation en cours...":"🔔 Activer les notifications"}
+    </button>);
+}
+
+// ═══════ TAB 6 — PROFILS (enrichi) ═══════
+function ProfilsTab(){
+  const meta={Damien:{e:"👨",i:"💪"},Maroie:{e:"👩",i:"✨"},"Maël":{e:"👦",i:"⚡"}};
+  const repasLabels={"petit_dejeuner":"Petit-déjeuner","dejeuner":"Déjeuner","gouter":"Goûter","diner":"Dîner"};
+
+  return(<div style={{padding:14}}>
+    <div style={{background:"#fff",borderRadius:12,padding:14,marginBottom:14,border:`1px solid ${C.bdr}`}}>
+      <h2 style={{margin:"0 0 2px",fontSize:16,fontWeight:700,color:C.forest}}>Profils nutritionnels</h2>
+    </div>
+
+    {Object.entries(DATA.profils).map(([name,p])=>{
+      const m=meta[name]||{};
+      return(<div key={name} style={{background:"#fff",borderRadius:12,padding:16,
+        borderLeft:`4px solid ${PC[name]}`,marginBottom:12,border:`1px solid ${C.bdrL}`}}>
+        <h3 style={{margin:"0 0 8px",fontSize:16,fontWeight:700,color:PC[name]}}>{name}</h3>
+
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:12,fontSize:12}}>
+          <div>Âge: <strong>{p.age} ans</strong></div>
+          <div>Poids: <strong>{p.poids} kg</strong></div>
+          <div>Taille: <strong>{p.taille} m</strong></div>
+          <div>Objectif: <strong>{p.objectif}</strong></div>
+        </div>
+
+        <div style={{background:PC[name]+"10",borderRadius:10,padding:14,textAlign:"center",marginBottom:10}}>
+          <div style={{fontSize:26,fontWeight:800,color:PC[name]}}>{p.calories} kcal/j</div>
+          <div style={{display:"flex",justifyContent:"center",gap:16,marginTop:8,fontSize:12,color:C.tM}}>
+            <span>Prot <strong>{p.proteines}g</strong></span>
+            <span>Lip <strong>{p.lipides||"—"}g</strong></span>
+            <span>Gluc <strong>{p.glucides||"—"}g</strong></span>
+          </div>
+        </div>
+
+        {p.repartition&&<div>
+          <div style={{fontSize:11,fontWeight:600,color:C.tM,marginBottom:4}}>Répartition journalière</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:4}}>
+            {Object.entries(p.repartition).map(([repas,kcal])=>(
+              <div key={repas} style={{padding:"5px 8px",borderRadius:6,background:C.bg,
+                display:"flex",justifyContent:"space-between",fontSize:11}}>
+                <span style={{color:C.tM}}>{repasLabels[repas]||repas}</span>
+                <span style={{fontWeight:600}}>{kcal} kcal</span>
+              </div>
+            ))}
+          </div>
+        </div>}
+      </div>);
+    })}
+
+    <div style={{background:"#fff",borderRadius:12,padding:14,border:`1px solid ${C.bdr}`}}>
+      <h3 style={{margin:"0 0 8px",fontSize:13,fontWeight:700,color:C.forest}}>📋 Règles</h3>
+      <div style={{fontSize:11,lineHeight:1.8,color:C.tM}}>
+        <div>• Végétarien-first : Œufs {">"} Poissons {">"} Fromages {">"} Poulet halal</div>
+        <div>• 15 min max · Petit-déj salé 3-4x/sem · Batch dimanche ~2h</div>
+      </div>
+    </div>
+
+    <div style={{background:"#E3F2FD",borderRadius:12,padding:14,border:`1px solid ${C.blue}22`,marginTop:4}}>
+      <h3 style={{margin:"0 0 8px",fontSize:13,fontWeight:700,color:C.blue}}>📱 Fonctionnalités version Netlify</h3>
+      <div style={{fontSize:11,lineHeight:1.8,color:C.tM}}>
+        <div>🔔 <strong>Notification achats frais</strong> — Jeudi 9h : liste des produits frais à acheter pour le week-end</div>
+        <div>🔔 <strong>Notification batch</strong> — Dimanche 9h : rappel des préparations du jour</div>
+        <div>⏰ <strong>Notification cuisson longue</strong> — Alerte programmée (19h45 - temps cuisson) pour les plats {">"} 25 min</div>
+        <div>📄 <strong>Export PDF</strong> — Synthèse semaine téléchargeable au verrouillage</div>
+        <div>🔄 <strong>Synchro 2 iPhones</strong> — Firebase Realtime Database (Damien + Maroie)</div>
+        <div>📶 <strong>Mode hors-ligne</strong> — Service Worker + PWA (ajout écran d'accueil)</div>
+        <div>↕️ <strong>Drag & drop stock</strong> — Réordonner les articles dans chaque catégorie</div>
+      </div>
+      <PushButton/>
+    </div>
+  </div>);
+}
+
+// ═══════ TAB 7 — SALADE (bibliothèque + compositeur) ═══════
+function salIng(id){return SALAD_ALL_INGS[id]||{nom:id,emoji:"❓",portion_g:0,cal_100g:0,prot_100g:0};}
+function salCalcNutri(comp,mult=1){
+  let cal=0,prot=0;
+  Object.values(comp).forEach(ids=>ids.forEach(id=>{
+    const i=salIng(id);const p=(i.portion_g||i.portion_ml||20)*mult;
+    cal+=(i.cal_100g*p)/100;prot+=((i.prot_100g||0)*p)/100;
+  }));
+  return{cal:Math.round(cal),prot:Math.round(prot*10)/10};
+}
+function salAllIngs(comp){const items=[];Object.values(comp).forEach(ids=>ids.forEach(id=>items.push(salIng(id))));return items;}
+function salGenRecipe(selectedIds){
+  const batch=[],fresh=[];
+  selectedIds.forEach(id=>{const i=salIng(id);if(i.batch)batch.push(i.nom);else fresh.push(i.nom);});
+  let steps=[];
+  if(batch.length)steps.push("**Batch : préparer "+batch.join(", ")+".**");
+  steps.push("Préparer et assembler : "+fresh.join(", ")+".");
+  steps.push("Assaisonner et servir.");
+  return steps.map((s,i)=>(i+1)+". "+s).join(" ");
+}
+
+function SalStars({rating,onRate,size=20}){
+  return React.createElement("div",{style:{display:"flex",gap:2}},
+    [1,2,3,4,5].map(n=>React.createElement("button",{key:n,onClick:()=>onRate?.(rating===n?0:n),
+      style:{background:"none",border:"none",cursor:onRate?"pointer":"default",
+        fontSize:size,padding:0,color:n<=rating?"#F59E0B":"#d1d5db",transition:"color .15s"}},"★"))
+  );
+}
+
+function SalBadge({children,color=C.forest,bg}){
+  return React.createElement("span",{style:{display:"inline-block",padding:"2px 7px",borderRadius:16,
+    fontSize:10.5,fontWeight:600,letterSpacing:.2,background:bg||(color+"15"),color,whiteSpace:"nowrap"}},children);
+}
+
+function SalFilterPill({children,active,onClick,color}){
+  return React.createElement("button",{onClick,style:{padding:"5px 11px",borderRadius:18,border:"none",
+    background:active?(color||C.forest):"#f3f4f6",color:active?"#fff":"#6b7280",
+    fontSize:12,fontWeight:600,cursor:"pointer",transition:"all .15s",whiteSpace:"nowrap"}},children);
+}
+
+function SalPhotoManager({photo,onPhotoChange}){
+  const fileRef=React.useRef(null);
+  const [urlInput,setUrlInput]=useState("");
+  const [showUrl,setShowUrl]=useState(false);
+  const handleFile=e=>{const f=e.target.files?.[0];if(!f)return;const r=new FileReader();r.onload=ev=>onPhotoChange(ev.target.result);r.readAsDataURL(f);};
+  return React.createElement("div",null,
+    photo&&React.createElement("div",{style:{position:"relative",marginBottom:8}},
+      React.createElement("img",{src:photo,alt:"",style:{width:"100%",height:160,objectFit:"cover",borderRadius:12}}),
+      React.createElement("button",{onClick:()=>onPhotoChange(null),style:{position:"absolute",top:6,right:6,background:"#000a",color:"#fff",border:"none",borderRadius:16,width:28,height:28,cursor:"pointer",fontSize:14}},"✕")
+    ),
+    React.createElement("div",{style:{display:"flex",gap:6}},
+      React.createElement("button",{onClick:()=>fileRef.current?.click(),style:{flex:1,padding:"8px 12px",borderRadius:8,border:"1px solid #e5e7eb",background:"#fff",fontSize:12,cursor:"pointer",color:"#374151"}},"📷 Photo"),
+      React.createElement("button",{onClick:()=>setShowUrl(!showUrl),style:{flex:1,padding:"8px 12px",borderRadius:8,border:"1px solid #e5e7eb",background:"#fff",fontSize:12,cursor:"pointer",color:"#374151"}},"🔗 URL"),
+      React.createElement("input",{ref:fileRef,type:"file",accept:"image/*",onChange:handleFile,style:{display:"none"}})
+    ),
+    showUrl&&React.createElement("div",{style:{display:"flex",gap:4,marginTop:6}},
+      React.createElement("input",{value:urlInput,onChange:e=>setUrlInput(e.target.value),placeholder:"https://...",
+        style:{flex:1,padding:"6px 10px",borderRadius:8,border:"1px solid #d1d5db",fontSize:12}}),
+      React.createElement("button",{onClick:()=>{if(urlInput){onPhotoChange(urlInput);setUrlInput("");setShowUrl(false);}},
+        style:{padding:"6px 12px",borderRadius:8,background:C.fL,color:"#fff",border:"none",fontSize:12,cursor:"pointer"}},"OK")
+    )
+  );
+}
+
+function SalChip({ingredient:i,selected,onClick,small}){
+  return React.createElement("button",{onClick,style:{display:"inline-flex",alignItems:"center",gap:small?3:5,
+    padding:small?"3px 7px":"5px 11px",borderRadius:18,
+    border:selected?"2px solid "+C.fL:"1.5px solid #d1d5db",
+    background:selected?C.fL+"10":"#fff",cursor:"pointer",fontSize:small?11:12.5,
+    fontWeight:selected?600:400,color:selected?C.forest:"#374151",transition:"all .15s"}},
+    React.createElement("span",{style:{fontSize:small?12:15}},i.emoji),
+    React.createElement("span",null,i.nom),
+    i.batch&&React.createElement("span",{style:{fontSize:8,color:C.gold}},"⏱")
+  );
+}
+
+function SalCard({salad,rating,photo,activeProfiles,onClick}){
+  const mult=activeProfiles.reduce((s,k)=>s+(SALAD_PROFILES[k]?.mult||0),0)/Math.max(activeProfiles.length,1);
+  const{cal}=salCalcNutri(salad.composition,mult);
+  const emojis=salAllIngs(salad.composition).slice(0,5).map(i=>i.emoji).join("");
+  const cc=SALAD_CUISINE_COLORS[salad.cuisine]||"#6b7280";
+  return React.createElement("button",{onClick,style:{background:"#fff",borderRadius:14,border:"1px solid #e5e7eb",
+    padding:0,cursor:"pointer",textAlign:"left",overflow:"hidden",boxShadow:"0 1px 3px #0001",width:"100%",transition:"all .15s"}},
+    photo?React.createElement("img",{src:photo,alt:"",style:{width:"100%",height:80,objectFit:"cover"}}):
+      React.createElement("div",{style:{background:"linear-gradient(135deg,"+cc+"10,"+cc+"05)",padding:"12px 12px 8px"}},
+        React.createElement("div",{style:{fontSize:24}},emojis)),
+    React.createElement("div",{style:{padding:"8px 12px 10px"}},
+      React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"#111",lineHeight:1.2,marginBottom:4}},salad.nom),
+      rating>0&&React.createElement(SalStars,{rating,size:12}),
+      React.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:3,marginTop:4}},
+        React.createElement(SalBadge,{color:cc},salad.cuisine),
+        React.createElement(SalBadge,{color:C.forest},"⏱"+salad.temps+"′"),
+        React.createElement(SalBadge,{color:"#059669"},"~"+cal+"kcal")
+      )
+    )
+  );
+}
+
+function SalDetail({salad,rating,photo,activeProfiles,onClose,onRate,onPhotoChange,onDelete,onToggleBestSeller}){
+  const cc=SALAD_CUISINE_COLORS[salad.cuisine]||"#6b7280";
+  const profileNutri=activeProfiles.map(k=>{const p=SALAD_PROFILES[k];const n=salCalcNutri(salad.composition,p.mult);return{...p,key:k,...n};});
+  const renderRecipe=text=>{
+    const parts=text.split(/(\*\*[^*]+\*\*)/g);
+    return parts.map((p,i)=>p.startsWith("**")&&p.endsWith("**")?
+      React.createElement("strong",{key:i,style:{color:C.gold,fontWeight:700}},p.slice(2,-2)):
+      React.createElement("span",{key:i},p));
+  };
+  return React.createElement("div",{style:{position:"fixed",inset:0,zIndex:1000,background:"#000a",display:"flex",alignItems:"flex-end",justifyContent:"center"},onClick:onClose},
+    React.createElement("div",{onClick:e=>e.stopPropagation(),style:{background:"#fff",borderRadius:"20px 20px 0 0",width:"100%",maxWidth:480,maxHeight:"90vh",overflow:"auto",paddingBottom:24}},
+      React.createElement("div",{style:{padding:"16px 16px 12px",position:"sticky",top:0,background:"#fff",borderRadius:"20px 20px 0 0",borderBottom:"1px solid #f3f4f6",zIndex:1}},
+        React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}},
+          React.createElement("div",{style:{flex:1}},
+            React.createElement("h2",{style:{margin:0,fontSize:18,fontWeight:800,color:"#111"}},salad.nom),
+            React.createElement("div",{style:{display:"flex",gap:5,marginTop:6,flexWrap:"wrap"}},
+              React.createElement(SalBadge,{color:cc},salad.cuisine),
+              React.createElement(SalBadge,null,"⏱ "+salad.temps+" min"),
+              salad.batch!=="Non"&&React.createElement(SalBadge,{color:C.gold,bg:C.gold+"14"},"🍳 Batch")
+            )
+          ),
+          React.createElement("button",{onClick:onClose,style:{background:"#f3f4f6",border:"none",borderRadius:18,width:32,height:32,fontSize:16,cursor:"pointer",color:"#6b7280"}},"✕")
+        ),
+        React.createElement("div",{style:{marginTop:8}},React.createElement(SalStars,{rating,onRate,size:22}))
+      ),
+      React.createElement("div",{style:{padding:"12px 16px"}},
+        React.createElement(SalPhotoManager,{photo,onPhotoChange}),
+        profileNutri.length>0&&React.createElement("div",{style:{display:"flex",gap:6,marginTop:12,flexWrap:"wrap"}},
+          profileNutri.map(p=>React.createElement("div",{key:p.key,style:{flex:1,minWidth:90,padding:"8px 10px",borderRadius:10,background:p.color+"08",border:"1px solid "+p.color+"20"}},
+            React.createElement("div",{style:{fontSize:11,fontWeight:700,color:p.color}},p.emoji+" "+p.nom),
+            React.createElement("div",{style:{fontSize:16,fontWeight:800,color:"#111"}},p.cal+" kcal"),
+            React.createElement("div",{style:{fontSize:10,color:"#6b7280"}},p.prot+"g prot")
+          ))
+        ),
+        React.createElement("h3",{style:{fontSize:12,fontWeight:700,color:C.forest,margin:"16px 0 8px",textTransform:"uppercase",letterSpacing:.8}},"Composition"),
+        Object.entries(salad.composition).map(([cat,ids])=>{
+          if(!ids.length)return null;const c=SALAD_CATEGORIES[cat];
+          return React.createElement("div",{key:cat,style:{marginBottom:8}},
+            React.createElement("div",{style:{fontSize:10,fontWeight:600,color:"#9ca3af",marginBottom:3}},c?.emoji+" "+c?.label),
+            React.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:3}},
+              ids.map(id=>{const i=salIng(id);const portion=i.portion_g||i.portion_ml||0;
+                const mults=activeProfiles.map(k=>({...SALAD_PROFILES[k],key:k}));
+                return React.createElement("span",{key:id,style:{display:"inline-flex",alignItems:"center",gap:3,padding:"2px 8px",borderRadius:14,background:"#f9fafb",border:"1px solid #e5e7eb",fontSize:11,color:"#374151"}},
+                  i.emoji+" "+i.nom,
+                  mults.map(p=>React.createElement("span",{key:p.key,style:{fontSize:9,color:p.color,fontWeight:600}},Math.round(portion*p.mult)+"g"))
+                );
+              })
+            )
+          );
+        }),
+        React.createElement("h3",{style:{fontSize:12,fontWeight:700,color:C.forest,margin:"16px 0 8px",textTransform:"uppercase",letterSpacing:.8}},"Recette"),
+        React.createElement("div",{style:{background:"#f9fafb",borderRadius:10,padding:12,fontSize:12.5,lineHeight:1.7,color:"#374151"}},renderRecipe(salad.recette)),
+        React.createElement("div",{style:{display:"flex",gap:6,marginTop:16}},
+          salad.cuisine!=="Best Seller"?
+            React.createElement("button",{onClick:onToggleBestSeller,style:{flex:1,padding:"10px 14px",borderRadius:10,border:"1.5px solid "+C.gold+"40",background:C.gold+"08",color:C.gold,fontSize:12,fontWeight:700,cursor:"pointer"}},"⭐ Passer en Best Seller"):
+            React.createElement("button",{onClick:onToggleBestSeller,style:{flex:1,padding:"10px 14px",borderRadius:10,border:"1.5px solid "+C.gold,background:C.gold+"14",color:C.gold,fontSize:12,fontWeight:700,cursor:"pointer"}},"⭐ Best Seller ✓"),
+          React.createElement("button",{onClick:onDelete,style:{padding:"10px 14px",borderRadius:10,border:"1px solid #fca5a5",background:"#fef2f2",color:"#dc2626",fontSize:12,fontWeight:600,cursor:"pointer"}},"🗑")
+        )
+      )
+    )
+  );
+}
+
+function SalComposer({onBack,onSave}){
+  const [step,setStep]=useState(1);
+  const [selected,setSelected]=useState(new Set());
+  const [saveName,setSaveName]=useState("");
+  const [saveSaison,setSaveSaison]=useState("Été");
+  const [showSave,setShowSave]=useState(false);
+  const toggle=React.useCallback(id=>{setSelected(prev=>{const n=new Set(prev);n.has(id)?n.delete(id):n.add(id);return n;});},[]);
+  const steps=[
+    {num:1,title:"Base",sub:"1-2 bases",cats:["bases"]},
+    {num:2,title:"Verdures",sub:"0-2 verdures",cats:["verdures"]},
+    {num:3,title:"Légumes",sub:"2-5 légumes",cats:["legumes_crus","legumes_cuits"]},
+    {num:4,title:"Garnitures",sub:"Protéines, fromages, marinés, herbes",cats:["proteines","fromages","marines_pickles","herbes_fraiches"]},
+    {num:5,title:"Finitions",sub:"Toppings & sauce",cats:["toppings","sauces"]},
+  ];
+  const cur=steps[step-1];
+  const{cal,prot}=React.useMemo(()=>{
+    let c=0,p=0;
+    selected.forEach(id=>{const i=salIng(id);const po=(i.portion_g||i.portion_ml||20);c+=(i.cal_100g*po)/100;p+=((i.prot_100g||0)*po)/100;});
+    return{cal:Math.round(c),prot:Math.round(p*10)/10};
+  },[selected]);
+  const applyCombo=combo=>{const n=new Set();if(combo.base)n.add(combo.base);combo.ids.forEach(id=>n.add(id));setSelected(n);setStep(5);};
+  const handleSave=()=>{
+    if(!saveName.trim()||selected.size<2)return;
+    const composition={bases:[],verdures:[],legumes_crus:[],legumes_cuits:[],marines_pickles:[],fromages:[],herbes_fraiches:[],proteines:[],toppings:[],sauces:[]};
+    selected.forEach(id=>{for(const[cat,items]of Object.entries(SALAD_INGREDIENTS)){if(items.some(i=>i.id===id)){composition[cat].push(id);break;}}});
+    const hasBatch=[...selected].some(id=>salIng(id).batch);
+    const newSalad={id:"custom_"+Date.now(),nom:saveName.trim(),cuisine:"Best Seller",saison:saveSaison,temps:12,batch:hasBatch?"Partiel":"Non",composition,recette:salGenRecipe(selected),custom:true};
+    onSave(newSalad);setShowSave(false);onBack();
+  };
+  return React.createElement("div",null,
+    React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:14}},
+      React.createElement("button",{onClick:onBack,style:{background:"#f3f4f6",border:"none",borderRadius:8,width:32,height:32,cursor:"pointer",fontSize:14}},"←"),
+      React.createElement("h2",{style:{margin:0,fontSize:17,fontWeight:800,color:C.forest}},"Composer ma salade")
+    ),
+    React.createElement("div",{style:{display:"flex",gap:3,marginBottom:14}},
+      steps.map(s=>React.createElement("button",{key:s.num,onClick:()=>setStep(s.num),style:{flex:1,height:5,borderRadius:3,border:"none",cursor:"pointer",background:s.num<=step?C.fL:"#e5e7eb"}}))
+    ),
+    step===1&&selected.size===0&&React.createElement("div",{style:{marginBottom:14}},
+      React.createElement("div",{style:{fontSize:11,fontWeight:600,color:"#9ca3af",marginBottom:6,textTransform:"uppercase",letterSpacing:.5}},"💡 Suggestions rapides"),
+      React.createElement("div",{style:{display:"flex",gap:6,overflowX:"auto",paddingBottom:4}},
+        SALAD_COMBOS.map(c=>React.createElement("button",{key:c.nom,onClick:()=>applyCombo(c),style:{flexShrink:0,padding:"7px 12px",borderRadius:10,border:"1.5px solid "+C.fL+"30",background:C.fL+"06",cursor:"pointer",textAlign:"left",minWidth:120}},
+          React.createElement("div",{style:{fontSize:12,fontWeight:700,color:C.forest}},c.nom),
+          React.createElement("div",{style:{fontSize:10,color:"#6b7280",marginTop:1}},c.desc)
+        ))
+      )
+    ),
+    React.createElement("div",{style:{background:"#f9fafb",borderRadius:12,padding:10,marginBottom:10}},
+      React.createElement("div",{style:{fontSize:14,fontWeight:700,color:C.forest}},"Étape "+cur.num+" — "+cur.title),
+      React.createElement("div",{style:{fontSize:11,color:"#6b7280"}},cur.sub)
+    ),
+    cur.cats.map(catKey=>React.createElement("div",{key:catKey,style:{marginBottom:14}},
+      React.createElement("div",{style:{fontSize:12,fontWeight:700,color:"#374151",marginBottom:6}},SALAD_CATEGORIES[catKey].emoji+" "+SALAD_CATEGORIES[catKey].label),
+      React.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:5}},
+        (SALAD_INGREDIENTS[catKey]||[]).map(i=>React.createElement(SalChip,{key:i.id,ingredient:i,selected:selected.has(i.id),onClick:()=>toggle(i.id)}))
+      )
+    )),
+    React.createElement("div",{style:{position:"sticky",bottom:0,background:"#fff",borderTop:"1px solid #e5e7eb",padding:"10px 0 4px",marginTop:14}},
+      React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}},
+        React.createElement("span",{style:{fontSize:12,fontWeight:700,color:C.forest}},selected.size+" ingr. · ~"+cal+" kcal · "+prot+"g prot"),
+        React.createElement("div",{style:{display:"flex",gap:1}},[...selected].slice(0,8).map(id=>React.createElement("span",{key:id,style:{fontSize:13}},salIng(id).emoji)))
+      ),
+      React.createElement("div",{style:{display:"flex",gap:6}},
+        step>1&&React.createElement("button",{onClick:()=>setStep(s=>s-1),style:{padding:"9px 14px",borderRadius:10,border:"1px solid #d1d5db",background:"#fff",fontSize:12,fontWeight:600,cursor:"pointer"}},"←"),
+        step<5?
+          React.createElement("button",{onClick:()=>setStep(s=>s+1),style:{flex:1,padding:"9px",borderRadius:10,background:C.fL,color:"#fff",border:"none",fontSize:12,fontWeight:700,cursor:"pointer"}},"Suivant →"):
+          React.createElement("button",{onClick:()=>selected.size>=2&&setShowSave(true),style:{flex:1,padding:"9px",borderRadius:10,border:"none",background:selected.size>=2?C.forest:"#d1d5db",color:selected.size>=2?"#fff":"#9ca3af",fontSize:12,fontWeight:700,cursor:selected.size>=2?"pointer":"default"}},"🥗 Enregistrer ("+selected.size+" ingr.)")
+      )
+    ),
+    showSave&&React.createElement("div",{style:{position:"fixed",inset:0,zIndex:1000,background:"#000a",display:"flex",alignItems:"center",justifyContent:"center"},onClick:()=>setShowSave(false)},
+      React.createElement("div",{onClick:e=>e.stopPropagation(),style:{background:"#fff",borderRadius:16,padding:20,width:"85%",maxWidth:360}},
+        React.createElement("h3",{style:{margin:"0 0 12px",fontSize:16,fontWeight:800,color:C.forest}},"🥗 Enregistrer ma salade"),
+        React.createElement("div",{style:{marginBottom:10}},
+          React.createElement("label",{style:{fontSize:11,fontWeight:600,color:"#6b7280"}},"Nom de la salade"),
+          React.createElement("input",{value:saveName,onChange:e=>setSaveName(e.target.value),placeholder:"Ma super salade...",autoFocus:true,
+            style:{width:"100%",padding:"8px 10px",borderRadius:8,border:"1px solid #d1d5db",fontSize:13,marginTop:4,boxSizing:"border-box"}})
+        ),
+        React.createElement("div",{style:{marginBottom:12}},
+          React.createElement("label",{style:{fontSize:11,fontWeight:600,color:"#6b7280"}},"Saison"),
+          React.createElement("select",{value:saveSaison,onChange:e=>setSaveSaison(e.target.value),
+            style:{width:"100%",padding:"8px",borderRadius:8,border:"1px solid #d1d5db",fontSize:13,marginTop:4}},
+            ["Été","Automne","Hiver","Printemps","Toutes saisons"].map(s=>React.createElement("option",{key:s},s))
+          )
+        ),
+        React.createElement("div",{style:{fontSize:11,color:"#6b7280",marginBottom:12}},
+          "Type : ",React.createElement("strong",{style:{color:C.gold}},"⭐ Best Seller")," · "+selected.size+" ingrédients · ~"+cal+" kcal"
+        ),
+        React.createElement("div",{style:{display:"flex",gap:8}},
+          React.createElement("button",{onClick:()=>setShowSave(false),style:{flex:1,padding:"10px",borderRadius:10,border:"1px solid #d1d5db",background:"#fff",fontSize:13,cursor:"pointer"}},"Annuler"),
+          React.createElement("button",{onClick:handleSave,style:{flex:1,padding:"10px",borderRadius:10,border:"none",background:saveName.trim()?C.forest:"#d1d5db",color:saveName.trim()?"#fff":"#9ca3af",fontSize:13,fontWeight:700,cursor:saveName.trim()?"pointer":"default"}},"✓ Enregistrer")
+        )
+      )
+    )
+  );
+}
+
+function SaladeTab({ratings,photos,customSalads,deletedIds,activeProfiles,bestsellerIds,onRate,onPhoto,onCustom,onDel,onProf,onBs}){
+  const [view,setView]=useState("library");
+  const [selectedSalad,setSelectedSalad]=useState(null);
+  const [search,setSearch]=useState("");
+  const [filterCuisine,setFilterCuisine]=useState("all");
+  const [filterSaison,setFilterSaison]=useState("all");
+  const [filterMinStars,setFilterMinStars]=useState(0);
+
+  const allSalads=React.useMemo(()=>{
+    return[...BASE_SALADES,...customSalads].filter(s=>!deletedIds.includes(s.id))
+      .map(s=>bestsellerIds.includes(s.id)?{...s,cuisine:"Best Seller"}:s);
+  },[customSalads,deletedIds,bestsellerIds]);
+
+  const cuisines=React.useMemo(()=>{
+    const set=new Set(allSalads.map(s=>s.cuisine));set.add("Best Seller");
+    return["Best Seller","Française","Méditerranéenne","Asiatique","Orientale","Autres"].filter(c=>set.has(c));
+  },[allSalads]);
+
+  const filtered=React.useMemo(()=>allSalads.filter(s=>{
+    if(search&&!s.nom.toLowerCase().includes(search.toLowerCase()))return false;
+    if(filterCuisine!=="all"&&s.cuisine!==filterCuisine)return false;
+    if(filterSaison!=="all"&&s.saison!==filterSaison)return false;
+    if(filterMinStars>0&&(ratings[s.id]||0)<filterMinStars)return false;
+    return true;
+  }),[allSalads,search,filterCuisine,filterSaison,filterMinStars,ratings]);
+
+  const toggleProfile=key=>onProf(activeProfiles.includes(key)?activeProfiles.filter(k=>k!==key):[...activeProfiles,key]);
+  const handleDelete=id=>{if(!confirm("Supprimer cette salade ?"))return;onDel([...deletedIds,id]);setSelectedSalad(null);setView("library");};
+  const handleToggleBestSeller=id=>{
+    const next=bestsellerIds.includes(id)?bestsellerIds.filter(x=>x!==id):[...bestsellerIds,id];
+    onBs(next);
+    setSelectedSalad(prev=>{if(!prev||prev.id!==id)return prev;
+      const isBs=bestsellerIds.includes(id);
+      return{...prev,cuisine:isBs?(BASE_SALADES.find(s=>s.id===id)?.cuisine||prev.cuisine):"Best Seller"};
+    });
+  };
+  const handleSaveCustom=salad=>onCustom([...customSalads,salad]);
+
+  if(view==="composer"){
+    return React.createElement("div",{style:{maxWidth:480,margin:"0 auto",padding:"14px 14px 80px"}},
+      React.createElement(SalComposer,{onBack:()=>setView("library"),onSave:handleSaveCustom})
+    );
+  }
+
+  return React.createElement("div",{style:{maxWidth:480,margin:"0 auto",padding:"14px 14px 80px"}},
+    React.createElement("h1",{style:{margin:"0 0 2px",fontSize:22,fontWeight:900,color:C.forest}},"🥗 Eat Salade Maison"),
+    React.createElement("p",{style:{margin:"0 0 12px",fontSize:12,color:"#6b7280"}},allSalads.length+" salades · Repas du midi"),
+    React.createElement("div",{style:{marginBottom:12,display:"flex",gap:6}},
+      Object.entries(SALAD_PROFILES).map(([key,p])=>{
+        const active=activeProfiles.includes(key);
+        return React.createElement("button",{key,onClick:()=>toggleProfile(key),style:{padding:"5px 10px",borderRadius:20,border:"none",
+          background:active?p.color+"18":"#f3f4f6",color:active?p.color:"#9ca3af",
+          fontSize:12,fontWeight:600,cursor:"pointer",transition:"all .15s",outline:active?"2px solid "+p.color+"40":"none"}},
+          p.emoji+" "+p.nom);
+      })
+    ),
+    React.createElement("button",{onClick:()=>setView("composer"),style:{width:"100%",padding:"12px 14px",borderRadius:12,
+      border:"2px dashed "+C.fL+"40",background:C.fL+"06",cursor:"pointer",textAlign:"left",marginBottom:12,display:"flex",alignItems:"center",gap:10}},
+      React.createElement("span",{style:{width:38,height:38,borderRadius:10,background:C.fL+"12",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}},"✨"),
+      React.createElement("div",null,
+        React.createElement("div",{style:{fontSize:14,fontWeight:700,color:C.forest}},"Composer ma salade"),
+        React.createElement("div",{style:{fontSize:11,color:"#6b7280"}},"Étape par étape → enregistrer en Best Seller")
+      ),
+      React.createElement("span",{style:{marginLeft:"auto",fontSize:16,color:C.fL}},"→")
+    ),
+    React.createElement("input",{type:"text",placeholder:"🔍 Rechercher...",value:search,onChange:e=>setSearch(e.target.value),
+      style:{width:"100%",padding:"9px 12px",borderRadius:10,border:"1.5px solid #e5e7eb",fontSize:13,outline:"none",marginBottom:10,boxSizing:"border-box"}}),
+    React.createElement("div",{style:{display:"flex",gap:5,marginBottom:8,overflowX:"auto",paddingBottom:2}},
+      React.createElement(SalFilterPill,{active:filterCuisine==="all",onClick:()=>setFilterCuisine("all")},"Toutes"),
+      cuisines.map(c=>React.createElement(SalFilterPill,{key:c,active:filterCuisine===c,onClick:()=>setFilterCuisine(c),color:SALAD_CUISINE_COLORS[c]},c))
+    ),
+    React.createElement("div",{style:{display:"flex",gap:5,marginBottom:12,alignItems:"center",flexWrap:"wrap"}},
+      React.createElement(SalFilterPill,{active:filterSaison==="all",onClick:()=>setFilterSaison("all")},"🌍 Toutes"),
+      React.createElement(SalFilterPill,{active:filterSaison==="Été",onClick:()=>setFilterSaison("Été")},"☀️ Été"),
+      React.createElement(SalFilterPill,{active:filterSaison==="Automne",onClick:()=>setFilterSaison("Automne")},"🍂 Automne"),
+      React.createElement(SalFilterPill,{active:filterSaison==="Hiver",onClick:()=>setFilterSaison("Hiver")},"❄️ Hiver"),
+      React.createElement(SalFilterPill,{active:filterSaison==="Printemps",onClick:()=>setFilterSaison("Printemps")},"🌸 Print."),
+      React.createElement("select",{value:filterMinStars,onChange:e=>setFilterMinStars(Number(e.target.value)),
+        style:{marginLeft:"auto",padding:"5px 8px",borderRadius:8,
+          border:filterMinStars>0?"1.5px solid #F59E0B":"1.5px solid #e5e7eb",
+          background:filterMinStars>0?"#FFFBEB":"#fff",fontSize:12,fontWeight:600,
+          color:filterMinStars>0?"#B45309":"#6b7280",cursor:"pointer",outline:"none"}},
+        React.createElement("option",{value:0},"⭐ Note"),
+        React.createElement("option",{value:1},"≥ 1 ★"),
+        React.createElement("option",{value:2},"≥ 2 ★★"),
+        React.createElement("option",{value:3},"≥ 3 ★★★"),
+        React.createElement("option",{value:4},"≥ 4 ★★★★"),
+        React.createElement("option",{value:5},"5 ★★★★★")
+      )
+    ),
+    React.createElement("div",{style:{fontSize:11,color:"#9ca3af",marginBottom:8,fontWeight:600}},filtered.length+" salade"+(filtered.length>1?"s":"")),
+    React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}},
+      filtered.map(s=>React.createElement(SalCard,{key:s.id,salad:s,rating:ratings[s.id]||0,photo:photos[s.id],
+        activeProfiles,onClick:()=>{setSelectedSalad(s);setView("detail");}}))
+    ),
+    filtered.length===0&&React.createElement("div",{style:{textAlign:"center",padding:32,color:"#9ca3af"}},
+      React.createElement("div",{style:{fontSize:36,marginBottom:6}},"🥬"),
+      React.createElement("div",{style:{fontSize:13}},"Aucune salade trouvée")
+    ),
+    view==="detail"&&selectedSalad&&(()=>{
+      const liveSalad=allSalads.find(s=>s.id===selectedSalad.id)||selectedSalad;
+      return React.createElement(SalDetail,{salad:liveSalad,rating:ratings[liveSalad.id]||0,photo:photos[liveSalad.id],
+        activeProfiles,onClose:()=>{setView("library");setSelectedSalad(null);},
+        onRate:n=>onRate(liveSalad.id,n),onPhotoChange:url=>onPhoto(liveSalad.id,url),
+        onDelete:()=>handleDelete(liveSalad.id),onToggleBestSeller:()=>handleToggleBestSeller(liveSalad.id)});
+    })()
+  );
+}
+
+
+// ═══════ MODAL ═══════
+function Modal({plat,onClose,profiles,rating,onRate,obs,onObs,photos,photo,onPhoto}){
+  const [photoInput,setPhotoInput]=useState("");
+  const [showPhotoEdit,setShowPhotoEdit]=useState(false);
+  const [showIng,setShowIng]=useState(true);
+  const [showRec,setShowRec]=useState(false);
+  const steps=(plat.recette||"").split(/(?=\d+\.)/).filter(s=>s.trim());
+
+  return(<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.5)",zIndex:200,
+    display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={onClose}>
+    <div onClick={e=>e.stopPropagation()} style={{background:C.bg,borderRadius:"18px 18px 0 0",
+      width:"100%",maxWidth:480,maxHeight:"88vh",overflowY:"auto",paddingBottom:"env(safe-area-inset-bottom,16px)"}}>
+      <div style={{background:`linear-gradient(135deg,${C.forest},${C.fL})`,padding:16,borderRadius:"18px 18px 0 0",color:"#fff",position:"relative"}}>
+        <button onClick={onClose} style={{position:"absolute",top:10,right:10,background:"rgba(255,255,255,.2)",
+          border:"none",borderRadius:"50%",width:28,height:28,color:"#fff",fontSize:16,cursor:"pointer",
+          display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+        {photo?<img src={photo} style={{width:"100%",height:120,objectFit:"cover",borderRadius:8,marginBottom:6}} onError={e=>{e.target.style.display="none"}}/>:<span style={{fontSize:36}}>{ET[plat.type]||"🍽"}</span>}
+        <h2 style={{margin:"6px 0 3px",fontSize:16,fontWeight:700}}>{plat.nom}</h2>
+        <div style={{fontSize:11,opacity:.85}}>{plat.type} · {EC[plat.genre]||""} {plat.genre} · {plat.saison} · {plat.temps_prepa}min</div>
+      </div>
+      <div style={{padding:"14px 16px"}}>
+        <div style={{display:"flex",gap:4,marginBottom:14,justifyContent:"center"}}>
+          {[1,2,3,4,5].map(n=>(<button key={n} onClick={()=>onRate(n===rating?0:n)} style={{background:"none",border:"none",
+            fontSize:24,cursor:"pointer",opacity:n<=rating?1:.2}}>⭐</button>))}
+        </div>
+        {plat.ingredients?.some(i=>i[0]?.toLowerCase().includes("riz"))&&plat.batch!=="Non"&&(
+          <div style={{padding:"8px 12px",borderRadius:8,background:C.dangerBg,marginBottom:14,fontSize:11,color:C.danger}}>⚠️ Riz: ne PAS batch cooker</div>)}
+        {plat.macros&&<div style={{marginBottom:14}}>
+          <h4 style={{fontSize:12,color:C.forest,fontWeight:700,marginBottom:6}}>Valeurs nutritionnelles</h4>
+          <div style={{display:"grid",gridTemplateColumns:`repeat(${profiles.length},1fr)`,gap:6}}>
+            {profiles.map(name=>plat.macros[name]&&(<div key={name} style={{padding:8,borderRadius:8,
+              border:`2px solid ${PC[name]}22`,background:PC[name]+"08",textAlign:"center"}}>
+              <div style={{fontSize:11,fontWeight:700,color:PC[name],marginBottom:4}}>{name}</div>
+              <div style={{fontSize:18,fontWeight:800}}>{plat.macros[name].kcal}</div>
+              <div style={{fontSize:9,color:C.tL}}>kcal</div>
+              <div style={{display:"flex",justifyContent:"center",gap:6,marginTop:4,fontSize:10}}>
+                <span><b>{plat.macros[name].prot}g</b> P</span>
+                {(plat.macros[name].lip>0||plat.macros[name].gluc>0)?<>
+                  <span><b>{plat.macros[name].lip}g</b> L</span>
+                  <span><b>{plat.macros[name].gluc}g</b> G</span>
+                </>:null}
+              </div>
+            </div>))}
+          </div>
+        </div>}
+        {plat.ingredients?.length>0&&<div style={{marginBottom:14}}>
+          <button onClick={()=>setShowIng(!showIng)} style={{width:"100%",padding:10,borderRadius:8,
+            border:`1px solid ${C.bdr}`,background:"#fff",cursor:"pointer",display:"flex",
+            justifyContent:"space-between",fontSize:12,fontWeight:600,color:C.forest}}>
+            <span>📋 Ingrédients ({plat.ingredients.length})</span>
+            <span style={{transform:showIng?"rotate(180deg)":"rotate(0)",transition:".2s"}}>▼</span></button>
+          {showIng&&<div style={{border:`1px solid ${C.bdr}`,borderTop:"none",borderRadius:"0 0 8px 8px",overflow:"hidden"}}>
+            <div style={{display:"grid",gridTemplateColumns:`2fr 1fr ${profiles.map(()=>"1fr").join(" ")}`,
+              background:C.forest,color:"#fff",padding:"6px 10px",fontSize:10,fontWeight:600}}>
+              <span>Ingrédient</span><span style={{textAlign:"center"}}>Unité</span>
+              {profiles.map(n=><span key={n} style={{textAlign:"center"}}>{n[0]}</span>)}</div>
+            {plat.ingredients.map(([nom,unite,qD,qM,qE],i)=>{const qMap={Damien:qD,Maroie:qM,"Maël":qE};
+              return(<div key={i} style={{display:"grid",gridTemplateColumns:`2fr 1fr ${profiles.map(()=>"1fr").join(" ")}`,
+                padding:"5px 10px",fontSize:11,borderTop:`1px solid ${C.bdrL}`,background:i%2?"#fff":C.bg}}>
+                <span style={{fontWeight:500}}>{nom}</span>
+                <span style={{textAlign:"center",color:C.tL}}>{unite}</span>
+                {profiles.map(n=><span key={n} style={{textAlign:"center",fontWeight:600,color:PC[n]}}>
+                  {qMap[n]!=null?(Number.isInteger(qMap[n])?qMap[n]:qMap[n].toFixed(1).replace(/\.0$/,"")):"—"}</span>)}
+              </div>);})}
+          </div>}
+        </div>}
+        {steps.length>0&&<div style={{marginBottom:14}}>
+          <button onClick={()=>setShowRec(!showRec)} style={{width:"100%",padding:10,borderRadius:8,
+            border:`1px solid ${C.bdr}`,background:"#fff",cursor:"pointer",display:"flex",
+            justifyContent:"space-between",fontSize:12,fontWeight:600,color:C.forest}}>
+            <span>📖 Recette ({steps.length} étapes)</span>
+            <span style={{transform:showRec?"rotate(180deg)":"rotate(0)",transition:".2s"}}>▼</span></button>
+          {showRec&&<div style={{padding:"10px 14px",background:"#fff",borderRadius:"0 0 8px 8px",
+            border:`1px solid ${C.bdr}`,borderTop:"none"}}>
+            {steps.map((s,i)=>{const isBatch=s.toLowerCase().includes("batch");
+              return <div key={i} style={{padding:"6px 0",borderBottom:i<steps.length-1?`1px solid ${C.bdrL}`:"none",
+                fontSize:12,lineHeight:1.5,color:isBatch?C.gold:C.text,fontWeight:isBatch?600:400}}>{s.trim()}</div>;})}
+          </div>}
+        </div>}
+        <div style={{marginBottom:14}}>
+          <h4 style={{fontSize:12,color:C.forest,fontWeight:700,marginBottom:6}}>📷 Photo</h4>
+          {photo&&<img src={photo} style={{width:"100%",height:150,objectFit:"cover",borderRadius:8,marginBottom:8}} onError={e=>{e.target.style.display="none"}}/>}
+          {showPhotoEdit?<div style={{display:"flex",gap:6}}>
+            <input type="text" value={photoInput} onChange={e=>setPhotoInput(e.target.value)}
+              placeholder="Coller URL image..." style={{flex:1,padding:"7px 10px",borderRadius:8,border:`1px solid ${C.bdr}`,fontSize:11,boxSizing:"border-box"}}/>
+            <button onClick={()=>{onPhoto(photoInput);setShowPhotoEdit(false);setPhotoInput("");}} style={{padding:"7px 12px",borderRadius:8,
+              background:C.fL,color:"#fff",border:"none",fontSize:11,cursor:"pointer"}}>OK</button>
+            <button onClick={()=>setShowPhotoEdit(false)} style={{padding:"7px 8px",borderRadius:8,
+              border:`1px solid ${C.bdr}`,background:"#fff",fontSize:11,cursor:"pointer"}}>X</button>
+          </div>:<div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+            <button onClick={()=>{
+              const inp=document.createElement("input");
+              inp.type="file";inp.accept="image/*";inp.capture="environment";
+              inp.onchange=ev=>{
+                const file=ev.target.files[0];if(!file)return;
+                const reader=new FileReader();
+                reader.onload=r=>{onPhoto(r.target.result);};
+                reader.readAsDataURL(file);
+              };
+              inp.click();
+            }} style={{padding:"7px 12px",borderRadius:8,border:`1px solid ${C.fL}`,
+              background:C.fL+"10",fontSize:11,cursor:"pointer",color:C.fL,fontWeight:600}}>
+              {"📸 Depuis l'appareil"}</button>
+            <button onClick={()=>setShowPhotoEdit(true)} style={{padding:"7px 12px",borderRadius:8,
+              border:`1px solid ${C.bdr}`,background:"#fff",fontSize:11,cursor:"pointer",color:C.tM}}>{"📎 URL"}</button>
+            {photo&&<button onClick={()=>onPhoto("")} style={{padding:"7px 12px",borderRadius:8,
+              border:`1px solid ${C.danger}33`,background:C.dangerBg,fontSize:11,cursor:"pointer",color:C.danger}}>Supprimer</button>}
+          </div>}
+        </div>
+        <div><h4 style={{fontSize:12,color:C.forest,fontWeight:700,marginBottom:6}}>💬 Observations</h4>
+          <textarea value={obs} onChange={e=>onObs(e.target.value)} placeholder="Ex: Maël adore..."
+            rows={2} style={{width:"100%",padding:10,borderRadius:8,border:`1px solid ${C.bdr}`,
+              fontSize:12,resize:"vertical",fontFamily:"inherit",boxSizing:"border-box"}}/></div>
+      </div>
+    </div>
+  </div>);
+}
+
+// ═══════ LOCK DIALOG (Synthèse + PDF) ═══════
+function LockDialog({menu,profiles,onClose}){
+  if(!menu)return null;
+  const [generating,setGenerating]=useState(false);
+  const pdfRef=React.useRef(null);
+  const batch=menu.repas.filter(r=>r.batch==="Oui"||r.batch==="Partiel");
+  const jour=menu.repas.filter(r=>r.batch==="Non");
+  const batchDay=(()=>{try{const d=new Date(menu.startDate||menu.at);const j=d.toLocaleDateString('fr-FR',{weekday:'long'});return j.charAt(0).toUpperCase()+j.slice(1);}catch(e){return"Dimanche";}})();
+
+  function generateText(){
+    let t="🌿 LA TABLE FAMILIALE\nSemaine du "+new Date().toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"})+"\n\n";
+    t+="══ MENU ══\n";
+    menu.repas.forEach(p=>{t+=(p.jour||p.jourDate||"")+": "+p.nom+(p.batch!=="Non"?" [BATCH]":"")+"\n";});
+    if(menu.entrees.length){t+="\n══ ENTRÉES ══\n";menu.entrees.forEach(e=>{t+="• "+e.nom+"\n";});}
+    if((menu.salades||[]).length){t+="\n══ SALADES MIDI ══\n";menu.salades.forEach(s=>{t+=(s.jour||s.jourDate||"")+": "+s.nom+(s.batch!=="Non"?" [BATCH]":"")+"\n";});}
+    t+="\n══ BATCH "+batchDay.toUpperCase()+" ══\n";
+    batch.forEach(p=>{
+      const steps=(p.recette||"").split(/(?=\d+\.)/).filter(s=>s.toLowerCase().includes("batch")).map(s=>s.trim()).join(" ");
+      t+="• "+p.nom+": "+(steps||"voir recette")+"\n";
+    });
+    if(jour.length){t+="\n══ JOUR MÊME ══\n";jour.forEach(p=>{t+=(p.jour||"")+": "+p.nom+" ("+p.temps_prepa+"min)\n";});}
+    return t;
+  }
+
+  function copyText(){
+    const t=generateText();
+    if(navigator.clipboard){navigator.clipboard.writeText(t).then(()=>alert("Synthèse copiée !"));}
+    else{const ta=document.createElement("textarea");ta.value=t;document.body.appendChild(ta);ta.select();document.execCommand("copy");document.body.removeChild(ta);alert("Copiée !");}
+  }
+
+  function downloadPDF(){
+    if(!pdfRef.current||!window.html2pdf)return;
+    setGenerating(true);
+    const opt={
+      margin:[10,10,10,10],
+      filename:"la-table-familiale-semaine.pdf",
+      image:{type:"jpeg",quality:0.95},
+      html2canvas:{scale:2,useCORS:true},
+      jsPDF:{unit:"mm",format:"a4",orientation:"portrait"}
+    };
+    html2pdf().set(opt).from(pdfRef.current).save().then(()=>setGenerating(false)).catch(()=>setGenerating(false));
+  }
+
+  const dateStr=new Date().toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"});
+
+  return(
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.5)",zIndex:300,
+      display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={onClose}>
+      <div onClick={e=>e.stopPropagation()} style={{background:"#fff",borderRadius:16,padding:20,
+        width:"100%",maxWidth:440,maxHeight:"85vh",overflowY:"auto"}}>
+        <h3 style={{margin:"0 0 12px",fontSize:16,fontWeight:700,color:C.forest,textAlign:"center"}}>🔒 Menu verrouillé !</h3>
+
+        {/* PDF content (rendered but used for export) */}
+        <div ref={pdfRef} style={{background:"#fff",padding:16,fontSize:11,lineHeight:1.7}}>
+          <div style={{textAlign:"center",marginBottom:12}}>
+            <div style={{fontSize:16,fontWeight:800,color:"#1A3A0A"}}>🌿 La Table Familiale</div>
+            <div style={{fontSize:12,color:"#4A4A4A"}}>Semaine du {dateStr}</div>
+            <div style={{fontSize:10,color:"#7A7A7A"}}>Pour {profiles.join(", ")}</div>
+          </div>
+
+          <div style={{borderTop:"2px solid #2D6B0E",paddingTop:8,marginBottom:10}}>
+            <div style={{fontWeight:700,color:"#1A3A0A",fontSize:12,marginBottom:6}}>📋 MENU DE LA SEMAINE</div>
+            {menu.repas.map(p=>(<div key={p.id} style={{padding:"3px 0",borderBottom:"1px solid #F0EDE5"}}>
+              <strong style={{color:"#2D6B0E"}}>{p.jourDate||p.jour}</strong>: {p.nom}
+              {p.batch!=="Non"&&<span style={{color:"#B8860B",fontSize:10}}> [{p.batch}]</span>}
+            </div>))}
+          </div>
+
+          {menu.entrees.length>0&&<div style={{marginBottom:10}}>
+            <div style={{fontWeight:700,color:"#B8860B",fontSize:12,marginBottom:4}}>🥕 ENTRÉES (pool libre)</div>
+            {menu.entrees.map(e=><div key={e.id}>• {e.nom} ({e.genre}, {e.temps_prepa}min)</div>)}
+          </div>}
+
+          {(menu.salades||[]).length>0&&<div style={{marginBottom:10}}>
+            <div style={{fontWeight:700,color:"#2D6B0E",fontSize:12,marginBottom:4}}>🥗 SALADES MIDI</div>
+            {menu.salades.map(s=><div key={s.id} style={{padding:"3px 0",borderBottom:"1px solid #F0EDE5"}}>
+              <strong style={{color:"#2D6B0E"}}>{s.jourDate||s.jour}</strong>: {s.nom}
+              {s.batch!=="Non"&&<span style={{color:"#B8860B",fontSize:10}}> [{s.batch}]</span>}
+            </div>)}
+          </div>}
+
+          {batch.length>0&&<div style={{marginBottom:10}}>
+            <div style={{fontWeight:700,color:"#B8860B",fontSize:12,marginBottom:4}}>👨‍🍳 BATCH COOKING — {batchDay}</div>
+            {batch.map(p=>{
+              const steps=(p.recette||"").split(/(?=\d+\.)/).filter(s=>s.toLowerCase().includes("batch")).map(s=>s.trim());
+              return(<div key={p.id} style={{marginBottom:4}}>
+                <strong>{p.nom}</strong> ({p.temps_batch!=="—"?p.temps_batch+"min":""})<br/>
+                {steps.length>0&&<span style={{color:"#B8860B"}}>{steps[0]}</span>}
+              </div>);
+            })}
+            <div style={{marginTop:6,padding:6,background:"#FFF3F0",borderRadius:4,fontSize:10,color:"#C62828"}}>
+              ⚠️ Riz = cuire au dernier moment · Viande = marinade uniquement, NE PAS cuire
+            </div>
+          </div>}
+
+          {jour.length>0&&<div style={{marginBottom:10}}>
+            <div style={{fontWeight:700,color:"#4A4A4A",fontSize:12,marginBottom:4}}>🔵 JOUR MÊME</div>
+            {jour.map(p=><div key={p.id}>{p.jourDate||p.jour}: {p.nom} ({p.temps_prepa}min)</div>)}
+          </div>}
+        </div>
+
+        {/* Action buttons */}
+        <div style={{display:"flex",gap:8,marginTop:12}}>
+          <button onClick={downloadPDF} disabled={generating} style={{flex:1,padding:12,borderRadius:10,border:"none",
+            background:`linear-gradient(135deg,${C.forest},${C.fL})`,color:"#fff",fontSize:13,fontWeight:700,
+            cursor:generating?"wait":"pointer",opacity:generating?.6:1}}>
+            {generating?"⏳ Génération...":"📄 Télécharger PDF"}</button>
+          <button onClick={copyText} style={{padding:"12px 14px",borderRadius:10,border:`1px solid ${C.bdr}`,
+            background:"#fff",fontSize:13,cursor:"pointer"}}>📋</button>
+        </div>
+        <button onClick={onClose} style={{width:"100%",marginTop:8,padding:10,borderRadius:10,
+          border:`1px solid ${C.bdr}`,background:"#fff",fontSize:13,cursor:"pointer",color:C.tM}}>Fermer</button>
+      </div>
+    </div>
+  );
+}
+
+
+// ── ROOT: Load data then render App ──
+function Root(){
+  const [loaded,setLoaded]=useState(false);
+  const [error,setError]=useState(null);
+  useEffect(()=>{
+    fetch("data.json").then(r=>r.json()).then(raw=>{
+      const ei=(a,isE)=>({
+        id:(isE?"e":"p")+a[0],nom:a[1],type:a[2],genre:a[3],saison:a[4],
+        temps_prepa:a[5],batch:a[6],temps_batch:a[7],
+        ingredients:a[8]||[],recette:a[10]||"",
+        macros:{
+          Damien:a[9]?.D?{kcal:a[9].D[0],prot:a[9].D[1],lip:a[9].D[2],gluc:a[9].D[3]}:null,
+          Maroie:a[9]?.M?{kcal:a[9].M[0],prot:a[9].M[1],lip:a[9].M[2],gluc:a[9].M[3]}:null,
+          "Maël":a[9]?.E?{kcal:a[9].E[0],prot:a[9].E[1],lip:a[9].E[2],gluc:a[9].E[3]}:null,
+        },
+      });
+      DATA={
+        plats:raw.p.map(p=>ei(p,false)),
+        entrees:raw.e.map(e=>ei(e,true)),
+        stock:raw.s.map(([n,a])=>({nom:n,articles:a.map(x=>({nom:x}))})),
+        profils:Object.fromEntries(Object.entries(raw.pr).map(([n,[cal,prot,lip,gluc,age,poids,taille,imc,act,obj,rep]])=>
+          [n,{nom:n,calories:cal,proteines:prot,lipides:lip,glucides:gluc,age,poids,taille,imc,activite:act,objectif:obj,repartition:rep}])),
+      };
+      // Inject new stock articles for salad module
+      const NEW_STOCK_ARTICLES=[
+        {cat:"FRAIS",art:"Halloumi"},{cat:"LÉGUMES",art:"Ciboulette"},{cat:"LÉGUMES",art:"Aneth"},
+        {cat:"FRAIS",art:"Artichauts marinés"},{cat:"FRAIS",art:"Poivrons marinés"},
+        {cat:"HUILES ET CONDIMENTS",art:"Vinaigre blanc"}
+      ];
+      NEW_STOCK_ARTICLES.forEach(({cat,art})=>{
+        const c=DATA.stock.find(s=>s.nom===cat);
+        if(c&&!c.articles.some(a=>a.nom===art)) c.articles.push({nom:art});
+      });
+      // Inject salades data into DATA
+      DATA.salades=BASE_SALADES;
+      DATA.saladIngredients=SALAD_INGREDIENTS;
+      DATA.saladAllIngs=SALAD_ALL_INGS;
+      setLoaded(true);
+    }).catch(e=>setError(e.message));
+  },[]);
+  if(error)return(<div style={{padding:40,textAlign:"center"}}>
+    <p style={{color:"#C62828",fontSize:16}}>Erreur: {error}</p>
+    <p style={{color:"#7A7A7A",fontSize:12}}>Vérifiez que data.json est présent.</p></div>);
+  if(!loaded)return(<div style={{display:"flex",flexDirection:"column",alignItems:"center",
+    justifyContent:"center",height:"100vh",background:"#F7F5EF"}}>
+    <div style={{fontSize:48}}>🌿</div>
+    <p style={{color:"#7A7A7A",fontSize:14,marginTop:12}}>Chargement...</p></div>);
+  return <App/>;
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<Root/>);
+  </script>
+
+  <script>
+    // ═══════ PUSH NOTIFICATIONS ═══════
+    const VAPID_PUBLIC_KEY = "BMQO2VO5Giv8BxgjWzdARnyYkAxrxeY4ww7sybm9gahbxMQM6u6RkNNPG0GLmf-AgU_MXsLiX8Eny-2ENsru16o";
+
+    function urlBase64ToUint8Array(base64String) {
+      const padding = "=".repeat((4 - base64String.length % 4) % 4);
+      const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+      const rawData = atob(base64);
+      const outputArray = new Uint8Array(rawData.length);
+      for (let i = 0; i < rawData.length; i++) outputArray[i] = rawData.charCodeAt(i);
+      return outputArray;
+    }
+
+    async function subscribePush(reg) {
+      try {
+        const existing = await reg.pushManager.getSubscription();
+        if (existing) { savePushSubscription(existing); return; }
+        const permission = await Notification.requestPermission();
+        if (permission !== "granted") { console.log("🔕 Notifications refusées"); return; }
+        const subscription = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+        });
+        savePushSubscription(subscription);
+        console.log("🔔 Push subscription active");
+      } catch (err) { console.warn("Push subscribe error:", err); }
+    }
+
+    function savePushSubscription(subscription) {
+      if (!window._fb) return;
+      const sub = subscription.toJSON();
+      const key = btoa(sub.endpoint).replace(/[.#$/\[\]]/g, "_").slice(-40);
+      window._fb.ref("push_subscriptions/" + key).set(sub);
+      console.log("💾 Subscription sauvegardée dans Firebase");
+    }
+
+    // Expose globally for the in-app button
+    window._pushSubscribe = null;
+    window._pushStatus = "loading";
+
+    async function checkAndSubscribe(reg) {
+      window._swReg = reg;
+      try {
+        const existing = await reg.pushManager.getSubscription();
+        if (existing) {
+          savePushSubscription(existing);
+          window._pushStatus = "subscribed";
+          return;
+        }
+      } catch(e) {}
+      // On iOS, permission must be triggered by user gesture
+      // So we just mark as "ready" and let the button handle it
+      if (Notification.permission === "granted") {
+        subscribePush(reg);
+      } else {
+        window._pushStatus = "ready";
+      }
+    }
+
+    window._pushSubscribe = async function() {
+      if (!window._swReg) return "no-sw";
+      try {
+        const permission = await Notification.requestPermission();
+        if (permission !== "granted") return "denied";
+        const subscription = await window._swReg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+        });
+        savePushSubscription(subscription);
+        window._pushStatus = "subscribed";
+        return "ok";
+      } catch (err) {
+        console.warn("Push subscribe error:", err);
+        return "error";
+      }
+    };
+
+    // Register SW
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js").then(reg => {
+        console.log("📱 Service Worker enregistré");
+        if (reg.active) {
+          checkAndSubscribe(reg);
+        } else {
+          reg.addEventListener("updatefound", () => {
+            const nw = reg.installing;
+            if (nw) nw.addEventListener("statechange", () => {
+              if (nw.state === "activated") checkAndSubscribe(reg);
+            });
+          });
+        }
+      }).catch(err => console.warn("SW error:", err));
+    }
+  </script>
+</body>
+</html>
