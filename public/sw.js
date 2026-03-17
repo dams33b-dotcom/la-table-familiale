@@ -1,4 +1,4 @@
-const CACHE_NAME = "ltf-v4";
+const CACHE_NAME = "ltf-v5";
 const ASSETS = [
   "/",
   "/index.html",
