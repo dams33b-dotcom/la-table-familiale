@@ -466,7 +466,9 @@ function Chip({label,on,click}){
 }
 
 // ═══════ TAB 1 — MENU ═══════
-function MenuTab({menu,setMenu,locked,profiles,setProfiles,ratings,saladRat,photos,onSel}){
+function MenuTab({menu:rawMenu,setMenu,locked,profiles,setProfiles,ratings,saladRat,photos,onSel}){
+  // Normaliser le menu (protection contre anciens menus Firebase sans certains champs)
+  const menu=rawMenu?{...rawMenu,repas:rawMenu.repas||[],entrees:rawMenu.entrees||[],salades:rawMenu.salades||[]}:null;
   const [nbR,setNbR]=useState(menu?.repas?.length||7);
   const [nbE,setNbE]=useState(menu?.entrees?.length||2);
   const [nbS,setNbS]=useState(menu?.salades?.length||0);
@@ -857,9 +859,10 @@ function CoursesTab({menu,profiles,stockCk,courseCk,setCk,stockOrder}){
 function fmtQ(v,u){if(v==null)return"—";const r=Math.round(v*10)/10;const d=Number.isInteger(r)?r:r.toFixed(1);return u&&u!=="—"?`${d} ${u}`:`${d}`;}
 
 // ═══════ TAB 4 — BATCH (restructuré : soir → salades → récap stratégie) ═══════
-function BatchTab({menu}){
+function BatchTab({menu:rawMenu}){
   const [openId,setOpenId]=useState(null);
-  if(!menu)return<div style={{padding:20,textAlign:"center",color:C.tL}}><span style={{fontSize:40}}>👨‍🍳</span><p>Générez un menu.</p></div>;
+  if(!rawMenu)return<div style={{padding:20,textAlign:"center",color:C.tL}}><span style={{fontSize:40}}>👨‍🍳</span><p>Générez un menu.</p></div>;
+  const menu={...rawMenu,repas:rawMenu.repas||[],entrees:rawMenu.entrees||[],salades:rawMenu.salades||[]};
 
   const batchDay=(()=>{try{const d=new Date(menu.startDate||menu.at);const j=d.toLocaleDateString('fr-FR',{weekday:'long'});return j.charAt(0).toUpperCase()+j.slice(1);}catch(e){return"Dimanche";}})();
   const hasRiz=p=>p.ingredients?.some(i=>i[0]?.toLowerCase().includes("riz"));
@@ -1913,8 +1916,9 @@ function Modal({plat,onClose,profiles,rating,onRate,obs,onObs,photos,photo,onPho
 }
 
 // ═══════ LOCK DIALOG (Synthèse + PDF) ═══════
-function LockDialog({menu,profiles,onClose}){
-  if(!menu)return null;
+function LockDialog({menu:rawMenu,profiles,onClose}){
+  if(!rawMenu)return null;
+  const menu={...rawMenu,repas:rawMenu.repas||[],entrees:rawMenu.entrees||[],salades:rawMenu.salades||[]};
   const [generating,setGenerating]=useState(false);
   const pdfRef=React.useRef(null);
   const batch=menu.repas.filter(r=>r.batch==="Oui"||r.batch==="Partiel");
