@@ -218,6 +218,7 @@ function App(){
     obs:(id,t)=>{const n={...obs,[id]:t};setObs(n);sSet("ltf2_obs",n);},
     lock:()=>{
       const n=!locked;setLocked(n);sSet("ltf2_lock",n);
+      if(n){sSet("ltf2_lock_at",new Date().toISOString());}
       if(n&&menu){const h=[{date:new Date().toISOString(),menu:JSON.parse(JSON.stringify(menu))},...history].slice(0,4);
         setHistory(h);sSet("ltf2_hist",h);}
     },
