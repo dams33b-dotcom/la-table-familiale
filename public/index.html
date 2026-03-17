@@ -270,42 +270,7 @@ const IC={"Levure chimique":"SUCRÉ","Miel":"SUCRÉ","Pain de mie complet":"SUCR
   "Poisson bordelaise (surgelé)":"SURG","Poivrons":"SURG","Riz arborio (cru)":"SURG",
   "Sole (filet)":"SURG","Tabasco":"SURG","Tahini":"SURG","Thym frais":"SURG",
   "Tomme de brebis":"SURG","Vin blanc sec":"SURG","Zaatar":"SURG",
-  "Épinards (surgelés)":"SURG","Labneh":"SURG","Pâte miso":"SURG",
-  // ═══ Mappings ingrédients salade (module Eat Salade Maison) ═══
-  // Bases
-  "Quinoa":"SALÉ","Boulgour":"SALÉ","Pâtes courtes":"SALÉ","Lentilles":"SALÉ",
-  "Pomme de terre":"LEG","Patate douce":"LEG","Vermicelles riz":"SALÉ",
-  // Verdures
-  "Roquette":"LEG","Épinards":"LEG","Mâche":"LEG","Salade verte":"LEG",
-  "Chou blanc":"LEG","Chou rouge":"LEG",
-  // Légumes crus
-  "Tomates cerises":"LEG","Concombre":"LEG","Carottes":"LEG","Avocat":"LEG",
-  "Oignon rouge":"LEG","Radis":"LEG","Betterave":"LEG",
-  "Champignons":"LEG","Brocoli cru":"LEG","Mangue":"FRUITS",
-  "Nectarine":"FRUITS","Pomme":"FRUITS","Pastèque":"FRUITS",
-  // Légumes cuits
-  "Patate douce rôtie":"LEG","Haricots verts":"LEG","Poivrons grillés":"LEG",
-  "Maïs":"LEG","Champignons sautés":"LEG","Brocoli blanchi":"LEG","Asperges":"LEG",
-  // Marinés & Pickles
-  "Poivrons marinés":"FRAIS","Artichauts marinés":"FRAIS",
-  "Pickles oignon":"HUI","Pickles concombre":"HUI","Pickles carottes":"HUI","Pickles radis":"HUI",
-  // Fromages
-  "Chèvre":"FRAIS","Roquefort":"FRAIS","Halloumi":"FRAIS","Cream cheese":"FRAIS",
-  // Herbes
-  "Basilic":"LEG","Coriandre":"LEG","Menthe":"LEG","Persil":"LEG",
-  "Ciboulette":"LEG","Aneth":"LEG",
-  // Protéines
-  "Œuf dur":"FRAIS","Thon":"SALÉ","Truite fumée":"PROT","Sardines":"SALÉ",
-  "Maquereaux":"SALÉ","Crevettes":"PROT","Poulet halal":"PROT",
-  "Pois chiches":"LEG","Anchois":"SALÉ","Houmous":"FRAIS",
-  // Toppings
-  "Noix":"FSEC","Gr. courge":"FSEC","Gr. sésame":"FSEC","Mix graines":"FSEC",
-  "Olives":"LEG","Câpres":"HUI","Croûtons":"SALÉ","Dattes":"FRUITS",
-  "Cornichons":"HUI","Algues":"SURG","Edamame":"SURG","Cajou":"FSEC",
-  // Sauces
-  "Citron-HO":"HUI","Balsamique":"HUI","Tahini":"HUI","Soja-sésame":"HUI",
-  "Moutarde":"HUI","Huile noix":"FSEC","César":"FRAIS","Xérès":"HUI",
-  "Pesto":"HUI","Coleslaw":"FRAIS"};
+  "Épinards (surgelés)":"SURG","Labneh":"SURG","Pâte miso":"SURG"};
 
 const CAT_ORDER=[["SUCRÉ","🍫"],["SALÉ","🧂"],["HUI","🫒"],["FRAIS","🧀"],
   ["PROT","🥩"],["FRUITS","🍎"],["FSEC","🥜"],["LEG","🥬"],["SURG","❄️"]];
@@ -433,7 +398,7 @@ function App(){
       {/* CONTENT */}
       <main style={{paddingBottom:20}}>
         {tab===0&&<MenuTab menu={menu} setMenu={sv.menu} locked={locked} profiles={profiles}
-          setProfiles={sv.prof} ratings={ratings} saladRat={saladRat} photos={photos} onSel={setSelPlat}/>}
+          setProfiles={sv.prof} ratings={ratings} photos={photos} onSel={setSelPlat}/>}
         {tab===1&&<CatalogTab ratings={ratings} profiles={profiles} photos={photos} onSel={setSelPlat}/>}
         {tab===2&&<CoursesTab menu={menu} profiles={profiles} stockCk={stockCk} courseCk={courseCk} setCk={sv.crs} stockOrder={stockOrder}/>}
         {tab===3&&<BatchTab menu={menu}/>}
@@ -466,7 +431,7 @@ function Chip({label,on,click}){
 }
 
 // ═══════ TAB 1 — MENU ═══════
-function MenuTab({menu,setMenu,locked,profiles,setProfiles,ratings,saladRat,photos,onSel}){
+function MenuTab({menu,setMenu,locked,profiles,setProfiles,ratings,photos,onSel}){
   const [nbR,setNbR]=useState(menu?.repas?.length||7);
   const [nbE,setNbE]=useState(menu?.entrees?.length||2);
   const [nbS,setNbS]=useState(menu?.salades?.length||0);
@@ -481,7 +446,7 @@ function MenuTab({menu,setMenu,locked,profiles,setProfiles,ratings,saladRat,phot
     if(saison==="Toutes saisons") return true;
     if(saison==="Printemps") return s.saison==="Toutes saisons"||s.saison==="Été";
     return s.saison==="Toutes saisons"||s.saison===saison;
-  }).filter(s=>noteF===0||((saladRat||{})[s.id]||0)>=noteF),[saison,noteF,saladRat]);
+  }).filter(s=>noteF===0||(ratings[s.id]||0)>=noteF),[saison,noteF,ratings]);
 
   const filtered=useMemo(()=>DATA.plats.filter(p=>{
     if(p.type==="Salade/bowl") return false; // Salades = midi uniquement (onglet 7)
@@ -1831,10 +1796,8 @@ function Modal({plat,onClose,profiles,rating,onRate,obs,onObs,photos,photo,onPho
               <div style={{fontSize:9,color:C.tL}}>kcal</div>
               <div style={{display:"flex",justifyContent:"center",gap:6,marginTop:4,fontSize:10}}>
                 <span><b>{plat.macros[name].prot}g</b> P</span>
-                {(plat.macros[name].lip>0||plat.macros[name].gluc>0)?<>
-                  <span><b>{plat.macros[name].lip}g</b> L</span>
-                  <span><b>{plat.macros[name].gluc}g</b> G</span>
-                </>:null}
+                <span><b>{plat.macros[name].lip}g</b> L</span>
+                <span><b>{plat.macros[name].gluc}g</b> G</span>
               </div>
             </div>))}
           </div>
