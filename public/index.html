@@ -938,6 +938,56 @@ function StockTab({stockCk,setStockCk,stockOrder,setStockOrder,customArt,setCust
   </div>);
 }
 
+// ═══════ PUSH NOTIFICATION BUTTON ═══════
+function PushButton(){
+  const [status,setStatus]=useState("checking");
+  useEffect(()=>{
+    const check=()=>{
+      if(!("serviceWorker" in navigator)||!("PushManager" in window)){setStatus("unsupported");return;}
+      if(Notification.permission==="denied"){setStatus("denied");return;}
+      if(window._pushStatus==="subscribed"){setStatus("subscribed");return;}
+      if(window._pushStatus==="ready"){setStatus("ready");return;}
+      setStatus("checking");
+    };
+    check();
+    const t=setInterval(check,1000);
+    return()=>clearInterval(t);
+  },[]);
+
+  const handleClick=async()=>{
+    if(!window._pushSubscribe){setStatus("error");return;}
+    setStatus("requesting");
+    const result=await window._pushSubscribe();
+    if(result==="ok")setStatus("subscribed");
+    else if(result==="denied")setStatus("denied");
+    else setStatus("error");
+  };
+
+  if(status==="unsupported")return(
+    <div style={{marginTop:12,padding:12,background:"#FFF3E0",borderRadius:8,fontSize:11,color:"#E65100"}}>
+      ⚠️ Les notifications push ne sont pas supportées sur ce navigateur. Ouvrez l'app depuis l'écran d'accueil (PWA).
+    </div>);
+  if(status==="denied")return(
+    <div style={{marginTop:12,padding:12,background:"#FFEBEE",borderRadius:8,fontSize:11,color:"#C62828"}}>
+      🔕 Notifications refusées. Allez dans Réglages → Notifications → La Table Familiale pour les réactiver.
+    </div>);
+  if(status==="subscribed")return(
+    <div style={{marginTop:12,padding:12,background:"#E8F5E9",borderRadius:8,fontSize:11,color:"#2E7D32"}}>
+      ✅ Notifications activées ! Vous recevrez les rappels achats frais, batch et cuisson.
+    </div>);
+  if(status==="checking")return(
+    <div style={{marginTop:12,padding:12,background:"#F5F5F5",borderRadius:8,fontSize:11,color:"#757575"}}>
+      ⏳ Vérification des notifications...
+    </div>);
+  return(
+    <button onClick={handleClick} disabled={status==="requesting"} style={{
+      marginTop:12,width:"100%",padding:14,background:C.forest,color:"#fff",
+      border:"none",borderRadius:10,fontSize:14,fontWeight:700,cursor:"pointer",
+      opacity:status==="requesting"?0.6:1}}>
+      {status==="requesting"?"⏳ Activation en cours...":"🔔 Activer les notifications"}
+    </button>);
+}
+
 // ═══════ TAB 6 — PROFILS (enrichi) ═══════
 function ProfilsTab(){
   const meta={Damien:{e:"👨",i:"💪"},Maroie:{e:"👩",i:"✨"},"Maël":{e:"👦",i:"⚡"}};
@@ -1004,6 +1054,7 @@ function ProfilsTab(){
         <div>📶 <strong>Mode hors-ligne</strong> — Service Worker + PWA (ajout écran d'accueil)</div>
         <div>↕️ <strong>Drag & drop stock</strong> — Réordonner les articles dans chaque catégorie</div>
       </div>
+      <PushButton/>
     </div>
   </div>);
 }
@@ -1307,17 +1358,58 @@ ReactDOM.createRoot(document.getElementById("root")).render(<Root/>);
       console.log("💾 Subscription sauvegardée dans Firebase");
     }
 
-    // Register SW + subscribe push
+    // Expose globally for the in-app button
+    window._pushSubscribe = null;
+    window._pushStatus = "loading";
+
+    async function checkAndSubscribe(reg) {
+      window._swReg = reg;
+      try {
+        const existing = await reg.pushManager.getSubscription();
+        if (existing) {
+          savePushSubscription(existing);
+          window._pushStatus = "subscribed";
+          return;
+        }
+      } catch(e) {}
+      // On iOS, permission must be triggered by user gesture
+      // So we just mark as "ready" and let the button handle it
+      if (Notification.permission === "granted") {
+        subscribePush(reg);
+      } else {
+        window._pushStatus = "ready";
+      }
+    }
+
+    window._pushSubscribe = async function() {
+      if (!window._swReg) return "no-sw";
+      try {
+        const permission = await Notification.requestPermission();
+        if (permission !== "granted") return "denied";
+        const subscription = await window._swReg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+        });
+        savePushSubscription(subscription);
+        window._pushStatus = "subscribed";
+        return "ok";
+      } catch (err) {
+        console.warn("Push subscribe error:", err);
+        return "error";
+      }
+    };
+
+    // Register SW
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("/sw.js").then(reg => {
         console.log("📱 Service Worker enregistré");
         if (reg.active) {
-          subscribePush(reg);
+          checkAndSubscribe(reg);
         } else {
           reg.addEventListener("updatefound", () => {
             const nw = reg.installing;
             if (nw) nw.addEventListener("statechange", () => {
-              if (nw.state === "activated") subscribePush(reg);
+              if (nw.state === "activated") checkAndSubscribe(reg);
             });
           });
         }
