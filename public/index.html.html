@@ -104,7 +104,7 @@ const SALAD_CATEGORIES = {
   toppings:{label:"Toppings",emoji:"🥜"},sauces:{label:"Sauces",emoji:"🫒"},
 };
 
-const SALAD_INGREDIENTS = {"bases":[{"id":"base_quinoa","nom":"Quinoa","emoji":"🌾","portion_g":80,"cal_100g":120,"prot_100g":4.4,"conservation_frigo_jours":5,"batch":true},{"id":"base_riz","nom":"Riz","emoji":"🍚","portion_g":80,"cal_100g":130,"prot_100g":2.7,"conservation_frigo_jours":1,"batch":false},{"id":"base_boulgour","nom":"Boulgour","emoji":"🌾","portion_g":80,"cal_100g":83,"prot_100g":3.1,"conservation_frigo_jours":5,"batch":true},{"id":"base_pates","nom":"Pâtes courtes","emoji":"🍝","portion_g":80,"cal_100g":131,"prot_100g":5.0,"conservation_frigo_jours":4,"batch":true},{"id":"base_lentilles","nom":"Lentilles","emoji":"🫘","portion_g":80,"cal_100g":116,"prot_100g":9.0,"conservation_frigo_jours":5,"batch":true},{"id":"base_pdt","nom":"Pomme de terre","emoji":"🥔","portion_g":150,"cal_100g":77,"prot_100g":2.0,"conservation_frigo_jours":4,"batch":true},{"id":"base_patate_douce","nom":"Patate douce","emoji":"🍠","portion_g":150,"cal_100g":86,"prot_100g":1.6,"conservation_frigo_jours":4,"batch":true},{"id":"base_nouilles_riz","nom":"Vermicelles riz","emoji":"🍜","portion_g":60,"cal_100g":109,"prot_100g":0.9,"conservation_frigo_jours":2,"batch":false}],"verdures":[{"id":"verd_roquette","nom":"Roquette","emoji":"🥬","portion_g":40,"cal_100g":25,"prot_100g":2.6,"conservation_frigo_jours":4},{"id":"verd_epinards","nom":"Épinards","emoji":"🌿","portion_g":50,"cal_100g":23,"prot_100g":2.9,"conservation_frigo_jours":4},{"id":"verd_mache","nom":"Mâche","emoji":"🥬","portion_g":40,"cal_100g":11,"prot_100g":1.8,"conservation_frigo_jours":3},{"id":"verd_laitue","nom":"Salade verte","emoji":"🥬","portion_g":50,"cal_100g":15,"prot_100g":1.4,"conservation_frigo_jours":5},{"id":"verd_chou_blanc","nom":"Chou blanc","emoji":"🥬","portion_g":50,"cal_100g":25,"prot_100g":1.3,"conservation_frigo_jours":10},{"id":"verd_chou_rouge","nom":"Chou rouge","emoji":"🟣","portion_g":50,"cal_100g":31,"prot_100g":1.4,"conservation_frigo_jours":10}],"legumes_crus":[{"id":"lcru_tomate","nom":"Tomates cerises","emoji":"🍅","portion_g":80,"cal_100g":18,"prot_100g":0.9,"conservation_frigo_jours":5},{"id":"lcru_concombre","nom":"Concombre","emoji":"🥒","portion_g":80,"cal_100g":12,"prot_100g":0.7,"conservation_frigo_jours":7},{"id":"lcru_carotte","nom":"Carottes","emoji":"🥕","portion_g":60,"cal_100g":41,"prot_100g":0.9,"conservation_frigo_jours":14},{"id":"lcru_avocat","nom":"Avocat","emoji":"🥑","portion_g":70,"cal_100g":160,"prot_100g":2.0,"conservation_frigo_jours":3},{"id":"lcru_poivron","nom":"Poivrons","emoji":"🫑","portion_g":60,"cal_100g":31,"prot_100g":1.0,"conservation_frigo_jours":7},{"id":"lcru_oignon_rouge","nom":"Oignon rouge","emoji":"🧅","portion_g":20,"cal_100g":40,"prot_100g":1.1,"conservation_frigo_jours":30},{"id":"lcru_radis","nom":"Radis","emoji":"🔴","portion_g":40,"cal_100g":16,"prot_100g":0.7,"conservation_frigo_jours":7},{"id":"lcru_betterave","nom":"Betterave","emoji":"🟣","portion_g":80,"cal_100g":43,"prot_100g":1.6,"conservation_frigo_jours":10},{"id":"lcru_champignon","nom":"Champignons","emoji":"🍄","portion_g":50,"cal_100g":22,"prot_100g":3.1,"conservation_frigo_jours":5},{"id":"lcru_brocoli","nom":"Brocoli cru","emoji":"🥦","portion_g":60,"cal_100g":34,"prot_100g":2.8,"conservation_frigo_jours":5},{"id":"lcru_mangue","nom":"Mangue","emoji":"🥭","portion_g":70,"cal_100g":60,"prot_100g":0.8,"conservation_frigo_jours":5},{"id":"lcru_nectarine","nom":"Nectarine","emoji":"🍑","portion_g":80,"cal_100g":44,"prot_100g":1.1,"conservation_frigo_jours":4},{"id":"lcru_pomme","nom":"Pomme","emoji":"🍏","portion_g":60,"cal_100g":52,"prot_100g":0.3,"conservation_frigo_jours":21},{"id":"lcru_pasteque","nom":"Pastèque","emoji":"🍉","portion_g":100,"cal_100g":30,"prot_100g":0.6,"conservation_frigo_jours":5}],"legumes_cuits":[{"id":"lcuit_patdouce","nom":"Patate douce rôtie","emoji":"🍠","portion_g":120,"cal_100g":90,"prot_100g":1.6,"conservation_frigo_jours":4,"batch":true},{"id":"lcuit_haricots_verts","nom":"Haricots verts","emoji":"🫛","portion_g":80,"cal_100g":31,"prot_100g":1.8,"conservation_frigo_jours":4},{"id":"lcuit_poivrons_grilles","nom":"Poivrons grillés","emoji":"🫑","portion_g":60,"cal_100g":34,"prot_100g":1.0,"conservation_frigo_jours":5,"batch":true},{"id":"lcuit_mais","nom":"Maïs","emoji":"🌽","portion_g":60,"cal_100g":86,"prot_100g":2.5,"conservation_frigo_jours":3},{"id":"lcuit_champignon_saute","nom":"Champignons sautés","emoji":"🍄","portion_g":60,"cal_100g":35,"prot_100g":3.1,"conservation_frigo_jours":3},{"id":"lcuit_brocoli_blanchi","nom":"Brocoli blanchi","emoji":"🥦","portion_g":80,"cal_100g":35,"prot_100g":2.4,"conservation_frigo_jours":4},{"id":"lcuit_asperges","nom":"Asperges","emoji":"🌱","portion_g":80,"cal_100g":20,"prot_100g":2.2,"conservation_frigo_jours":3}],"marines_pickles":[{"id":"marin_poivrons","nom":"Poivrons marinés","emoji":"🫑","portion_g":40,"cal_100g":40,"prot_100g":0.9,"conservation_frigo_jours":30},{"id":"marin_artichauts","nom":"Artichauts marinés","emoji":"🌿","portion_g":40,"cal_100g":62,"prot_100g":2.9,"conservation_frigo_jours":30},{"id":"marin_oignon_rouge","nom":"Pickles oignon","emoji":"🧅","portion_g":20,"cal_100g":30,"prot_100g":0.8,"conservation_frigo_jours":14,"batch":true},{"id":"marin_pickles_concombre","nom":"Pickles concombre","emoji":"🥒","portion_g":30,"cal_100g":18,"prot_100g":0.5,"conservation_frigo_jours":14,"batch":true},{"id":"marin_pickles_carotte","nom":"Pickles carottes","emoji":"🥕","portion_g":30,"cal_100g":35,"prot_100g":0.7,"conservation_frigo_jours":14,"batch":true},{"id":"marin_pickles_radis","nom":"Pickles radis","emoji":"🔴","portion_g":20,"cal_100g":20,"prot_100g":0.6,"conservation_frigo_jours":10,"batch":true}],"fromages":[{"id":"from_feta","nom":"Fêta","emoji":"🧀","portion_g":40,"cal_100g":264,"prot_100g":14.2,"conservation_frigo_jours":14},{"id":"from_chevre","nom":"Chèvre","emoji":"🧀","portion_g":40,"cal_100g":290,"prot_100g":19.0,"conservation_frigo_jours":14},{"id":"from_parmesan","nom":"Parmesan","emoji":"🧀","portion_g":20,"cal_100g":431,"prot_100g":38.5,"conservation_frigo_jours":30},{"id":"from_mozzarella","nom":"Mozzarella","emoji":"🧀","portion_g":60,"cal_100g":280,"prot_100g":17.0,"conservation_frigo_jours":5},{"id":"from_roquefort","nom":"Roquefort","emoji":"🧀","portion_g":25,"cal_100g":369,"prot_100g":21.5,"conservation_frigo_jours":14},{"id":"from_halloumi","nom":"Halloumi","emoji":"🧀","portion_g":50,"cal_100g":321,"prot_100g":25.0,"conservation_frigo_jours":14},{"id":"from_cream_cheese","nom":"Cream cheese","emoji":"🧀","portion_g":30,"cal_100g":342,"prot_100g":6.2,"conservation_frigo_jours":14}],"herbes_fraiches":[{"id":"herb_basilic","nom":"Basilic","emoji":"🌿","portion_g":5,"cal_100g":23,"prot_100g":3.2,"conservation_frigo_jours":5},{"id":"herb_coriandre","nom":"Coriandre","emoji":"🌿","portion_g":5,"cal_100g":23,"prot_100g":2.1,"conservation_frigo_jours":7},{"id":"herb_menthe","nom":"Menthe","emoji":"🌿","portion_g":5,"cal_100g":44,"prot_100g":3.3,"conservation_frigo_jours":7},{"id":"herb_persil","nom":"Persil","emoji":"🌿","portion_g":5,"cal_100g":36,"prot_100g":3.0,"conservation_frigo_jours":7},{"id":"herb_ciboulette","nom":"Ciboulette","emoji":"🌿","portion_g":3,"cal_100g":30,"prot_100g":3.3,"conservation_frigo_jours":7},{"id":"herb_aneth","nom":"Aneth","emoji":"🌿","portion_g":3,"cal_100g":43,"prot_100g":3.5,"conservation_frigo_jours":5}],"proteines":[{"id":"prot_oeuf","nom":"Œuf dur","emoji":"🥚","portion_g":60,"cal_100g":155,"prot_100g":12.6,"conservation_frigo_jours":7,"batch":true},{"id":"prot_thon","nom":"Thon","emoji":"🐟","portion_g":80,"cal_100g":132,"prot_100g":29.1,"conservation_frigo_jours":3},{"id":"prot_truite_fumee","nom":"Truite fumée","emoji":"🐟","portion_g":60,"cal_100g":117,"prot_100g":18.6,"conservation_frigo_jours":5},{"id":"prot_sardines","nom":"Sardines","emoji":"🐟","portion_g":80,"cal_100g":208,"prot_100g":24.6,"conservation_frigo_jours":3},{"id":"prot_maquereaux","nom":"Maquereaux","emoji":"🐟","portion_g":80,"cal_100g":205,"prot_100g":18.6,"conservation_frigo_jours":3},{"id":"prot_crevettes","nom":"Crevettes","emoji":"🦐","portion_g":80,"cal_100g":99,"prot_100g":20.9,"conservation_frigo_jours":2},{"id":"prot_poulet","nom":"Poulet halal","emoji":"🍗","portion_g":100,"cal_100g":165,"prot_100g":31.0,"conservation_frigo_jours":3,"batch":false},{"id":"prot_pois_chiches","nom":"Pois chiches","emoji":"🫘","portion_g":80,"cal_100g":164,"prot_100g":8.9,"conservation_frigo_jours":5,"batch":true},{"id":"prot_anchois","nom":"Anchois","emoji":"🐟","portion_g":15,"cal_100g":210,"prot_100g":28.9,"conservation_frigo_jours":60},{"id":"prot_houmous","nom":"Houmous","emoji":"🫘","portion_g":40,"cal_100g":166,"prot_100g":7.9,"conservation_frigo_jours":7}],"toppings":[{"id":"top_noix","nom":"Noix","emoji":"🥜","portion_g":15,"cal_100g":654,"prot_100g":15.2,"conservation_frigo_jours":90},{"id":"top_graines_courge","nom":"Gr. courge","emoji":"🌰","portion_g":10,"cal_100g":559,"prot_100g":30.2,"conservation_frigo_jours":90},{"id":"top_graines_sesame","nom":"Gr. sésame","emoji":"🌰","portion_g":8,"cal_100g":573,"prot_100g":17.7,"conservation_frigo_jours":180},{"id":"top_graines_melange","nom":"Mix graines","emoji":"🌰","portion_g":10,"cal_100g":550,"prot_100g":22.0,"conservation_frigo_jours":90},{"id":"top_olives","nom":"Olives","emoji":"🫒","portion_g":20,"cal_100g":115,"prot_100g":0.8,"conservation_frigo_jours":30},{"id":"top_capres","nom":"Câpres","emoji":"🟢","portion_g":10,"cal_100g":23,"prot_100g":2.4,"conservation_frigo_jours":180},{"id":"top_croutons","nom":"Croûtons","emoji":"🍞","portion_g":15,"cal_100g":407,"prot_100g":12.0,"conservation_frigo_jours":30},{"id":"top_dattes","nom":"Dattes","emoji":"🌴","portion_g":20,"cal_100g":282,"prot_100g":2.5,"conservation_frigo_jours":60},{"id":"top_cornichons","nom":"Cornichons","emoji":"🥒","portion_g":20,"cal_100g":14,"prot_100g":0.3,"conservation_frigo_jours":90},{"id":"top_algues","nom":"Algues","emoji":"🌊","portion_g":3,"cal_100g":35,"prot_100g":5.8,"conservation_frigo_jours":365},{"id":"top_edamame","nom":"Edamame","emoji":"🫛","portion_g":40,"cal_100g":121,"prot_100g":11.9,"conservation_frigo_jours":3},{"id":"top_cajou","nom":"Cajou","emoji":"🥜","portion_g":15,"cal_100g":553,"prot_100g":18.2,"conservation_frigo_jours":90}],"sauces":[{"id":"sauce_citron_ho","nom":"Citron-HO","emoji":"🍋","portion_ml":20,"cal_100g":400,"prot_100g":0,"conservation_frigo_jours":7},{"id":"sauce_balsamique","nom":"Balsamique","emoji":"🍷","portion_ml":20,"cal_100g":370,"prot_100g":0,"conservation_frigo_jours":14},{"id":"sauce_tahini","nom":"Tahini","emoji":"🫘","portion_ml":25,"cal_100g":320,"prot_100g":8,"conservation_frigo_jours":5},{"id":"sauce_soja_sesame","nom":"Soja-sésame","emoji":"🥢","portion_ml":20,"cal_100g":180,"prot_100g":3,"conservation_frigo_jours":14},{"id":"sauce_moutarde","nom":"Moutarde","emoji":"🟡","portion_ml":20,"cal_100g":380,"prot_100g":1,"conservation_frigo_jours":14},{"id":"sauce_huile_noix","nom":"Huile noix","emoji":"🥜","portion_ml":20,"cal_100g":400,"prot_100g":0,"conservation_frigo_jours":14},{"id":"sauce_cesar","nom":"César","emoji":"🧀","portion_ml":25,"cal_100g":420,"prot_100g":5,"conservation_frigo_jours":5},{"id":"sauce_xerez","nom":"Xérès","emoji":"🍷","portion_ml":20,"cal_100g":390,"prot_100g":0,"conservation_frigo_jours":14},{"id":"sauce_pesto","nom":"Pesto","emoji":"🌿","portion_ml":20,"cal_100g":350,"prot_100g":5,"conservation_frigo_jours":7},{"id":"sauce_coleslaw","nom":"Coleslaw","emoji":"🥬","portion_ml":25,"cal_100g":350,"prot_100g":1,"conservation_frigo_jours":5}]};
+const SALAD_INGREDIENTS = {"bases":[{"id":"base_quinoa","nom":"Quinoa","emoji":"🌾","portion_g":80,"cal_100g":120,"prot_100g":4.4,"conservation_frigo_jours":5,"batch":true},{"id":"base_riz","nom":"Riz","emoji":"🍚","portion_g":80,"cal_100g":130,"prot_100g":2.7,"conservation_frigo_jours":1,"batch":false},{"id":"base_boulgour","nom":"Boulgour","emoji":"🌾","portion_g":80,"cal_100g":83,"prot_100g":3.1,"conservation_frigo_jours":5,"batch":true},{"id":"base_pates","nom":"Pâtes courtes","emoji":"🍝","portion_g":80,"cal_100g":131,"prot_100g":5.0,"conservation_frigo_jours":4,"batch":true},{"id":"base_lentilles","nom":"Lentilles","emoji":"🫘","portion_g":80,"cal_100g":116,"prot_100g":9.0,"conservation_frigo_jours":5,"batch":true},{"id":"base_pdt","nom":"Pomme de terre","emoji":"🥔","portion_g":150,"cal_100g":77,"prot_100g":2.0,"conservation_frigo_jours":4,"batch":true},{"id":"base_patate_douce","nom":"Patate douce","emoji":"🍠","portion_g":150,"cal_100g":86,"prot_100g":1.6,"conservation_frigo_jours":4,"batch":true},{"id":"base_nouilles_riz","nom":"Vermicelles riz","emoji":"🍜","portion_g":60,"cal_100g":109,"prot_100g":0.9,"conservation_frigo_jours":2,"batch":false}],"verdures":[{"id":"verd_roquette","nom":"Roquette","emoji":"🥬","portion_g":40,"cal_100g":25,"prot_100g":2.6,"conservation_frigo_jours":4},{"id":"verd_epinards","nom":"Épinards","emoji":"🌿","portion_g":50,"cal_100g":23,"prot_100g":2.9,"conservation_frigo_jours":4},{"id":"verd_mache","nom":"Mâche","emoji":"🥬","portion_g":40,"cal_100g":11,"prot_100g":1.8,"conservation_frigo_jours":3},{"id":"verd_laitue","nom":"Salade verte","emoji":"🥬","portion_g":50,"cal_100g":15,"prot_100g":1.4,"conservation_frigo_jours":5},{"id":"verd_chou_blanc","nom":"Chou blanc","emoji":"🥬","portion_g":50,"cal_100g":25,"prot_100g":1.3,"conservation_frigo_jours":10},{"id":"verd_chou_rouge","nom":"Chou rouge","emoji":"🟣","portion_g":50,"cal_100g":31,"prot_100g":1.4,"conservation_frigo_jours":10}],"legumes_crus":[{"id":"lcru_tomate","nom":"Tomates cerises","emoji":"🍅","portion_g":80,"cal_100g":18,"prot_100g":0.9,"conservation_frigo_jours":5},{"id":"lcru_concombre","nom":"Concombre","emoji":"🥒","portion_g":80,"cal_100g":12,"prot_100g":0.7,"conservation_frigo_jours":7},{"id":"lcru_carotte","nom":"Carottes","emoji":"🥕","portion_g":60,"cal_100g":41,"prot_100g":0.9,"conservation_frigo_jours":14},{"id":"lcru_avocat","nom":"Avocat","emoji":"🥑","portion_g":70,"cal_100g":160,"prot_100g":2.0,"conservation_frigo_jours":3},{"id":"lcru_poivron","nom":"Poivrons","emoji":"🫑","portion_g":60,"cal_100g":31,"prot_100g":1.0,"conservation_frigo_jours":7},{"id":"lcru_oignon_rouge","nom":"Oignon rouge","emoji":"🧅","portion_g":20,"cal_100g":40,"prot_100g":1.1,"conservation_frigo_jours":30},{"id":"lcru_radis","nom":"Radis","emoji":"🔴","portion_g":40,"cal_100g":16,"prot_100g":0.7,"conservation_frigo_jours":7},{"id":"lcru_betterave","nom":"Betterave","emoji":"🟣","portion_g":80,"cal_100g":43,"prot_100g":1.6,"conservation_frigo_jours":10},{"id":"lcru_champignon","nom":"Champignons","emoji":"🍄","portion_g":50,"cal_100g":22,"prot_100g":3.1,"conservation_frigo_jours":5},{"id":"lcru_brocoli","nom":"Brocoli cru","emoji":"🥦","portion_g":60,"cal_100g":34,"prot_100g":2.8,"conservation_frigo_jours":5},{"id":"lcru_mangue","nom":"Mangue","emoji":"🥭","portion_g":70,"cal_100g":60,"prot_100g":0.8,"conservation_frigo_jours":5},{"id":"lcru_nectarine","nom":"Nectarine","emoji":"🍑","portion_g":80,"cal_100g":44,"prot_100g":1.1,"conservation_frigo_jours":4},{"id":"lcru_pomme","nom":"Pomme","emoji":"🍏","portion_g":60,"cal_100g":52,"prot_100g":0.3,"conservation_frigo_jours":21},{"id":"lcru_pasteque","nom":"Pastèque","emoji":"🍉","portion_g":100,"cal_100g":30,"prot_100g":0.6,"conservation_frigo_jours":5},{"id":"lcru_tomate_ronde","nom":"Tomate","emoji":"🍅","portion_g":120,"cal_100g":18,"prot_100g":0.9,"conservation_frigo_jours":5}],"legumes_cuits":[{"id":"lcuit_patdouce","nom":"Patate douce rôtie","emoji":"🍠","portion_g":120,"cal_100g":90,"prot_100g":1.6,"conservation_frigo_jours":4,"batch":true},{"id":"lcuit_haricots_verts","nom":"Haricots verts","emoji":"🫛","portion_g":80,"cal_100g":31,"prot_100g":1.8,"conservation_frigo_jours":4},{"id":"lcuit_poivrons_grilles","nom":"Poivrons grillés","emoji":"🫑","portion_g":60,"cal_100g":34,"prot_100g":1.0,"conservation_frigo_jours":5,"batch":true},{"id":"lcuit_mais","nom":"Maïs","emoji":"🌽","portion_g":60,"cal_100g":86,"prot_100g":2.5,"conservation_frigo_jours":3},{"id":"lcuit_champignon_saute","nom":"Champignons sautés","emoji":"🍄","portion_g":60,"cal_100g":35,"prot_100g":3.1,"conservation_frigo_jours":3},{"id":"lcuit_brocoli_blanchi","nom":"Brocoli blanchi","emoji":"🥦","portion_g":80,"cal_100g":35,"prot_100g":2.4,"conservation_frigo_jours":4},{"id":"lcuit_asperges","nom":"Asperges","emoji":"🌱","portion_g":80,"cal_100g":20,"prot_100g":2.2,"conservation_frigo_jours":3}],"marines_pickles":[{"id":"marin_poivrons","nom":"Poivrons marinés","emoji":"🫑","portion_g":40,"cal_100g":40,"prot_100g":0.9,"conservation_frigo_jours":30},{"id":"marin_artichauts","nom":"Artichauts marinés","emoji":"🌿","portion_g":40,"cal_100g":62,"prot_100g":2.9,"conservation_frigo_jours":30},{"id":"marin_oignon_rouge","nom":"Pickles oignon","emoji":"🧅","portion_g":20,"cal_100g":30,"prot_100g":0.8,"conservation_frigo_jours":14,"batch":true},{"id":"marin_pickles_concombre","nom":"Pickles concombre","emoji":"🥒","portion_g":30,"cal_100g":18,"prot_100g":0.5,"conservation_frigo_jours":14,"batch":true},{"id":"marin_pickles_carotte","nom":"Pickles carottes","emoji":"🥕","portion_g":30,"cal_100g":35,"prot_100g":0.7,"conservation_frigo_jours":14,"batch":true},{"id":"marin_pickles_radis","nom":"Pickles radis","emoji":"🔴","portion_g":20,"cal_100g":20,"prot_100g":0.6,"conservation_frigo_jours":10,"batch":true},{"id":"mar_tomates_sechees","nom":"Tomates séchées","emoji":"🍅","portion_g":20,"cal_100g":258,"prot_100g":14.0,"conservation_frigo_jours":60}],"fromages":[{"id":"from_feta","nom":"Fêta","emoji":"🧀","portion_g":40,"cal_100g":264,"prot_100g":14.2,"conservation_frigo_jours":14},{"id":"from_chevre","nom":"Chèvre","emoji":"🧀","portion_g":40,"cal_100g":290,"prot_100g":19.0,"conservation_frigo_jours":14},{"id":"from_parmesan","nom":"Parmesan","emoji":"🧀","portion_g":20,"cal_100g":431,"prot_100g":38.5,"conservation_frigo_jours":30},{"id":"from_mozzarella","nom":"Mozzarella","emoji":"🧀","portion_g":60,"cal_100g":280,"prot_100g":17.0,"conservation_frigo_jours":5},{"id":"from_roquefort","nom":"Roquefort","emoji":"🧀","portion_g":25,"cal_100g":369,"prot_100g":21.5,"conservation_frigo_jours":14},{"id":"from_halloumi","nom":"Halloumi","emoji":"🧀","portion_g":50,"cal_100g":321,"prot_100g":25.0,"conservation_frigo_jours":14},{"id":"from_cream_cheese","nom":"Cream cheese","emoji":"🧀","portion_g":30,"cal_100g":342,"prot_100g":6.2,"conservation_frigo_jours":14}],"herbes_fraiches":[{"id":"herb_basilic","nom":"Basilic","emoji":"🌿","portion_g":5,"cal_100g":23,"prot_100g":3.2,"conservation_frigo_jours":5},{"id":"herb_coriandre","nom":"Coriandre","emoji":"🌿","portion_g":5,"cal_100g":23,"prot_100g":2.1,"conservation_frigo_jours":7},{"id":"herb_menthe","nom":"Menthe","emoji":"🌿","portion_g":5,"cal_100g":44,"prot_100g":3.3,"conservation_frigo_jours":7},{"id":"herb_persil","nom":"Persil","emoji":"🌿","portion_g":5,"cal_100g":36,"prot_100g":3.0,"conservation_frigo_jours":7},{"id":"herb_ciboulette","nom":"Ciboulette","emoji":"🌿","portion_g":3,"cal_100g":30,"prot_100g":3.3,"conservation_frigo_jours":7},{"id":"herb_aneth","nom":"Aneth","emoji":"🌿","portion_g":3,"cal_100g":43,"prot_100g":3.5,"conservation_frigo_jours":5}],"proteines":[{"id":"prot_oeuf","nom":"Œuf dur","emoji":"🥚","portion_g":60,"cal_100g":155,"prot_100g":12.6,"conservation_frigo_jours":7,"batch":true},{"id":"prot_thon","nom":"Thon","emoji":"🐟","portion_g":80,"cal_100g":132,"prot_100g":29.1,"conservation_frigo_jours":3},{"id":"prot_truite_fumee","nom":"Truite fumée","emoji":"🐟","portion_g":60,"cal_100g":117,"prot_100g":18.6,"conservation_frigo_jours":5},{"id":"prot_sardines","nom":"Sardines","emoji":"🐟","portion_g":80,"cal_100g":208,"prot_100g":24.6,"conservation_frigo_jours":3},{"id":"prot_maquereaux","nom":"Maquereaux","emoji":"🐟","portion_g":80,"cal_100g":205,"prot_100g":18.6,"conservation_frigo_jours":3},{"id":"prot_crevettes","nom":"Crevettes","emoji":"🦐","portion_g":80,"cal_100g":99,"prot_100g":20.9,"conservation_frigo_jours":2},{"id":"prot_poulet","nom":"Poulet halal","emoji":"🍗","portion_g":100,"cal_100g":165,"prot_100g":31.0,"conservation_frigo_jours":3,"batch":false},{"id":"prot_pois_chiches","nom":"Pois chiches","emoji":"🫘","portion_g":80,"cal_100g":164,"prot_100g":8.9,"conservation_frigo_jours":5,"batch":true},{"id":"prot_anchois","nom":"Anchois","emoji":"🐟","portion_g":15,"cal_100g":210,"prot_100g":28.9,"conservation_frigo_jours":60},{"id":"prot_houmous","nom":"Houmous","emoji":"🫘","portion_g":40,"cal_100g":166,"prot_100g":7.9,"conservation_frigo_jours":7}],"toppings":[{"id":"top_noix","nom":"Noix","emoji":"🥜","portion_g":15,"cal_100g":654,"prot_100g":15.2,"conservation_frigo_jours":90},{"id":"top_graines_courge","nom":"Gr. courge","emoji":"🌰","portion_g":10,"cal_100g":559,"prot_100g":30.2,"conservation_frigo_jours":90},{"id":"top_graines_sesame","nom":"Gr. sésame","emoji":"🌰","portion_g":8,"cal_100g":573,"prot_100g":17.7,"conservation_frigo_jours":180},{"id":"top_graines_melange","nom":"Mix graines","emoji":"🌰","portion_g":10,"cal_100g":550,"prot_100g":22.0,"conservation_frigo_jours":90},{"id":"top_olives","nom":"Olives","emoji":"🫒","portion_g":20,"cal_100g":115,"prot_100g":0.8,"conservation_frigo_jours":30},{"id":"top_capres","nom":"Câpres","emoji":"🟢","portion_g":10,"cal_100g":23,"prot_100g":2.4,"conservation_frigo_jours":180},{"id":"top_croutons","nom":"Croûtons","emoji":"🍞","portion_g":15,"cal_100g":407,"prot_100g":12.0,"conservation_frigo_jours":30},{"id":"top_dattes","nom":"Dattes","emoji":"🌴","portion_g":20,"cal_100g":282,"prot_100g":2.5,"conservation_frigo_jours":60},{"id":"top_cornichons","nom":"Cornichons","emoji":"🥒","portion_g":20,"cal_100g":14,"prot_100g":0.3,"conservation_frigo_jours":90},{"id":"top_algues","nom":"Algues","emoji":"🌊","portion_g":3,"cal_100g":35,"prot_100g":5.8,"conservation_frigo_jours":365},{"id":"top_edamame","nom":"Edamame","emoji":"🫛","portion_g":40,"cal_100g":121,"prot_100g":11.9,"conservation_frigo_jours":3},{"id":"top_cajou","nom":"Cajou","emoji":"🥜","portion_g":15,"cal_100g":553,"prot_100g":18.2,"conservation_frigo_jours":90},{"id":"top_oignons_frits","nom":"Oignons frits","emoji":"🧅","portion_g":10,"cal_100g":330,"prot_100g":4.0,"conservation_frigo_jours":90}],"sauces":[{"id":"sauce_citron_ho","nom":"Citron-HO","emoji":"🍋","portion_ml":20,"cal_100g":400,"prot_100g":0,"conservation_frigo_jours":7},{"id":"sauce_balsamique","nom":"Balsamique","emoji":"🍷","portion_ml":20,"cal_100g":370,"prot_100g":0,"conservation_frigo_jours":14},{"id":"sauce_tahini","nom":"Tahini","emoji":"🫘","portion_ml":25,"cal_100g":320,"prot_100g":8,"conservation_frigo_jours":5},{"id":"sauce_soja_sesame","nom":"Soja-sésame","emoji":"🥢","portion_ml":20,"cal_100g":180,"prot_100g":3,"conservation_frigo_jours":14},{"id":"sauce_moutarde","nom":"Moutarde","emoji":"🟡","portion_ml":20,"cal_100g":380,"prot_100g":1,"conservation_frigo_jours":14},{"id":"sauce_huile_noix","nom":"Huile noix","emoji":"🥜","portion_ml":20,"cal_100g":400,"prot_100g":0,"conservation_frigo_jours":14},{"id":"sauce_cesar","nom":"César","emoji":"🧀","portion_ml":25,"cal_100g":420,"prot_100g":5,"conservation_frigo_jours":5},{"id":"sauce_xerez","nom":"Xérès","emoji":"🍷","portion_ml":20,"cal_100g":390,"prot_100g":0,"conservation_frigo_jours":14},{"id":"sauce_pesto","nom":"Pesto","emoji":"🌿","portion_ml":20,"cal_100g":350,"prot_100g":5,"conservation_frigo_jours":7},{"id":"sauce_coleslaw","nom":"Coleslaw","emoji":"🥬","portion_ml":25,"cal_100g":350,"prot_100g":1,"conservation_frigo_jours":5}]};
 const BASE_SALADES = [
   {id:"sal_01",nom:"Bol de Quinoa Salé",cuisine:"Autres",saison:"Toutes saisons",temps:10,batch:"Partiel",composition:{bases:["base_quinoa"],verdures:[],legumes_crus:["lcru_tomate","lcru_concombre","lcru_avocat"],legumes_cuits:[],marines_pickles:[],fromages:["from_feta"],herbes_fraiches:[],proteines:["prot_pois_chiches"],toppings:[],sauces:["sauce_citron_ho"]},recette:"1. **Batch : cuire quinoa 15 min, refroidir.** 2. Couper avocat, tomates, concombre. 3. Assembler + pois chiches. 4. Fêta émiettée. 5. Vinaigrette citron."},
   {id:"sal_02",nom:"Bowl poké truite fumée",cuisine:"Asiatique",saison:"Toutes saisons",temps:12,batch:"Partiel",composition:{bases:["base_riz"],verdures:[],legumes_crus:["lcru_avocat","lcru_concombre","lcru_carotte"],legumes_cuits:[],marines_pickles:[],fromages:[],herbes_fraiches:[],proteines:["prot_truite_fumee"],toppings:["top_graines_sesame","top_edamame","top_algues"],sauces:["sauce_soja_sesame"]},recette:"1. Cuire riz vinaigré (⚠️ jour même). 2. Trancher truite, avocat, concombre. 3. Dresser en quartiers. 4. Sauce soja-sésame."},
@@ -301,11 +301,13 @@ const IC={"Levure chimique":"SUCRÉ","Miel":"SUCRÉ","Pain de mie complet":"SUCR
   // Toppings
   "Noix":"FSEC","Gr. courge":"FSEC","Gr. sésame":"FSEC","Mix graines":"FSEC",
   "Olives":"LEG","Câpres":"HUI","Croûtons":"SALÉ","Dattes":"FRUITS",
-  "Cornichons":"HUI","Algues":"SURG","Edamame":"SURG","Cajou":"FSEC",
+  "Cornichons":"HUI","Algues":"SURG","Edamame":"SURG","Cajou":"FSEC","Oignons frits":"SALÉ",
   // Sauces
   "Citron-HO":"HUI","Balsamique":"HUI","Tahini":"HUI","Soja-sésame":"HUI",
   "Moutarde":"HUI","Huile noix":"FSEC","César":"FRAIS","Xérès":"HUI",
-  "Pesto":"HUI","Coleslaw":"FRAIS"};
+  "Pesto":"HUI","Coleslaw":"FRAIS",
+  // Nouveaux ingrédients salade (Étape B)
+  "Tomate":"LEG","Tomates séchées":"SALÉ"};
 
 const CAT_ORDER=[["SUCRÉ","🍫"],["SALÉ","🧂"],["HUI","🫒"],["FRAIS","🧀"],
   ["PROT","🥩"],["FRUITS","🍎"],["FSEC","🥜"],["LEG","🥬"],["SURG","❄️"]];
@@ -329,6 +331,8 @@ function App(){
   const [customArt,setCustomArt]=useState({add:[],del:[],ren:{}});
   const [photos,setPhotos]=useState({});
   const [lockDialog,setLockDialog]=useState(false);
+  // ── Plat/entrée soft delete ──
+  const [platDel,setPlatDel]=useState([]);
   // ── Salade tab states ──
   const [saladRat,setSaladRat]=useState({});
   const [saladPhotos,setSaladPhotos]=useState({});
@@ -346,6 +350,7 @@ function App(){
     setPhotos(sGet("ltf2_photos",{}));
     setStockOrder(sGet("ltf2_sord",{}));
     setCustomArt(sGet("ltf2_cart",{add:[],del:[],ren:{}}));
+    setPlatDel(sGet("ltf2_plat_del",[]));
     // Salade tab
     setSaladRat(sGet("ltf2_salad_rat",{}));setSaladPhotos(sGet("ltf2_salad_photos",{}));
     setSaladCustom(sGet("ltf2_salad_custom",[]));setSaladDel(sGet("ltf2_salad_del",[]));
@@ -361,6 +366,7 @@ function App(){
     fbListen("ltf2_photos",setPhotos);
     fbListen("ltf2_sord",setStockOrder);
     fbListen("ltf2_cart",v=>{if(v)setCustomArt(v);});
+    fbListen("ltf2_plat_del",v=>setPlatDel(v||[]));
     // Salade tab sync
     fbListen("ltf2_salad_rat",v=>setSaladRat(v||{}));
     fbListen("ltf2_salad_photos",v=>setSaladPhotos(v||{}));
@@ -386,6 +392,7 @@ function App(){
     photo:(id,url)=>{const n={...photos,[id]:url};setPhotos(n);sSet("ltf2_photos",n);},
     sord:o=>{setStockOrder(o);sSet("ltf2_sord",o);},
     cart:c=>{setCustomArt(c);sSet("ltf2_cart",c);},
+    pDel:d=>{setPlatDel(d);sSet("ltf2_plat_del",d);},
     // Salade tab savers
     sRat:(id,v)=>{setSaladRat(p=>{const n={...p,[id]:v};sSet("ltf2_salad_rat",n);return n;});},
     sPhoto:(id,url)=>{setSaladPhotos(p=>{const n={...p};if(url)n[id]=url;else delete n[id];sSet("ltf2_salad_photos",n);return n;});},
@@ -433,8 +440,8 @@ function App(){
       {/* CONTENT */}
       <main style={{paddingBottom:20}}>
         {tab===0&&<MenuTab menu={menu} setMenu={sv.menu} locked={locked} profiles={profiles}
-          setProfiles={sv.prof} ratings={ratings} saladRat={saladRat} photos={photos} onSel={setSelPlat}/>}
-        {tab===1&&<CatalogTab ratings={ratings} profiles={profiles} photos={photos} onSel={setSelPlat}/>}
+          setProfiles={sv.prof} ratings={ratings} saladRat={saladRat} photos={photos} onSel={setSelPlat} platDel={platDel}/>}
+        {tab===1&&<CatalogTab ratings={ratings} profiles={profiles} photos={photos} onSel={setSelPlat} platDel={platDel} onPlatDel={sv.pDel}/>}
         {tab===2&&<CoursesTab menu={menu} profiles={profiles} stockCk={stockCk} courseCk={courseCk} setCk={sv.crs} stockOrder={stockOrder}/>}
         {tab===3&&<BatchTab menu={menu}/>}
         {tab===4&&<StockTab stockCk={stockCk} setStockCk={sv.stk} stockOrder={stockOrder} setStockOrder={sv.sord} customArt={customArt} setCustomArt={sv.cart}/>}
@@ -467,7 +474,7 @@ function Chip({label,on,click}){
 }
 
 // ═══════ TAB 1 — MENU ═══════
-function MenuTab({menu:rawMenu,setMenu,locked,profiles,setProfiles,ratings,saladRat,photos,onSel}){
+function MenuTab({menu:rawMenu,setMenu,locked,profiles,setProfiles,ratings,saladRat,photos,onSel,platDel}){
   // Normaliser le menu (protection contre anciens menus Firebase sans certains champs)
   const menu=rawMenu?{...rawMenu,repas:rawMenu.repas||[],entrees:rawMenu.entrees||[],salades:rawMenu.salades||[]}:null;
   const [nbR,setNbR]=useState(menu?.repas?.length||7);
@@ -476,8 +483,10 @@ function MenuTab({menu:rawMenu,setMenu,locked,profiles,setProfiles,ratings,salad
   const [noteF,setNoteF]=useState(0);
   const [confirm,setConfirm]=useState(false);
   const [replIdx,setReplIdx]=useState(null);
+  const [replListR,setReplListR]=useState(null); // {idx,type} — liste choix repas
   const [replSIdx,setReplSIdx]=useState(null);
   const [replEIdx,setReplEIdx]=useState(null);
+  const [replListE,setReplListE]=useState(null); // {idx,genre} — liste choix entrées
 
   // Pool salades (depuis BASE_SALADES — module Eat Salade Maison)
   const filteredS=useMemo(()=>BASE_SALADES.filter(s=>{
@@ -488,10 +497,11 @@ function MenuTab({menu:rawMenu,setMenu,locked,profiles,setProfiles,ratings,salad
 
   const filtered=useMemo(()=>DATA.plats.filter(p=>{
     if(p.type==="Salade/bowl") return false; // Salades = midi uniquement (onglet 7)
+    if((platDel||[]).includes(p.id)) return false; // Plats supprimés
     if(saison==="Toutes saisons") return true;
     if(saison==="Printemps") return p.saison==="Toutes saisons"||p.saison==="Été";
     return p.saison==="Toutes saisons"||p.saison===saison;
-  }).filter(p=>noteF===0||(ratings[p.id]||0)>=noteF),[saison,noteF,ratings]);
+  }).filter(p=>noteF===0||(ratings[p.id]||0)>=noteF),[saison,noteF,ratings,platDel]);
 
   const filteredE=useMemo(()=>DATA.entrees.filter(e=>{
     if(saison==="Toutes saisons") return true;
@@ -502,15 +512,16 @@ function MenuTab({menu:rawMenu,setMenu,locked,profiles,setProfiles,ratings,salad
   function generate(){
     if(menu&&!confirm){setConfirm(true);return;}
     setConfirm(false);
-    const sh=[...filtered].sort(()=>Math.random()-.5).slice(0,nbR);
+    const sh=nbR>0?[...filtered].sort(()=>Math.random()-.5).slice(0,nbR):[];
     const bo={Oui:0,Partiel:1,Non:2};
     sh.sort((a,b)=>(bo[a.batch]??1)-(bo[b.batch]??1));
     const weekDays=getWeekDays(new Date());
     const repas=sh.map((p,i)=>({...p,jour:weekDays[i%7].full,jourShort:weekDays[i%7].name,jourIdx:i%7,jourDate:weekDays[i%7].dateStr}));
-    const ent=[...filteredE].sort(()=>Math.random()-.5).slice(0,nbE);
+    const ent=nbE>0?[...filteredE].sort(()=>Math.random()-.5).slice(0,nbE):[];
     // Conserver les salades existantes (ajoutées manuellement depuis l'onglet Salade)
     const salades=menu?.salades||[];
     setMenu({repas,entrees:ent,salades,at:new Date().toISOString(),startDate:new Date().toISOString()});
+    setReplIdx(null);setReplListR(null);setReplEIdx(null);setReplListE(null);setReplSIdx(null);
   }
   function removeS(idx){if(locked)return;
     const wd=getWeekDays(menu.startDate?new Date(menu.startDate):new Date());
@@ -525,20 +536,26 @@ function MenuTab({menu:rawMenu,setMenu,locked,profiles,setProfiles,ratings,salad
   function removeR(idx){if(locked)return;
     const wd=getWeekDays(menu.startDate?new Date(menu.startDate):new Date());
     const r=menu.repas.filter((_,i)=>i!==idx).map((r,i)=>({...r,jour:wd[i%7].full,jourShort:wd[i%7].name,jourIdx:i%7,jourDate:wd[i%7].dateStr}));
-    setMenu({...menu,repas:r});}
+    setMenu({...menu,repas:r});setReplIdx(null);setReplListR(null);}
   function replaceR(idx,type){if(locked)return;
     const cands=filtered.filter(p=>p.type===type&&!menu.repas.some(r=>r.id===p.id));
     if(!cands.length)return;
     const r=[...menu.repas];r[idx]={...cands[Math.floor(Math.random()*cands.length)],jour:r[idx].jour,jourShort:r[idx].jourShort,jourIdx:r[idx].jourIdx,jourDate:r[idx].jourDate};
-    setMenu({...menu,repas:r});setReplIdx(null);}
+    setMenu({...menu,repas:r});setReplIdx(null);setReplListR(null);}
+  function pickR(idx,plat){if(locked)return;
+    const r=[...menu.repas];r[idx]={...plat,jour:r[idx].jour,jourShort:r[idx].jourShort,jourIdx:r[idx].jourIdx,jourDate:r[idx].jourDate};
+    setMenu({...menu,repas:r});setReplIdx(null);setReplListR(null);}
   function removeE(idx){if(locked)return;
     const e=menu.entrees.filter((_,i)=>i!==idx);
-    setMenu({...menu,entrees:e});}
+    setMenu({...menu,entrees:e});setReplEIdx(null);setReplListE(null);}
   function replaceE(idx,genre){if(locked)return;
     const cands=filteredE.filter(e=>e.genre===genre&&!menu.entrees.some(r=>r.id===e.id));
     if(!cands.length)return;
     const e=[...menu.entrees];e[idx]=cands[Math.floor(Math.random()*cands.length)];
-    setMenu({...menu,entrees:e});setReplEIdx(null);}
+    setMenu({...menu,entrees:e});setReplEIdx(null);setReplListE(null);}
+  function pickE(idx,entree){if(locked)return;
+    const e=[...menu.entrees];e[idx]=entree;
+    setMenu({...menu,entrees:e});setReplEIdx(null);setReplListE(null);}
   function toggleProf(name){
     const n=profiles.includes(name)?profiles.filter(p=>p!==name):[...profiles,name];
     if(!n.length)return;setProfiles(n);}
@@ -558,7 +575,7 @@ function MenuTab({menu:rawMenu,setMenu,locked,profiles,setProfiles,ratings,salad
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
           <div>
             <label style={{fontSize:11,color:C.tM,fontWeight:600}}>Repas: <strong style={{color:C.forest,fontSize:15}}>{nbR}</strong></label>
-            <input type="range" min={2} max={14} value={nbR} onChange={e=>setNbR(+e.target.value)} style={{width:"100%",accentColor:C.fL}}/>
+            <input type="range" min={0} max={12} value={nbR} onChange={e=>setNbR(+e.target.value)} style={{width:"100%",accentColor:C.fL}}/>
           </div>
           <div>
             <label style={{fontSize:11,color:C.tM,fontWeight:600}}>Entrées: <strong style={{color:C.forest,fontSize:15}}>{nbE}</strong></label>
@@ -635,20 +652,48 @@ function MenuTab({menu:rawMenu,setMenu,locked,profiles,setProfiles,ratings,salad
                     ))}</div>}
                 </div>
                 {!locked&&<div style={{display:"flex",justifyContent:"flex-end",gap:4,marginTop:6}}>
-                  <button onClick={()=>setReplIdx(replIdx===idx?null:idx)} style={{padding:"3px 8px",borderRadius:6,
+                  <button onClick={()=>{setReplIdx(replIdx===idx?null:idx);setReplListR(null);}} style={{padding:"3px 8px",borderRadius:6,
                     border:`1px solid ${C.bdr}`,background:"#fff",fontSize:10,cursor:"pointer",color:C.tM}}>🔄</button>
                   <button onClick={()=>removeR(idx)} style={{padding:"3px 8px",borderRadius:6,
                     border:`1px solid ${C.danger}33`,background:C.dangerBg,fontSize:10,cursor:"pointer",color:C.danger}}>✕</button>
                 </div>}
               </div>
               {replIdx===idx&&!locked&&(
-                <div style={{padding:8,background:"#fff",borderRadius:"0 0 10px 10px",border:`1px solid ${C.bdr}`,borderTop:"none",display:"flex",flexWrap:"wrap",gap:4}}>
+                <div style={{padding:8,background:"#fff",borderRadius:replListR&&replListR.idx===idx?"0":"0 0 10px 10px",border:`1px solid ${C.bdr}`,borderTop:"none",display:"flex",flexWrap:"wrap",gap:4}}>
                   {TYPES.map(type=>{const cnt=filtered.filter(p2=>p2.type===type&&!menu.repas.some(r=>r.id===p2.id)).length;
-                    return <button key={type} onClick={()=>replaceR(idx,type)} disabled={!cnt}
-                      style={{padding:"3px 8px",borderRadius:12,fontSize:10,border:`1px solid ${C.bdr}`,
-                        background:cnt?"#fff":"#f5f5f5",cursor:cnt?"pointer":"default",
+                    return <button key={type} onClick={()=>setReplListR(cnt?{idx,type}:null)} disabled={!cnt}
+                      style={{padding:"3px 8px",borderRadius:12,fontSize:10,border:`1px solid ${replListR&&replListR.idx===idx&&replListR.type===type?C.fL:C.bdr}`,
+                        background:replListR&&replListR.idx===idx&&replListR.type===type?C.fL+"18":"#fff",
+                        cursor:cnt?"pointer":"default",
                         color:cnt?C.text:C.tL,opacity:cnt?1:.5}}>{ET[type]||"🍽"} {type.split("/")[0]} ({cnt})</button>;})}
                 </div>)}
+              {replListR&&replListR.idx===idx&&!locked&&(()=>{
+                const cands=filtered.filter(p2=>p2.type===replListR.type&&!menu.repas.some(r=>r.id===p2.id));
+                return <div style={{background:"#fff",borderRadius:"0 0 10px 10px",border:`1px solid ${C.bdr}`,borderTop:`1px dashed ${C.bdr}`,maxHeight:260,overflowY:"auto"}}>
+                  <div style={{padding:"6px 10px",display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:0,background:"#fff",zIndex:1}}>
+                    <span style={{fontSize:11,fontWeight:600,color:C.forest}}>{ET[replListR.type]||"🍽"} {replListR.type} — {cands.length} plat{cands.length>1?"s":""}</span>
+                    <div style={{display:"flex",gap:4}}>
+                      <button onClick={()=>replaceR(idx,replListR.type)} style={{padding:"3px 8px",borderRadius:8,fontSize:10,border:`1px solid ${C.gold}`,background:C.gold+"15",cursor:"pointer",color:C.gold,fontWeight:600}}>🎲 Aléatoire</button>
+                      <button onClick={()=>setReplListR(null)} style={{padding:"3px 8px",borderRadius:8,fontSize:10,border:`1px solid ${C.bdr}`,background:"#fff",cursor:"pointer",color:C.tL}}>✕</button>
+                    </div>
+                  </div>
+                  {cands.map(p2=>(
+                    <div key={p2.id} onClick={()=>pickR(idx,p2)} style={{padding:"8px 10px",borderTop:`1px solid ${C.bdr}22`,cursor:"pointer",display:"flex",alignItems:"center",gap:8}}
+                      onMouseOver={e=>e.currentTarget.style.background=C.fL+"0A"} onMouseOut={e=>e.currentTarget.style.background="transparent"}>
+                      <span style={{fontSize:16}}>{ET[p2.type]||"🍽"}</span>
+                      <div style={{flex:1}}>
+                        <div style={{fontSize:12,fontWeight:600}}>{p2.nom}</div>
+                        <div style={{fontSize:10,color:C.tL,display:"flex",gap:6,flexWrap:"wrap",marginTop:1}}>
+                          <span>{p2.genre}</span>
+                          <span>·</span>
+                          <span>⏱ {p2.temps_prepa}min</span>
+                          {p2.batch&&<><span>·</span><span style={{color:C.fL}}>🍳 Batch</span></>}
+                          {p2.note&&<><span>·</span><span>{"⭐".repeat(Math.min(p2.note,5))}</span></>}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>;})()}
             </div>);
           })}
         </div>
@@ -666,21 +711,48 @@ function MenuTab({menu:rawMenu,setMenu,locked,profiles,setProfiles,ratings,salad
                     <div style={{fontSize:10,color:C.tL}}>{e.genre} · {e.temps_prepa}min</div></div>
                   </div>
                   {!locked&&<div style={{display:"flex",gap:4}}>
-                    <button onClick={()=>setReplEIdx(replEIdx===idx?null:idx)} style={{padding:"3px 8px",borderRadius:6,
+                    <button onClick={()=>{setReplEIdx(replEIdx===idx?null:idx);setReplListE(null);}} style={{padding:"3px 8px",borderRadius:6,
                       border:`1px solid ${C.bdr}`,background:"#fff",fontSize:10,cursor:"pointer",color:C.tM}}>🔄</button>
                     <button onClick={()=>removeE(idx)} style={{padding:"3px 8px",borderRadius:6,
                       border:`1px solid ${C.danger}33`,background:C.dangerBg,fontSize:10,cursor:"pointer",color:C.danger}}>✕</button>
                   </div>}
                 </div>
                 {replEIdx===idx&&!locked&&(
-                  <div style={{padding:8,background:"#fff",borderRadius:"0 0 10px 10px",border:`1px solid ${C.bdr}`,borderTop:"none",display:"flex",flexWrap:"wrap",gap:4}}>
+                  <div style={{padding:8,background:"#fff",borderRadius:replListE&&replListE.idx===idx?"0":"0 0 10px 10px",border:`1px solid ${C.bdr}`,borderTop:"none",display:"flex",flexWrap:"wrap",gap:4}}>
                     <span style={{fontSize:10,color:C.tL,width:"100%",marginBottom:2}}>Remplacer par :</span>
                     {CUISINES.map(cui=>{const cnt=filteredE.filter(e2=>e2.genre===cui&&!menu.entrees.some(r=>r.id===e2.id)).length;
-                      return <button key={cui} onClick={()=>replaceE(idx,cui)} disabled={!cnt}
-                        style={{padding:"3px 8px",borderRadius:12,fontSize:10,border:`1px solid ${C.bdr}`,
-                          background:cnt?"#fff":"#f5f5f5",cursor:cnt?"pointer":"default",
+                      return <button key={cui} onClick={()=>setReplListE(cnt?{idx,genre:cui}:null)} disabled={!cnt}
+                        style={{padding:"3px 8px",borderRadius:12,fontSize:10,border:`1px solid ${replListE&&replListE.idx===idx&&replListE.genre===cui?C.gold:C.bdr}`,
+                          background:replListE&&replListE.idx===idx&&replListE.genre===cui?C.gold+"18":"#fff",
+                          cursor:cnt?"pointer":"default",
                           color:cnt?C.text:C.tL,opacity:cnt?1:.5}}>{EC[cui]||"🌍"} {cui} ({cnt})</button>;})}
                   </div>)}
+                {replListE&&replListE.idx===idx&&!locked&&(()=>{
+                  const cands=filteredE.filter(e2=>e2.genre===replListE.genre&&!menu.entrees.some(r=>r.id===e2.id));
+                  return <div style={{background:"#fff",borderRadius:"0 0 10px 10px",border:`1px solid ${C.bdr}`,borderTop:`1px dashed ${C.bdr}`,maxHeight:260,overflowY:"auto"}}>
+                    <div style={{padding:"6px 10px",display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:0,background:"#fff",zIndex:1}}>
+                      <span style={{fontSize:11,fontWeight:600,color:C.gold}}>{EC[replListE.genre]||"🌍"} {replListE.genre} — {cands.length} entrée{cands.length>1?"s":""}</span>
+                      <div style={{display:"flex",gap:4}}>
+                        <button onClick={()=>replaceE(idx,replListE.genre)} style={{padding:"3px 8px",borderRadius:8,fontSize:10,border:`1px solid ${C.gold}`,background:C.gold+"15",cursor:"pointer",color:C.gold,fontWeight:600}}>🎲 Aléatoire</button>
+                        <button onClick={()=>setReplListE(null)} style={{padding:"3px 8px",borderRadius:8,fontSize:10,border:`1px solid ${C.bdr}`,background:"#fff",cursor:"pointer",color:C.tL}}>✕</button>
+                      </div>
+                    </div>
+                    {cands.map(e2=>(
+                      <div key={e2.id} onClick={()=>pickE(idx,e2)} style={{padding:"8px 10px",borderTop:`1px solid ${C.bdr}22`,cursor:"pointer",display:"flex",alignItems:"center",gap:8}}
+                        onMouseOver={ev=>ev.currentTarget.style.background=C.gold+"0A"} onMouseOut={ev=>ev.currentTarget.style.background="transparent"}>
+                        <span style={{fontSize:16}}>🥕</span>
+                        <div style={{flex:1}}>
+                          <div style={{fontSize:12,fontWeight:600}}>{e2.nom}</div>
+                          <div style={{fontSize:10,color:C.tL,display:"flex",gap:6,flexWrap:"wrap",marginTop:1}}>
+                            <span>{e2.genre}</span>
+                            <span>·</span>
+                            <span>⏱ {e2.temps_prepa}min</span>
+                            {e2.batch&&<><span>·</span><span style={{color:C.fL}}>🍳 Batch</span></>}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>;})()}
               </div>
             ))}
           </div>
@@ -740,14 +812,19 @@ function MenuTab({menu:rawMenu,setMenu,locked,profiles,setProfiles,ratings,salad
 }
 
 // ═══════ TAB 2 — CATALOGUE ═══════
-function CatalogTab({ratings,profiles,photos,onSel}){
+function CatalogTab({ratings,profiles,photos,onSel,platDel,onPlatDel}){
   const [search,setSearch]=useState("");
   const [tF,setTF]=useState("all");
   const [cF,setCF]=useState("all");
   const [showE,setShowE]=useState(false);
   const [sF,setSF]=useState("Toutes saisons");
+  const [showDeleted,setShowDeleted]=useState(false);
+  const [confirmDel,setConfirmDel]=useState(null);
+  const del=platDel||[];
   const items=useMemo(()=>{
     let list=showE?DATA.entrees:DATA.plats;
+    if(!showDeleted) list=list.filter(p=>!del.includes(p.id));
+    else list=list.filter(p=>del.includes(p.id));
     if(sF!=="Toutes saisons"){
       if(sF==="Printemps") list=list.filter(p=>p.saison==="Toutes saisons"||p.saison==="Été");
       else list=list.filter(p=>p.saison==="Toutes saisons"||p.saison===sF);
@@ -756,7 +833,16 @@ function CatalogTab({ratings,profiles,photos,onSel}){
     if(cF!=="all")list=list.filter(p=>p.genre===cF);
     if(search.trim()){const q=search.toLowerCase();list=list.filter(p=>p.nom.toLowerCase().includes(q));}
     return list;
-  },[showE,sF,tF,cF,search]);
+  },[showE,sF,tF,cF,search,del,showDeleted]);
+
+  const delCount=showE?DATA.entrees.filter(p=>del.includes(p.id)).length:DATA.plats.filter(p=>del.includes(p.id)).length;
+  const activeCount=showE?DATA.entrees.filter(p=>!del.includes(p.id)).length:DATA.plats.filter(p=>!del.includes(p.id)).length;
+
+  function toggleDel(id){
+    if(del.includes(id)){onPlatDel(del.filter(d=>d!==id));}
+    else{onPlatDel([...del,id]);}
+    setConfirmDel(null);
+  }
 
   return(<div style={{padding:14,maxWidth:600,margin:"0 auto",textAlign:"center"}}>
     <div style={{position:"relative",marginBottom:10}}>
@@ -765,11 +851,17 @@ function CatalogTab({ratings,profiles,photos,onSel}){
         style={{width:"100%",padding:"8px 10px 8px 32px",borderRadius:10,border:`1px solid ${C.bdr}`,fontSize:13,background:"#fff",boxSizing:"border-box"}}/>
     </div>
     <div style={{display:"flex",gap:6,marginBottom:10,justifyContent:"center"}}>
-      <button onClick={()=>setShowE(false)} style={{flex:1,padding:7,borderRadius:8,border:`2px solid ${C.fL}`,
-        background:!showE?C.fL:"transparent",color:!showE?"#fff":C.fL,fontSize:12,fontWeight:600,cursor:"pointer"}}>🍽 Plats ({DATA.plats.length})</button>
-      <button onClick={()=>setShowE(true)} style={{flex:1,padding:7,borderRadius:8,border:`2px solid ${C.gold}`,
-        background:showE?C.gold:"transparent",color:showE?"#fff":C.gold,fontSize:12,fontWeight:600,cursor:"pointer"}}>🥕 Entrées ({DATA.entrees.length})</button>
+      <button onClick={()=>{setShowE(false);setShowDeleted(false);}} style={{flex:1,padding:7,borderRadius:8,border:`2px solid ${C.fL}`,
+        background:!showE&&!showDeleted?C.fL:"transparent",color:!showE&&!showDeleted?"#fff":C.fL,fontSize:12,fontWeight:600,cursor:"pointer"}}>🍽 Plats ({activeCount})</button>
+      <button onClick={()=>{setShowE(true);setShowDeleted(false);}} style={{flex:1,padding:7,borderRadius:8,border:`2px solid ${C.gold}`,
+        background:showE&&!showDeleted?C.gold:"transparent",color:showE&&!showDeleted?"#fff":C.gold,fontSize:12,fontWeight:600,cursor:"pointer"}}>🥕 Entrées ({DATA.entrees.filter(p=>!del.includes(p.id)).length})</button>
     </div>
+    {delCount>0&&<div style={{marginBottom:10}}>
+      <button onClick={()=>setShowDeleted(!showDeleted)} style={{padding:"5px 14px",borderRadius:18,fontSize:11,
+        border:`1px solid ${showDeleted?C.danger:C.bdr}`,background:showDeleted?C.dangerBg:"#fff",
+        color:showDeleted?C.danger:C.tL,cursor:"pointer",fontWeight:showDeleted?600:400}}>
+        {showDeleted?"← Retour aux actifs":`🗑 Masqués (${delCount})`}</button>
+    </div>}
     <div style={{display:"flex",gap:4,marginBottom:8,justifyContent:"center",flexWrap:"wrap"}}>
       {["Toutes saisons","Printemps","Été","Automne","Hiver"].map(s=>(
         <Chip key={s} label={`${s==="Printemps"?"🌸":s==="Été"?"☀️":s==="Automne"?"🍂":s==="Hiver"?"❄️":"🌿"} ${s}`}
@@ -784,19 +876,34 @@ function CatalogTab({ratings,profiles,photos,onSel}){
       <Chip label="Toutes" on={cF==="all"} click={()=>setCF("all")}/>
       {CUISINES.map(c=><Chip key={c} label={`${EC[c]||""} ${c}`} on={cF===c} click={()=>setCF(c)}/>)}
     </div>
-    <p style={{fontSize:11,color:C.tL,marginBottom:8}}>{items.length} résultat{items.length>1?"s":""}</p>
+    <p style={{fontSize:11,color:C.tL,marginBottom:8}}>{items.length} résultat{items.length>1?"s":""}{showDeleted?" (masqués)":""}</p>
     <div style={{display:"flex",flexDirection:"column",gap:6}}>
-      {items.map(p=>(<div key={p.id} onClick={()=>onSel(p)} style={{background:"#fff",borderRadius:10,padding:"10px 12px",
-        border:`1px solid ${C.bdr}`,cursor:"pointer",display:"flex",alignItems:"center",gap:10}}>
-        {photos[p.id]?<img src={photos[p.id]} style={{width:40,height:40,borderRadius:8,objectFit:"cover",flexShrink:0}} onError={e=>{e.target.style.display="none"}}/>:<span style={{fontSize:24,flexShrink:0}}>{ET[p.type]||"🍽"}</span>}
-        <div style={{flex:1,minWidth:0}}>
-          <div style={{fontSize:13,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.nom}</div>
-          <div style={{display:"flex",gap:3,marginTop:2,flexWrap:"wrap"}}>
-            <Tag text={p.genre} color={C.tM}/><Tag text={`${p.temps_prepa}min`} color={C.tM}/>
-            {p.batch!=="Non"&&<Tag text="Batch" color={C.gold}/>}
+      {items.map(p=>{const isDel=del.includes(p.id);return(<div key={p.id}>
+        <div style={{background:isDel?"#fff5f5":"#fff",borderRadius:10,padding:"10px 12px",
+          border:`1px solid ${isDel?C.danger+"33":C.bdr}`,display:"flex",alignItems:"center",gap:10}}>
+          <div onClick={()=>onSel(p)} style={{display:"flex",alignItems:"center",gap:10,flex:1,cursor:"pointer"}}>
+            {photos[p.id]?<img src={photos[p.id]} style={{width:40,height:40,borderRadius:8,objectFit:"cover",flexShrink:0}} onError={e=>{e.target.style.display="none"}}/>:<span style={{fontSize:24,flexShrink:0}}>{ET[p.type]||"🍽"}</span>}
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:13,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",
+                textDecoration:isDel?"line-through":"none",opacity:isDel?.5:1}}>{p.nom}</div>
+              <div style={{display:"flex",gap:3,marginTop:2,flexWrap:"wrap"}}>
+                <Tag text={p.genre} color={C.tM}/><Tag text={`${p.temps_prepa}min`} color={C.tM}/>
+                {p.batch!=="Non"&&<Tag text="Batch" color={C.gold}/>}
+              </div>
+            </div>
           </div>
-        </div><span style={{fontSize:14,color:C.tL}}>›</span>
-      </div>))}
+          {isDel?<button onClick={()=>toggleDel(p.id)} style={{padding:"4px 10px",borderRadius:8,border:`1px solid ${C.ok}`,
+            background:C.okBg,fontSize:10,cursor:"pointer",color:C.ok,fontWeight:600,whiteSpace:"nowrap"}}>↩ Restaurer</button>
+          :<>{confirmDel===p.id?<div style={{display:"flex",gap:4,alignItems:"center"}}>
+            <button onClick={()=>toggleDel(p.id)} style={{padding:"4px 8px",borderRadius:8,border:"none",
+              background:C.danger,fontSize:10,cursor:"pointer",color:"#fff",fontWeight:600}}>Oui</button>
+            <button onClick={()=>setConfirmDel(null)} style={{padding:"4px 8px",borderRadius:8,border:`1px solid ${C.bdr}`,
+              background:"#fff",fontSize:10,cursor:"pointer",color:C.tM}}>Non</button>
+          </div>:<button onClick={(e)=>{e.stopPropagation();setConfirmDel(p.id);}} style={{padding:"4px 10px",borderRadius:8,
+            border:`1px solid ${C.danger}33`,background:C.dangerBg,fontSize:10,cursor:"pointer",color:C.danger,
+            whiteSpace:"nowrap"}}>🗑</button>}</>}
+        </div>
+      </div>);})}
     </div>
   </div>);
 }
