@@ -104,7 +104,7 @@ const SALAD_CATEGORIES = {
   toppings:{label:"Toppings",emoji:"🥜"},sauces:{label:"Sauces",emoji:"🫒"},
 };
 
-const SALAD_INGREDIENTS = {"bases":[{"id":"base_quinoa","nom":"Quinoa","emoji":"🌾","portion_g":80,"cal_100g":120,"prot_100g":4.4,"conservation_frigo_jours":5,"batch":true},{"id":"base_riz","nom":"Riz","emoji":"🍚","portion_g":80,"cal_100g":130,"prot_100g":2.7,"conservation_frigo_jours":1,"batch":false},{"id":"base_boulgour","nom":"Boulgour","emoji":"🌾","portion_g":80,"cal_100g":83,"prot_100g":3.1,"conservation_frigo_jours":5,"batch":true},{"id":"base_pates","nom":"Pâtes courtes","emoji":"🍝","portion_g":80,"cal_100g":131,"prot_100g":5.0,"conservation_frigo_jours":4,"batch":true},{"id":"base_lentilles","nom":"Lentilles","emoji":"🫘","portion_g":80,"cal_100g":116,"prot_100g":9.0,"conservation_frigo_jours":5,"batch":true},{"id":"base_pdt","nom":"Pomme de terre","emoji":"🥔","portion_g":150,"cal_100g":77,"prot_100g":2.0,"conservation_frigo_jours":4,"batch":true},{"id":"base_patate_douce","nom":"Patate douce","emoji":"🍠","portion_g":150,"cal_100g":86,"prot_100g":1.6,"conservation_frigo_jours":4,"batch":true},{"id":"base_nouilles_riz","nom":"Vermicelles riz","emoji":"🍜","portion_g":60,"cal_100g":109,"prot_100g":0.9,"conservation_frigo_jours":2,"batch":false}],"verdures":[{"id":"verd_roquette","nom":"Roquette","emoji":"🥬","portion_g":40,"cal_100g":25,"prot_100g":2.6,"conservation_frigo_jours":4},{"id":"verd_epinards","nom":"Épinards","emoji":"🌿","portion_g":50,"cal_100g":23,"prot_100g":2.9,"conservation_frigo_jours":4},{"id":"verd_mache","nom":"Mâche","emoji":"🥬","portion_g":40,"cal_100g":11,"prot_100g":1.8,"conservation_frigo_jours":3},{"id":"verd_laitue","nom":"Salade verte","emoji":"🥬","portion_g":50,"cal_100g":15,"prot_100g":1.4,"conservation_frigo_jours":5},{"id":"verd_chou_blanc","nom":"Chou blanc","emoji":"🥬","portion_g":50,"cal_100g":25,"prot_100g":1.3,"conservation_frigo_jours":10},{"id":"verd_chou_rouge","nom":"Chou rouge","emoji":"🟣","portion_g":50,"cal_100g":31,"prot_100g":1.4,"conservation_frigo_jours":10}],"legumes_crus":[{"id":"lcru_tomate","nom":"Tomates cerises","emoji":"🍅","portion_g":80,"cal_100g":18,"prot_100g":0.9,"conservation_frigo_jours":5},{"id":"lcru_concombre","nom":"Concombre","emoji":"🥒","portion_g":80,"cal_100g":12,"prot_100g":0.7,"conservation_frigo_jours":7},{"id":"lcru_carotte","nom":"Carottes","emoji":"🥕","portion_g":60,"cal_100g":41,"prot_100g":0.9,"conservation_frigo_jours":14},{"id":"lcru_avocat","nom":"Avocat","emoji":"🥑","portion_g":70,"cal_100g":160,"prot_100g":2.0,"conservation_frigo_jours":3},{"id":"lcru_poivron","nom":"Poivrons","emoji":"🫑","portion_g":60,"cal_100g":31,"prot_100g":1.0,"conservation_frigo_jours":7},{"id":"lcru_oignon_rouge","nom":"Oignon rouge","emoji":"🧅","portion_g":20,"cal_100g":40,"prot_100g":1.1,"conservation_frigo_jours":30},{"id":"lcru_radis","nom":"Radis","emoji":"🔴","portion_g":40,"cal_100g":16,"prot_100g":0.7,"conservation_frigo_jours":7},{"id":"lcru_betterave","nom":"Betterave","emoji":"🟣","portion_g":80,"cal_100g":43,"prot_100g":1.6,"conservation_frigo_jours":10},{"id":"lcru_champignon","nom":"Champignons","emoji":"🍄","portion_g":50,"cal_100g":22,"prot_100g":3.1,"conservation_frigo_jours":5},{"id":"lcru_brocoli","nom":"Brocoli cru","emoji":"🥦","portion_g":60,"cal_100g":34,"prot_100g":2.8,"conservation_frigo_jours":5},{"id":"lcru_mangue","nom":"Mangue","emoji":"🥭","portion_g":70,"cal_100g":60,"prot_100g":0.8,"conservation_frigo_jours":5},{"id":"lcru_nectarine","nom":"Nectarine","emoji":"🍑","portion_g":80,"cal_100g":44,"prot_100g":1.1,"conservation_frigo_jours":4},{"id":"lcru_pomme","nom":"Pomme","emoji":"🍏","portion_g":60,"cal_100g":52,"prot_100g":0.3,"conservation_frigo_jours":21},{"id":"lcru_pasteque","nom":"Pastèque","emoji":"🍉","portion_g":100,"cal_100g":30,"prot_100g":0.6,"conservation_frigo_jours":5},{"id":"lcru_tomate_ronde","nom":"Tomate","emoji":"🍅","portion_g":120,"cal_100g":18,"prot_100g":0.9,"conservation_frigo_jours":5}],"legumes_cuits":[{"id":"lcuit_patdouce","nom":"Patate douce rôtie","emoji":"🍠","portion_g":120,"cal_100g":90,"prot_100g":1.6,"conservation_frigo_jours":4,"batch":true},{"id":"lcuit_haricots_verts","nom":"Haricots verts","emoji":"🫛","portion_g":80,"cal_100g":31,"prot_100g":1.8,"conservation_frigo_jours":4},{"id":"lcuit_poivrons_grilles","nom":"Poivrons grillés","emoji":"🫑","portion_g":60,"cal_100g":34,"prot_100g":1.0,"conservation_frigo_jours":5,"batch":true},{"id":"lcuit_mais","nom":"Maïs","emoji":"🌽","portion_g":60,"cal_100g":86,"prot_100g":2.5,"conservation_frigo_jours":3},{"id":"lcuit_champignon_saute","nom":"Champignons sautés","emoji":"🍄","portion_g":60,"cal_100g":35,"prot_100g":3.1,"conservation_frigo_jours":3},{"id":"lcuit_brocoli_blanchi","nom":"Brocoli blanchi","emoji":"🥦","portion_g":80,"cal_100g":35,"prot_100g":2.4,"conservation_frigo_jours":4},{"id":"lcuit_asperges","nom":"Asperges","emoji":"🌱","portion_g":80,"cal_100g":20,"prot_100g":2.2,"conservation_frigo_jours":3}],"marines_pickles":[{"id":"marin_poivrons","nom":"Poivrons marinés","emoji":"🫑","portion_g":40,"cal_100g":40,"prot_100g":0.9,"conservation_frigo_jours":30},{"id":"marin_artichauts","nom":"Artichauts marinés","emoji":"🌿","portion_g":40,"cal_100g":62,"prot_100g":2.9,"conservation_frigo_jours":30},{"id":"marin_oignon_rouge","nom":"Pickles oignon","emoji":"🧅","portion_g":20,"cal_100g":30,"prot_100g":0.8,"conservation_frigo_jours":14,"batch":true},{"id":"marin_pickles_concombre","nom":"Pickles concombre","emoji":"🥒","portion_g":30,"cal_100g":18,"prot_100g":0.5,"conservation_frigo_jours":14,"batch":true},{"id":"marin_pickles_carotte","nom":"Pickles carottes","emoji":"🥕","portion_g":30,"cal_100g":35,"prot_100g":0.7,"conservation_frigo_jours":14,"batch":true},{"id":"marin_pickles_radis","nom":"Pickles radis","emoji":"🔴","portion_g":20,"cal_100g":20,"prot_100g":0.6,"conservation_frigo_jours":10,"batch":true},{"id":"mar_tomates_sechees","nom":"Tomates séchées","emoji":"🍅","portion_g":20,"cal_100g":258,"prot_100g":14.0,"conservation_frigo_jours":60}],"fromages":[{"id":"from_feta","nom":"Fêta","emoji":"🧀","portion_g":40,"cal_100g":264,"prot_100g":14.2,"conservation_frigo_jours":14},{"id":"from_chevre","nom":"Chèvre","emoji":"🧀","portion_g":40,"cal_100g":290,"prot_100g":19.0,"conservation_frigo_jours":14},{"id":"from_parmesan","nom":"Parmesan","emoji":"🧀","portion_g":20,"cal_100g":431,"prot_100g":38.5,"conservation_frigo_jours":30},{"id":"from_mozzarella","nom":"Mozzarella","emoji":"🧀","portion_g":60,"cal_100g":280,"prot_100g":17.0,"conservation_frigo_jours":5},{"id":"from_roquefort","nom":"Roquefort","emoji":"🧀","portion_g":25,"cal_100g":369,"prot_100g":21.5,"conservation_frigo_jours":14},{"id":"from_halloumi","nom":"Halloumi","emoji":"🧀","portion_g":50,"cal_100g":321,"prot_100g":25.0,"conservation_frigo_jours":14},{"id":"from_cream_cheese","nom":"Cream cheese","emoji":"🧀","portion_g":30,"cal_100g":342,"prot_100g":6.2,"conservation_frigo_jours":14}],"herbes_fraiches":[{"id":"herb_basilic","nom":"Basilic","emoji":"🌿","portion_g":5,"cal_100g":23,"prot_100g":3.2,"conservation_frigo_jours":5},{"id":"herb_coriandre","nom":"Coriandre","emoji":"🌿","portion_g":5,"cal_100g":23,"prot_100g":2.1,"conservation_frigo_jours":7},{"id":"herb_menthe","nom":"Menthe","emoji":"🌿","portion_g":5,"cal_100g":44,"prot_100g":3.3,"conservation_frigo_jours":7},{"id":"herb_persil","nom":"Persil","emoji":"🌿","portion_g":5,"cal_100g":36,"prot_100g":3.0,"conservation_frigo_jours":7},{"id":"herb_ciboulette","nom":"Ciboulette","emoji":"🌿","portion_g":3,"cal_100g":30,"prot_100g":3.3,"conservation_frigo_jours":7},{"id":"herb_aneth","nom":"Aneth","emoji":"🌿","portion_g":3,"cal_100g":43,"prot_100g":3.5,"conservation_frigo_jours":5}],"proteines":[{"id":"prot_oeuf","nom":"Œuf dur","emoji":"🥚","portion_g":60,"cal_100g":155,"prot_100g":12.6,"conservation_frigo_jours":7,"batch":true},{"id":"prot_thon","nom":"Thon","emoji":"🐟","portion_g":80,"cal_100g":132,"prot_100g":29.1,"conservation_frigo_jours":3},{"id":"prot_truite_fumee","nom":"Truite fumée","emoji":"🐟","portion_g":60,"cal_100g":117,"prot_100g":18.6,"conservation_frigo_jours":5},{"id":"prot_sardines","nom":"Sardines","emoji":"🐟","portion_g":80,"cal_100g":208,"prot_100g":24.6,"conservation_frigo_jours":3},{"id":"prot_maquereaux","nom":"Maquereaux","emoji":"🐟","portion_g":80,"cal_100g":205,"prot_100g":18.6,"conservation_frigo_jours":3},{"id":"prot_crevettes","nom":"Crevettes","emoji":"🦐","portion_g":80,"cal_100g":99,"prot_100g":20.9,"conservation_frigo_jours":2},{"id":"prot_poulet","nom":"Poulet halal","emoji":"🍗","portion_g":100,"cal_100g":165,"prot_100g":31.0,"conservation_frigo_jours":3,"batch":false},{"id":"prot_pois_chiches","nom":"Pois chiches","emoji":"🫘","portion_g":80,"cal_100g":164,"prot_100g":8.9,"conservation_frigo_jours":5,"batch":true},{"id":"prot_anchois","nom":"Anchois","emoji":"🐟","portion_g":15,"cal_100g":210,"prot_100g":28.9,"conservation_frigo_jours":60},{"id":"prot_houmous","nom":"Houmous","emoji":"🫘","portion_g":40,"cal_100g":166,"prot_100g":7.9,"conservation_frigo_jours":7}],"toppings":[{"id":"top_noix","nom":"Noix","emoji":"🥜","portion_g":15,"cal_100g":654,"prot_100g":15.2,"conservation_frigo_jours":90},{"id":"top_graines_courge","nom":"Gr. courge","emoji":"🌰","portion_g":10,"cal_100g":559,"prot_100g":30.2,"conservation_frigo_jours":90},{"id":"top_graines_sesame","nom":"Gr. sésame","emoji":"🌰","portion_g":8,"cal_100g":573,"prot_100g":17.7,"conservation_frigo_jours":180},{"id":"top_graines_melange","nom":"Mix graines","emoji":"🌰","portion_g":10,"cal_100g":550,"prot_100g":22.0,"conservation_frigo_jours":90},{"id":"top_olives","nom":"Olives","emoji":"🫒","portion_g":20,"cal_100g":115,"prot_100g":0.8,"conservation_frigo_jours":30},{"id":"top_capres","nom":"Câpres","emoji":"🟢","portion_g":10,"cal_100g":23,"prot_100g":2.4,"conservation_frigo_jours":180},{"id":"top_croutons","nom":"Croûtons","emoji":"🍞","portion_g":15,"cal_100g":407,"prot_100g":12.0,"conservation_frigo_jours":30},{"id":"top_dattes","nom":"Dattes","emoji":"🌴","portion_g":20,"cal_100g":282,"prot_100g":2.5,"conservation_frigo_jours":60},{"id":"top_cornichons","nom":"Cornichons","emoji":"🥒","portion_g":20,"cal_100g":14,"prot_100g":0.3,"conservation_frigo_jours":90},{"id":"top_algues","nom":"Algues","emoji":"🌊","portion_g":3,"cal_100g":35,"prot_100g":5.8,"conservation_frigo_jours":365},{"id":"top_edamame","nom":"Edamame","emoji":"🫛","portion_g":40,"cal_100g":121,"prot_100g":11.9,"conservation_frigo_jours":3},{"id":"top_cajou","nom":"Cajou","emoji":"🥜","portion_g":15,"cal_100g":553,"prot_100g":18.2,"conservation_frigo_jours":90},{"id":"top_oignons_frits","nom":"Oignons frits","emoji":"🧅","portion_g":10,"cal_100g":330,"prot_100g":4.0,"conservation_frigo_jours":90}],"sauces":[{"id":"sauce_citron_ho","nom":"Citron-HO","emoji":"🍋","portion_ml":20,"cal_100g":400,"prot_100g":0,"conservation_frigo_jours":7},{"id":"sauce_balsamique","nom":"Balsamique","emoji":"🍷","portion_ml":20,"cal_100g":370,"prot_100g":0,"conservation_frigo_jours":14},{"id":"sauce_tahini","nom":"Tahini","emoji":"🫘","portion_ml":25,"cal_100g":320,"prot_100g":8,"conservation_frigo_jours":5},{"id":"sauce_soja_sesame","nom":"Soja-sésame","emoji":"🥢","portion_ml":20,"cal_100g":180,"prot_100g":3,"conservation_frigo_jours":14},{"id":"sauce_moutarde","nom":"Moutarde","emoji":"🟡","portion_ml":20,"cal_100g":380,"prot_100g":1,"conservation_frigo_jours":14},{"id":"sauce_huile_noix","nom":"Huile noix","emoji":"🥜","portion_ml":20,"cal_100g":400,"prot_100g":0,"conservation_frigo_jours":14},{"id":"sauce_cesar","nom":"César","emoji":"🧀","portion_ml":25,"cal_100g":420,"prot_100g":5,"conservation_frigo_jours":5},{"id":"sauce_xerez","nom":"Xérès","emoji":"🍷","portion_ml":20,"cal_100g":390,"prot_100g":0,"conservation_frigo_jours":14},{"id":"sauce_pesto","nom":"Pesto","emoji":"🌿","portion_ml":20,"cal_100g":350,"prot_100g":5,"conservation_frigo_jours":7},{"id":"sauce_coleslaw","nom":"Coleslaw","emoji":"🥬","portion_ml":25,"cal_100g":350,"prot_100g":1,"conservation_frigo_jours":5}]};
+const SALAD_INGREDIENTS = {"bases":[{"id":"base_quinoa","nom":"Quinoa","emoji":"🌾","portion_g":80,"cal_100g":120,"prot_100g":4.4,"lip_100g":1.9,"gluc_100g":21.3,"conservation_frigo_jours":5,"batch":true},{"id":"base_riz","nom":"Riz","emoji":"🍚","portion_g":80,"cal_100g":130,"prot_100g":2.7,"lip_100g":0.3,"gluc_100g":28.2,"conservation_frigo_jours":1,"batch":false},{"id":"base_boulgour","nom":"Boulgour","emoji":"🌾","portion_g":80,"cal_100g":83,"prot_100g":3.1,"lip_100g":0.2,"gluc_100g":18.6,"conservation_frigo_jours":5,"batch":true},{"id":"base_pates","nom":"Pâtes courtes","emoji":"🍝","portion_g":80,"cal_100g":131,"prot_100g":5.0,"lip_100g":1.1,"gluc_100g":25,"conservation_frigo_jours":4,"batch":true},{"id":"base_lentilles","nom":"Lentilles","emoji":"🫘","portion_g":80,"cal_100g":116,"prot_100g":9.0,"lip_100g":0.4,"gluc_100g":20.1,"conservation_frigo_jours":5,"batch":true},{"id":"base_pdt","nom":"Pomme de terre","emoji":"🥔","portion_g":150,"cal_100g":77,"prot_100g":2.0,"lip_100g":0.1,"gluc_100g":17,"conservation_frigo_jours":4,"batch":true},{"id":"base_patate_douce","nom":"Patate douce","emoji":"🍠","portion_g":150,"cal_100g":86,"prot_100g":1.6,"lip_100g":0.1,"gluc_100g":20.1,"conservation_frigo_jours":4,"batch":true},{"id":"base_nouilles_riz","nom":"Vermicelles riz","emoji":"🍜","portion_g":60,"cal_100g":109,"prot_100g":0.9,"lip_100g":0.2,"gluc_100g":25,"conservation_frigo_jours":2,"batch":false}],"verdures":[{"id":"verd_roquette","nom":"Roquette","emoji":"🥬","portion_g":40,"cal_100g":25,"prot_100g":2.6,"lip_100g":0.7,"gluc_100g":3.7,"conservation_frigo_jours":4},{"id":"verd_epinards","nom":"Épinards","emoji":"🌿","portion_g":50,"cal_100g":23,"prot_100g":2.9,"lip_100g":0.4,"gluc_100g":3.6,"conservation_frigo_jours":4},{"id":"verd_mache","nom":"Mâche","emoji":"🥬","portion_g":40,"cal_100g":11,"prot_100g":1.8,"lip_100g":0.4,"gluc_100g":0.7,"conservation_frigo_jours":3},{"id":"verd_laitue","nom":"Salade verte","emoji":"🥬","portion_g":50,"cal_100g":15,"prot_100g":1.4,"lip_100g":0.2,"gluc_100g":2.9,"conservation_frigo_jours":5},{"id":"verd_chou_blanc","nom":"Chou blanc","emoji":"🥬","portion_g":50,"cal_100g":25,"prot_100g":1.3,"lip_100g":0.1,"gluc_100g":6,"conservation_frigo_jours":10},{"id":"verd_chou_rouge","nom":"Chou rouge","emoji":"🟣","portion_g":50,"cal_100g":31,"prot_100g":1.4,"lip_100g":0.2,"gluc_100g":7.4,"conservation_frigo_jours":10}],"legumes_crus":[{"id":"lcru_tomate","nom":"Tomates cerises","emoji":"🍅","portion_g":80,"cal_100g":18,"prot_100g":0.9,"lip_100g":0.2,"gluc_100g":3.9,"conservation_frigo_jours":5},{"id":"lcru_concombre","nom":"Concombre","emoji":"🥒","portion_g":80,"cal_100g":12,"prot_100g":0.7,"lip_100g":0.1,"gluc_100g":3,"conservation_frigo_jours":7},{"id":"lcru_carotte","nom":"Carottes","emoji":"🥕","portion_g":60,"cal_100g":41,"prot_100g":0.9,"lip_100g":0.2,"gluc_100g":9.6,"conservation_frigo_jours":14},{"id":"lcru_avocat","nom":"Avocat","emoji":"🥑","portion_g":70,"cal_100g":160,"prot_100g":2.0,"lip_100g":14.7,"gluc_100g":8.5,"conservation_frigo_jours":3},{"id":"lcru_poivron","nom":"Poivrons","emoji":"🫑","portion_g":60,"cal_100g":31,"prot_100g":1.0,"lip_100g":0.3,"gluc_100g":6,"conservation_frigo_jours":7},{"id":"lcru_oignon_rouge","nom":"Oignon rouge","emoji":"🧅","portion_g":20,"cal_100g":40,"prot_100g":1.1,"lip_100g":0.1,"gluc_100g":9.3,"conservation_frigo_jours":30},{"id":"lcru_radis","nom":"Radis","emoji":"🔴","portion_g":40,"cal_100g":16,"prot_100g":0.7,"lip_100g":0.1,"gluc_100g":3.4,"conservation_frigo_jours":7},{"id":"lcru_betterave","nom":"Betterave","emoji":"🟣","portion_g":80,"cal_100g":43,"prot_100g":1.6,"lip_100g":0.2,"gluc_100g":9.6,"conservation_frigo_jours":10},{"id":"lcru_champignon","nom":"Champignons","emoji":"🍄","portion_g":50,"cal_100g":22,"prot_100g":3.1,"lip_100g":0.3,"gluc_100g":3.3,"conservation_frigo_jours":5},{"id":"lcru_brocoli","nom":"Brocoli cru","emoji":"🥦","portion_g":60,"cal_100g":34,"prot_100g":2.8,"lip_100g":0.4,"gluc_100g":6.6,"conservation_frigo_jours":5},{"id":"lcru_mangue","nom":"Mangue","emoji":"🥭","portion_g":70,"cal_100g":60,"prot_100g":0.8,"lip_100g":0.4,"gluc_100g":15,"conservation_frigo_jours":5},{"id":"lcru_nectarine","nom":"Nectarine","emoji":"🍑","portion_g":80,"cal_100g":44,"prot_100g":1.1,"lip_100g":0.3,"gluc_100g":10.6,"conservation_frigo_jours":4},{"id":"lcru_pomme","nom":"Pomme","emoji":"🍏","portion_g":60,"cal_100g":52,"prot_100g":0.3,"lip_100g":0.2,"gluc_100g":13.8,"conservation_frigo_jours":21},{"id":"lcru_pasteque","nom":"Pastèque","emoji":"🍉","portion_g":100,"cal_100g":30,"prot_100g":0.6,"lip_100g":0.2,"gluc_100g":7.6,"conservation_frigo_jours":5},{"id":"lcru_tomate_ronde","nom":"Tomate","emoji":"🍅","portion_g":120,"cal_100g":18,"prot_100g":0.9,"lip_100g":0.2,"gluc_100g":3.9,"conservation_frigo_jours":5}],"legumes_cuits":[{"id":"lcuit_patdouce","nom":"Patate douce rôtie","emoji":"🍠","portion_g":120,"cal_100g":90,"prot_100g":1.6,"lip_100g":0.1,"gluc_100g":20.7,"conservation_frigo_jours":4,"batch":true},{"id":"lcuit_haricots_verts","nom":"Haricots verts","emoji":"🫛","portion_g":80,"cal_100g":31,"prot_100g":1.8,"lip_100g":0.1,"gluc_100g":7,"conservation_frigo_jours":4},{"id":"lcuit_poivrons_grilles","nom":"Poivrons grillés","emoji":"🫑","portion_g":60,"cal_100g":34,"prot_100g":1.0,"lip_100g":0.4,"gluc_100g":6.7,"conservation_frigo_jours":5,"batch":true},{"id":"lcuit_mais","nom":"Maïs","emoji":"🌽","portion_g":60,"cal_100g":86,"prot_100g":2.5,"lip_100g":1.2,"gluc_100g":18.7,"conservation_frigo_jours":3},{"id":"lcuit_champignon_saute","nom":"Champignons sautés","emoji":"🍄","portion_g":60,"cal_100g":35,"prot_100g":3.1,"lip_100g":0.5,"gluc_100g":3.3,"conservation_frigo_jours":3},{"id":"lcuit_brocoli_blanchi","nom":"Brocoli blanchi","emoji":"🥦","portion_g":80,"cal_100g":35,"prot_100g":2.4,"lip_100g":0.4,"gluc_100g":7.2,"conservation_frigo_jours":4},{"id":"lcuit_asperges","nom":"Asperges","emoji":"🌱","portion_g":80,"cal_100g":20,"prot_100g":2.2,"lip_100g":0.1,"gluc_100g":3.9,"conservation_frigo_jours":3}],"marines_pickles":[{"id":"marin_poivrons","nom":"Poivrons marinés","emoji":"🫑","portion_g":40,"cal_100g":40,"prot_100g":0.9,"lip_100g":1.5,"gluc_100g":5.5,"conservation_frigo_jours":30},{"id":"marin_artichauts","nom":"Artichauts marinés","emoji":"🌿","portion_g":40,"cal_100g":62,"prot_100g":2.9,"lip_100g":3.6,"gluc_100g":4.7,"conservation_frigo_jours":30},{"id":"marin_oignon_rouge","nom":"Pickles oignon","emoji":"🧅","portion_g":20,"cal_100g":30,"prot_100g":0.8,"lip_100g":0.1,"gluc_100g":7,"conservation_frigo_jours":14,"batch":true},{"id":"marin_pickles_concombre","nom":"Pickles concombre","emoji":"🥒","portion_g":30,"cal_100g":18,"prot_100g":0.5,"lip_100g":0.1,"gluc_100g":3.5,"conservation_frigo_jours":14,"batch":true},{"id":"marin_pickles_carotte","nom":"Pickles carottes","emoji":"🥕","portion_g":30,"cal_100g":35,"prot_100g":0.7,"lip_100g":0.1,"gluc_100g":7.5,"conservation_frigo_jours":14,"batch":true},{"id":"marin_pickles_radis","nom":"Pickles radis","emoji":"🔴","portion_g":20,"cal_100g":20,"prot_100g":0.6,"lip_100g":0.1,"gluc_100g":4,"conservation_frigo_jours":10,"batch":true},{"id":"mar_tomates_sechees","nom":"Tomates séchées","emoji":"🍅","portion_g":20,"cal_100g":258,"prot_100g":14.0,"lip_100g":3,"gluc_100g":43.5,"conservation_frigo_jours":60}],"fromages":[{"id":"from_feta","nom":"Fêta","emoji":"🧀","portion_g":40,"cal_100g":264,"prot_100g":14.2,"lip_100g":21.3,"gluc_100g":1.4,"conservation_frigo_jours":14},{"id":"from_chevre","nom":"Chèvre","emoji":"🧀","portion_g":40,"cal_100g":290,"prot_100g":19.0,"lip_100g":23,"gluc_100g":0.1,"conservation_frigo_jours":14},{"id":"from_parmesan","nom":"Parmesan","emoji":"🧀","portion_g":20,"cal_100g":431,"prot_100g":38.5,"lip_100g":29,"gluc_100g":3.2,"conservation_frigo_jours":30},{"id":"from_mozzarella","nom":"Mozzarella","emoji":"🧀","portion_g":60,"cal_100g":280,"prot_100g":17.0,"lip_100g":22.4,"gluc_100g":2.2,"conservation_frigo_jours":5},{"id":"from_roquefort","nom":"Roquefort","emoji":"🧀","portion_g":25,"cal_100g":369,"prot_100g":21.5,"lip_100g":30.6,"gluc_100g":0,"conservation_frigo_jours":14},{"id":"from_halloumi","nom":"Halloumi","emoji":"🧀","portion_g":50,"cal_100g":321,"prot_100g":25.0,"lip_100g":26,"gluc_100g":2,"conservation_frigo_jours":14},{"id":"from_cream_cheese","nom":"Cream cheese","emoji":"🧀","portion_g":30,"cal_100g":342,"prot_100g":6.2,"lip_100g":34.4,"gluc_100g":2.7,"conservation_frigo_jours":14}],"herbes_fraiches":[{"id":"herb_basilic","nom":"Basilic","emoji":"🌿","portion_g":5,"cal_100g":23,"prot_100g":3.2,"lip_100g":0.6,"gluc_100g":2.7,"conservation_frigo_jours":5},{"id":"herb_coriandre","nom":"Coriandre","emoji":"🌿","portion_g":5,"cal_100g":23,"prot_100g":2.1,"lip_100g":0.5,"gluc_100g":3.7,"conservation_frigo_jours":7},{"id":"herb_menthe","nom":"Menthe","emoji":"🌿","portion_g":5,"cal_100g":44,"prot_100g":3.3,"lip_100g":0.7,"gluc_100g":8.4,"conservation_frigo_jours":7},{"id":"herb_persil","nom":"Persil","emoji":"🌿","portion_g":5,"cal_100g":36,"prot_100g":3.0,"lip_100g":0.8,"gluc_100g":6.3,"conservation_frigo_jours":7},{"id":"herb_ciboulette","nom":"Ciboulette","emoji":"🌿","portion_g":3,"cal_100g":30,"prot_100g":3.3,"lip_100g":0.7,"gluc_100g":4.4,"conservation_frigo_jours":7},{"id":"herb_aneth","nom":"Aneth","emoji":"🌿","portion_g":3,"cal_100g":43,"prot_100g":3.5,"lip_100g":1.1,"gluc_100g":7,"conservation_frigo_jours":5}],"proteines":[{"id":"prot_oeuf","nom":"Œuf dur","emoji":"🥚","portion_g":60,"cal_100g":155,"prot_100g":12.6,"lip_100g":10.6,"gluc_100g":1.1,"conservation_frigo_jours":7,"batch":true},{"id":"prot_thon","nom":"Thon","emoji":"🐟","portion_g":80,"cal_100g":132,"prot_100g":29.1,"lip_100g":1,"gluc_100g":0,"conservation_frigo_jours":3},{"id":"prot_truite_fumee","nom":"Truite fumée","emoji":"🐟","portion_g":60,"cal_100g":117,"prot_100g":18.6,"lip_100g":3.7,"gluc_100g":0,"conservation_frigo_jours":5},{"id":"prot_sardines","nom":"Sardines","emoji":"🐟","portion_g":80,"cal_100g":208,"prot_100g":24.6,"lip_100g":11.5,"gluc_100g":0,"conservation_frigo_jours":3},{"id":"prot_maquereaux","nom":"Maquereaux","emoji":"🐟","portion_g":80,"cal_100g":205,"prot_100g":18.6,"lip_100g":13.9,"gluc_100g":0,"conservation_frigo_jours":3},{"id":"prot_crevettes","nom":"Crevettes","emoji":"🦐","portion_g":80,"cal_100g":99,"prot_100g":20.9,"lip_100g":0.6,"gluc_100g":1.5,"conservation_frigo_jours":2},{"id":"prot_poulet","nom":"Poulet halal","emoji":"🍗","portion_g":100,"cal_100g":165,"prot_100g":31.0,"lip_100g":3.6,"gluc_100g":0,"conservation_frigo_jours":3,"batch":false},{"id":"prot_pois_chiches","nom":"Pois chiches","emoji":"🫘","portion_g":80,"cal_100g":164,"prot_100g":8.9,"lip_100g":2.6,"gluc_100g":27.4,"conservation_frigo_jours":5,"batch":true},{"id":"prot_anchois","nom":"Anchois","emoji":"🐟","portion_g":15,"cal_100g":210,"prot_100g":28.9,"lip_100g":9.7,"gluc_100g":0,"conservation_frigo_jours":60},{"id":"prot_houmous","nom":"Houmous","emoji":"🫘","portion_g":40,"cal_100g":166,"prot_100g":7.9,"lip_100g":9.6,"gluc_100g":14.3,"conservation_frigo_jours":7}],"toppings":[{"id":"top_noix","nom":"Noix","emoji":"🥜","portion_g":15,"cal_100g":654,"prot_100g":15.2,"lip_100g":65.2,"gluc_100g":13.7,"conservation_frigo_jours":90},{"id":"top_graines_courge","nom":"Gr. courge","emoji":"🌰","portion_g":10,"cal_100g":559,"prot_100g":30.2,"lip_100g":49.1,"gluc_100g":5,"conservation_frigo_jours":90},{"id":"top_graines_sesame","nom":"Gr. sésame","emoji":"🌰","portion_g":8,"cal_100g":573,"prot_100g":17.7,"lip_100g":49.7,"gluc_100g":23.5,"conservation_frigo_jours":180},{"id":"top_graines_melange","nom":"Mix graines","emoji":"🌰","portion_g":10,"cal_100g":550,"prot_100g":22.0,"lip_100g":45,"gluc_100g":10,"conservation_frigo_jours":90},{"id":"top_olives","nom":"Olives","emoji":"🫒","portion_g":20,"cal_100g":115,"prot_100g":0.8,"lip_100g":10.7,"gluc_100g":3.8,"conservation_frigo_jours":30},{"id":"top_capres","nom":"Câpres","emoji":"🟢","portion_g":10,"cal_100g":23,"prot_100g":2.4,"lip_100g":0.9,"gluc_100g":4.9,"conservation_frigo_jours":180},{"id":"top_croutons","nom":"Croûtons","emoji":"🍞","portion_g":15,"cal_100g":407,"prot_100g":12.0,"lip_100g":15,"gluc_100g":60,"conservation_frigo_jours":30},{"id":"top_dattes","nom":"Dattes","emoji":"🌴","portion_g":20,"cal_100g":282,"prot_100g":2.5,"lip_100g":0.4,"gluc_100g":75,"conservation_frigo_jours":60},{"id":"top_cornichons","nom":"Cornichons","emoji":"🥒","portion_g":20,"cal_100g":14,"prot_100g":0.3,"lip_100g":0.2,"gluc_100g":2.3,"conservation_frigo_jours":90},{"id":"top_algues","nom":"Algues","emoji":"🌊","portion_g":3,"cal_100g":35,"prot_100g":5.8,"lip_100g":0.6,"gluc_100g":5.1,"conservation_frigo_jours":365},{"id":"top_edamame","nom":"Edamame","emoji":"🫛","portion_g":40,"cal_100g":121,"prot_100g":11.9,"lip_100g":5.2,"gluc_100g":8.9,"conservation_frigo_jours":3},{"id":"top_cajou","nom":"Cajou","emoji":"🥜","portion_g":15,"cal_100g":553,"prot_100g":18.2,"lip_100g":43.9,"gluc_100g":30.2,"conservation_frigo_jours":90},{"id":"top_oignons_frits","nom":"Oignons frits","emoji":"🧅","portion_g":10,"cal_100g":330,"prot_100g":4.0,"lip_100g":16,"gluc_100g":45,"conservation_frigo_jours":90}],"sauces":[{"id":"sauce_citron_ho","nom":"Citron-HO","emoji":"🍋","portion_ml":20,"cal_100g":400,"prot_100g":0,"lip_100g":44,"gluc_100g":0.5,"conservation_frigo_jours":7},{"id":"sauce_balsamique","nom":"Balsamique","emoji":"🍷","portion_ml":20,"cal_100g":370,"prot_100g":0,"lip_100g":38,"gluc_100g":8,"conservation_frigo_jours":14},{"id":"sauce_tahini","nom":"Tahini","emoji":"🫘","portion_ml":25,"cal_100g":320,"prot_100g":8,"lip_100g":28,"gluc_100g":8,"conservation_frigo_jours":5},{"id":"sauce_soja_sesame","nom":"Soja-sésame","emoji":"🥢","portion_ml":20,"cal_100g":180,"prot_100g":3,"lip_100g":12,"gluc_100g":10,"conservation_frigo_jours":14},{"id":"sauce_moutarde","nom":"Moutarde","emoji":"🟡","portion_ml":20,"cal_100g":380,"prot_100g":1,"lip_100g":40,"gluc_100g":3,"conservation_frigo_jours":14},{"id":"sauce_huile_noix","nom":"Huile noix","emoji":"🥜","portion_ml":20,"cal_100g":400,"prot_100g":0,"lip_100g":44,"gluc_100g":0,"conservation_frigo_jours":14},{"id":"sauce_cesar","nom":"César","emoji":"🧀","portion_ml":25,"cal_100g":420,"prot_100g":5,"lip_100g":42,"gluc_100g":5,"conservation_frigo_jours":5},{"id":"sauce_xerez","nom":"Xérès","emoji":"🍷","portion_ml":20,"cal_100g":390,"prot_100g":0,"lip_100g":42,"gluc_100g":2,"conservation_frigo_jours":14},{"id":"sauce_pesto","nom":"Pesto","emoji":"🌿","portion_ml":20,"cal_100g":350,"prot_100g":5,"lip_100g":30,"gluc_100g":5,"conservation_frigo_jours":7},{"id":"sauce_coleslaw","nom":"Coleslaw","emoji":"🥬","portion_ml":25,"cal_100g":350,"prot_100g":1,"lip_100g":35,"gluc_100g":6,"conservation_frigo_jours":5}]};
 const BASE_SALADES = [
   {id:"sal_01",nom:"Bol de Quinoa Salé",cuisine:"Autres",saison:"Toutes saisons",temps:10,batch:"Partiel",composition:{bases:["base_quinoa"],verdures:[],legumes_crus:["lcru_tomate","lcru_concombre","lcru_avocat"],legumes_cuits:[],marines_pickles:[],fromages:["from_feta"],herbes_fraiches:[],proteines:["prot_pois_chiches"],toppings:[],sauces:["sauce_citron_ho"]},recette:"1. **Batch : cuire quinoa 15 min, refroidir.** 2. Couper avocat, tomates, concombre. 3. Assembler + pois chiches. 4. Fêta émiettée. 5. Vinaigrette citron."},
   {id:"sal_02",nom:"Bowl poké truite fumée",cuisine:"Asiatique",saison:"Toutes saisons",temps:12,batch:"Partiel",composition:{bases:["base_riz"],verdures:[],legumes_crus:["lcru_avocat","lcru_concombre","lcru_carotte"],legumes_cuits:[],marines_pickles:[],fromages:[],herbes_fraiches:[],proteines:["prot_truite_fumee"],toppings:["top_graines_sesame","top_edamame","top_algues"],sauces:["sauce_soja_sesame"]},recette:"1. Cuire riz vinaigré (⚠️ jour même). 2. Trancher truite, avocat, concombre. 3. Dresser en quartiers. 4. Sauce soja-sésame."},
@@ -179,20 +179,21 @@ function buildSaladForMenu(salad){
     id:salad.id,nom:salad.nom,type:"Salade/bowl",genre:salad.cuisine,saison:salad.saison,
     temps_prepa:salad.temps,batch:salad.batch,temps_batch:salad.batch!=="Non"?String(salad.temps):"—",
     ingredients:ings,recette:salad.recette,
-    macros:{Damien:{kcal:cD.cal,prot:cD.prot,lip:0,gluc:0},Maroie:{kcal:cM.cal,prot:cM.prot,lip:0,gluc:0},"Maël":{kcal:cE.cal,prot:cE.prot,lip:0,gluc:0}},
+    macros:{Damien:{kcal:cD.cal,prot:cD.prot,lip:cD.lip,gluc:cD.gluc},Maroie:{kcal:cM.cal,prot:cM.prot,lip:cM.lip,gluc:cM.gluc},"Maël":{kcal:cE.cal,prot:cE.prot,lip:cE.lip,gluc:cE.gluc}},
     _salId:salad.id, // lien vers BASE_SALADES pour le BatchTab
     composition:salad.composition, // garder la composition pour le BatchTab
   };
 }
 // Version globale de salCalcNutri (avant que la fonction dans le scope SaladeTab soit définie)
 function salCalcNutriGlobal(comp,mult){
-  let cal=0,prot=0;
+  let cal=0,prot=0,lip=0,gluc=0;
   Object.values(comp).forEach(ids=>ids.forEach(id=>{
     const i=SALAD_ALL_INGS[id];if(!i)return;
     const p=(i.portion_g||i.portion_ml||20)*mult;
     cal+=(i.cal_100g*p)/100;prot+=((i.prot_100g||0)*p)/100;
+    lip+=((i.lip_100g||0)*p)/100;gluc+=((i.gluc_100g||0)*p)/100;
   }));
-  return{cal:Math.round(cal),prot:Math.round(prot*10)/10};
+  return{cal:Math.round(cal),prot:Math.round(prot*10)/10,lip:Math.round(lip*10)/10,gluc:Math.round(gluc*10)/10};
 }
 
 function getWeekDays(startDate){
@@ -445,7 +446,7 @@ function App(){
         {tab===2&&<CoursesTab menu={menu} profiles={profiles} stockCk={stockCk} courseCk={courseCk} setCk={sv.crs} stockOrder={stockOrder}/>}
         {tab===3&&<BatchTab menu={menu}/>}
         {tab===4&&<StockTab stockCk={stockCk} setStockCk={sv.stk} stockOrder={stockOrder} setStockOrder={sv.sord} customArt={customArt} setCustomArt={sv.cart}/>}
-        {tab===5&&<ProfilsTab/>}
+        {tab===5&&<ProfilsTab menu={menu}/>}
         {tab===6&&<SaladeTab ratings={saladRat} photos={saladPhotos} customSalads={saladCustom}
           deletedIds={saladDel} activeProfiles={saladProf} bestsellerIds={saladBs}
           menu={menu} setMenu={sv.menu}
@@ -1490,85 +1491,269 @@ function PushButton(){
 }
 
 // ═══════ TAB 6 — PROFILS (enrichi) ═══════
-function ProfilsTab(){
+function NutriBar({value,target,label,unit="g"}){
+  const pct=target>0?Math.min((value/target)*100,150):0;
+  const st=pct<70?"#C62828":pct>120?"#E65100":"#2E7D32";
+  return(<div style={{marginBottom:5}}>
+    <div style={{display:"flex",justifyContent:"space-between",fontSize:10,marginBottom:1}}>
+      <span style={{fontWeight:600,color:"#374151"}}>{label}</span>
+      <span style={{color:C.tM}}>{value}{unit} / {target}{unit}</span>
+    </div>
+    <div style={{height:5,borderRadius:3,background:C.bdr,overflow:"hidden"}}>
+      <div style={{height:"100%",borderRadius:3,background:st,width:`${Math.min(pct,100)}%`,transition:"width 0.4s ease"}}/>
+    </div>
+  </div>);
+}
+
+function NutriDashboard({menu}){
+  const JOURS=["Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi","Dimanche"];
+  const profNames=["Damien","Maroie","Maël"];
+  const profMeta={
+    Damien:{emoji:"👨",color:C.fL},Maroie:{emoji:"👩",color:C.pink},"Maël":{emoji:"👦",color:C.blue}
+  };
+  const [activeProfil,setActiveProfil]=useState("Damien");
+  const [dayView,setDayView]=useState(false);
+
+  const m=menu?{repas:menu.repas||[],entrees:menu.entrees||[],salades:menu.salades||[]}:null;
+  if(!m||m.repas.length===0)return(
+    <div style={{background:"#fff",borderRadius:12,padding:20,border:`1px solid ${C.bdr}`,textAlign:"center",color:C.tM,fontSize:13}}>
+      📊 Générez un menu pour voir le bilan nutritionnel.
+    </div>
+  );
+
+  // Build targets per profile (déjeuner+dîner only)
+  function getTargets(name){
+    const p=DATA.profils[name];if(!p)return{kcal:0,prot:0,lip:0,gluc:0};
+    const rep=p.repartition||{};
+    const coveredKcal=(rep.dejeuner||0)+(rep.diner||0);
+    const ratio=p.calories>0?coveredKcal/p.calories:0;
+    return{kcal:coveredKcal,prot:Math.round((p.proteines||0)*ratio),lip:Math.round((p.lipides||0)*ratio),gluc:Math.round((p.glucides||0)*ratio)};
+  }
+
+  // Compute day totals
+  function dayTotal(idx,name){
+    const rM=m.repas[idx]?.macros?.[name]||{kcal:0,prot:0,lip:0,gluc:0};
+    const eM=m.entrees[idx]?.macros?.[name]||{kcal:0,prot:0,lip:0,gluc:0};
+    const sM=m.salades[idx]?.macros?.[name]||{kcal:0,prot:0,lip:0,gluc:0};
+    return{kcal:rM.kcal+eM.kcal+sM.kcal,prot:rM.prot+eM.prot+sM.prot,lip:rM.lip+eM.lip+sM.lip,gluc:rM.gluc+eM.gluc+sM.gluc,
+      detail:{dej:sM.kcal,entree:eM.kcal,diner:rM.kcal}};
+  }
+
+  // Week avg
+  function weekAvg(name){
+    const t=getTargets(name);const days=Math.min(m.repas.length,7);
+    let tk=0,tp=0,tl=0,tg=0;
+    for(let i=0;i<days;i++){const d=dayTotal(i,name);tk+=d.kcal;tp+=d.prot;tl+=d.lip;tg+=d.gluc;}
+    const avg={kcal:Math.round(tk/days),prot:Math.round(tp/days),lip:Math.round(tl/days),gluc:Math.round(tg/days)};
+    // Score
+    const sc=Math.round(
+      (Math.min(t.kcal>0?avg.kcal/t.kcal:0,1)*40+Math.min(t.prot>0?avg.prot/t.prot:0,1)*30+
+       Math.min(t.lip>0?avg.lip/t.lip:0,1)*15+Math.min(t.gluc>0?avg.gluc/t.gluc:0,1)*15)
+    );
+    // Alerts
+    const alerts=[];
+    if(t.prot>0&&avg.prot<t.prot*0.7)alerts.push("⚠️ Protéines faibles ("+avg.prot+"g/j vs "+t.prot+"g)");
+    if(t.kcal>0&&avg.kcal<t.kcal*0.7)alerts.push("⚠️ Calories insuffisantes");
+    if(t.kcal>0&&avg.kcal>t.kcal*1.2)alerts.push("⚡ Excès calorique");
+    if(t.lip>0&&avg.lip>t.lip*1.3)alerts.push("🧈 Lipides élevés ("+avg.lip+"g/j vs "+t.lip+"g)");
+    return{avg,targets:t,score:sc,alerts};
+  }
+
+  // Summary card for one profile
+  function SummaryCard({name}){
+    const pm=profMeta[name];const{avg,targets:t,score,alerts}=weekAvg(name);
+    const sColor=score>=85?"#2E7D32":score>=65?"#E65100":"#C62828";
+    const sLabel=score>=85?"Excellent":score>=65?"Correct":"À ajuster";
+    return(
+      <div style={{background:`linear-gradient(135deg,${pm.color}08,${pm.color}12)`,borderRadius:14,padding:14,
+        border:`1px solid ${pm.color}20`,marginBottom:10}}>
+        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+          <span style={{fontSize:24}}>{pm.emoji}</span>
+          <div style={{flex:1}}>
+            <div style={{fontSize:14,fontWeight:800,color:pm.color}}>{name}</div>
+            <div style={{fontSize:10,color:C.tM}}>Déjeuner + Dîner</div>
+          </div>
+          <div style={{textAlign:"center"}}>
+            <div style={{fontSize:28,fontWeight:900,color:sColor,lineHeight:1}}>{score}%</div>
+            <div style={{fontSize:9,fontWeight:700,color:sColor}}>{sLabel}</div>
+          </div>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+          <NutriBar value={avg.kcal} target={t.kcal} label="Énergie" unit=" kcal"/>
+          <NutriBar value={avg.prot} target={t.prot} label="Protéines"/>
+          <NutriBar value={avg.lip} target={t.lip} label="Lipides"/>
+          <NutriBar value={avg.gluc} target={t.gluc} label="Glucides"/>
+        </div>
+        {alerts.length>0&&<div style={{background:"#FFF8E1",borderRadius:8,padding:6,marginTop:8,fontSize:10,color:"#795548"}}>
+          {alerts.map((a,i)=><div key={i}>{a}</div>)}
+        </div>}
+      </div>
+    );
+  }
+
+  // Day card for detail view
+  function DayCardN({jour,idx}){
+    const name=activeProfil;const pm=profMeta[name];const t=getTargets(name);
+    const d=dayTotal(idx,name);
+    const pctK=t.kcal>0?Math.round(d.kcal/t.kcal*100):0;
+    const kColor=pctK<70?"#C62828":pctK>120?"#E65100":"#2E7D32";
+    return(
+      <div style={{background:"#fff",borderRadius:10,padding:10,border:`1px solid ${C.bdr}`}}>
+        <div style={{fontSize:11,fontWeight:700,color:pm.color,marginBottom:6,textAlign:"center"}}>{jour}</div>
+        <div style={{textAlign:"center",marginBottom:6}}>
+          <div style={{fontSize:22,fontWeight:800,color:kColor}}>{d.kcal}</div>
+          <div style={{fontSize:9,color:C.tM}}>/ {t.kcal} kcal</div>
+        </div>
+        <NutriBar value={d.prot} target={t.prot} label="P"/>
+        <NutriBar value={d.lip} target={t.lip} label="L"/>
+        <NutriBar value={d.gluc} target={t.gluc} label="G"/>
+        <div style={{borderTop:`1px solid ${C.bdr}`,marginTop:6,paddingTop:4,fontSize:9,color:C.tM}}>
+          <div style={{display:"flex",justifyContent:"space-between"}}><span>🥗 Déj</span><span>{d.detail.dej} kcal</span></div>
+          {d.detail.entree>0&&<div style={{display:"flex",justifyContent:"space-between"}}><span>🥣 Entrée</span><span>{d.detail.entree} kcal</span></div>}
+          <div style={{display:"flex",justifyContent:"space-between"}}><span>🍽 Dîner</span><span>{d.detail.diner} kcal</span></div>
+        </div>
+      </div>
+    );
+  }
+
+  return(<div>
+    <div style={{display:"flex",gap:6,marginBottom:10}}>
+      {[["📋 Résumé",false],["📅 Par jour",true]].map(([label,v])=>(
+        <button key={label} onClick={()=>setDayView(v)} style={{flex:1,padding:"7px 0",borderRadius:10,border:"none",
+          fontSize:12,fontWeight:700,cursor:"pointer",transition:"all 0.2s",
+          background:dayView===v?C.forest:"#fff",color:dayView===v?"#fff":C.tM,
+          boxShadow:dayView===v?`0 2px 8px ${C.forest}30`:"none"}}>{label}</button>
+      ))}
+    </div>
+
+    {!dayView?(
+      <>
+        {profNames.map(name=><SummaryCard key={name} name={name}/>)}
+        <div style={{background:"#fff",borderRadius:10,padding:10,border:`1px solid ${C.bdr}`,fontSize:10,color:C.tM}}>
+          <div style={{display:"flex",gap:12,flexWrap:"wrap",marginBottom:4}}>
+            <span><span style={{display:"inline-block",width:8,height:8,borderRadius:2,background:"#2E7D32",marginRight:3,verticalAlign:"middle"}}/>70-120%</span>
+            <span><span style={{display:"inline-block",width:8,height:8,borderRadius:2,background:"#E65100",marginRight:3,verticalAlign:"middle"}}/>&gt;120%</span>
+            <span><span style={{display:"inline-block",width:8,height:8,borderRadius:2,background:"#C62828",marginRight:3,verticalAlign:"middle"}}/>&lt;70%</span>
+          </div>
+          <div style={{fontStyle:"italic",fontSize:9}}>ℹ️ Petit-déjeuner et collations non inclus.</div>
+        </div>
+      </>
+    ):(
+      <>
+        <div style={{display:"flex",gap:5,marginBottom:10}}>
+          {profNames.map(name=>{const pm=profMeta[name];return(
+            <button key={name} onClick={()=>setActiveProfil(name)} style={{flex:1,padding:"6px 0",borderRadius:8,
+              border:`2px solid ${activeProfil===name?pm.color:C.bdr}`,fontSize:11,fontWeight:700,
+              background:activeProfil===name?pm.color+"15":"#fff",color:pm.color,cursor:"pointer"}}>{pm.emoji} {name}</button>
+          );})}
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+          {JOURS.slice(0,Math.min(m.repas.length,7)).map((j,i)=><DayCardN key={j} jour={j} idx={i}/>)}
+        </div>
+        <div style={{marginTop:10}}><SummaryCard name={activeProfil}/></div>
+      </>
+    )}
+  </div>);
+}
+
+function ProfilsTab({menu}){
   const meta={Damien:{e:"👨",i:"💪"},Maroie:{e:"👩",i:"✨"},"Maël":{e:"👦",i:"⚡"}};
   const repasLabels={"petit_dejeuner":"Petit-déjeuner","dejeuner":"Déjeuner","gouter":"Goûter","diner":"Dîner"};
+  const [showDash,setShowDash]=useState(true);
 
   return(<div style={{padding:14}}>
-    <div style={{background:"#fff",borderRadius:12,padding:14,marginBottom:14,border:`1px solid ${C.bdr}`}}>
-      <h2 style={{margin:"0 0 2px",fontSize:16,fontWeight:700,color:C.forest}}>Profils nutritionnels</h2>
+    {/* Toggle Bilan / Profils */}
+    <div style={{display:"flex",gap:6,marginBottom:12}}>
+      {[["📊 Bilan",true],["👤 Profils",false]].map(([label,v])=>(
+        <button key={label} onClick={()=>setShowDash(v)} style={{flex:1,padding:"9px 0",borderRadius:12,border:"none",
+          fontSize:13,fontWeight:700,cursor:"pointer",transition:"all 0.2s",
+          background:showDash===v?`linear-gradient(135deg,${C.forest},${C.fL})`:"#fff",
+          color:showDash===v?"#fff":C.tM,
+          boxShadow:showDash===v?`0 2px 10px ${C.forest}30`:"none"}}>{label}</button>
+      ))}
     </div>
 
-    {Object.entries(DATA.profils).map(([name,p])=>{
-      const m=meta[name]||{};
-      return(<div key={name} style={{background:"#fff",borderRadius:12,padding:16,
-        borderLeft:`4px solid ${PC[name]}`,marginBottom:12,border:`1px solid ${C.bdrL}`}}>
-        <h3 style={{margin:"0 0 8px",fontSize:16,fontWeight:700,color:PC[name]}}>{name}</h3>
-
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:12,fontSize:12}}>
-          <div>Âge: <strong>{p.age} ans</strong></div>
-          <div>Poids: <strong>{p.poids} kg</strong></div>
-          <div>Taille: <strong>{p.taille} m</strong></div>
-          <div>Objectif: <strong>{p.objectif}</strong></div>
+    {showDash?(
+      <NutriDashboard menu={menu}/>
+    ):(
+      <>
+        <div style={{background:"#fff",borderRadius:12,padding:14,marginBottom:14,border:`1px solid ${C.bdr}`}}>
+          <h2 style={{margin:"0 0 2px",fontSize:16,fontWeight:700,color:C.forest}}>Profils nutritionnels</h2>
         </div>
 
-        <div style={{background:PC[name]+"10",borderRadius:10,padding:14,textAlign:"center",marginBottom:10}}>
-          <div style={{fontSize:26,fontWeight:800,color:PC[name]}}>{p.calories} kcal/j</div>
-          <div style={{display:"flex",justifyContent:"center",gap:16,marginTop:8,fontSize:12,color:C.tM}}>
-            <span>Prot <strong>{p.proteines}g</strong></span>
-            <span>Lip <strong>{p.lipides||"—"}g</strong></span>
-            <span>Gluc <strong>{p.glucides||"—"}g</strong></span>
-          </div>
-        </div>
+        {Object.entries(DATA.profils).map(([name,p])=>{
+          const m=meta[name]||{};
+          return(<div key={name} style={{background:"#fff",borderRadius:12,padding:16,
+            borderLeft:`4px solid ${PC[name]}`,marginBottom:12,border:`1px solid ${C.bdrL}`}}>
+            <h3 style={{margin:"0 0 8px",fontSize:16,fontWeight:700,color:PC[name]}}>{name}</h3>
 
-        {p.repartition&&<div>
-          <div style={{fontSize:11,fontWeight:600,color:C.tM,marginBottom:4}}>Répartition journalière</div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:4}}>
-            {Object.entries(p.repartition).map(([repas,kcal])=>(
-              <div key={repas} style={{padding:"5px 8px",borderRadius:6,background:C.bg,
-                display:"flex",justifyContent:"space-between",fontSize:11}}>
-                <span style={{color:C.tM}}>{repasLabels[repas]||repas}</span>
-                <span style={{fontWeight:600}}>{kcal} kcal</span>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:12,fontSize:12}}>
+              <div>Âge: <strong>{p.age} ans</strong></div>
+              <div>Poids: <strong>{p.poids} kg</strong></div>
+              <div>Taille: <strong>{p.taille} m</strong></div>
+              <div>Objectif: <strong>{p.objectif}</strong></div>
+            </div>
+
+            <div style={{background:PC[name]+"10",borderRadius:10,padding:14,textAlign:"center",marginBottom:10}}>
+              <div style={{fontSize:26,fontWeight:800,color:PC[name]}}>{p.calories} kcal/j</div>
+              <div style={{display:"flex",justifyContent:"center",gap:16,marginTop:8,fontSize:12,color:C.tM}}>
+                <span>Prot <strong>{p.proteines}g</strong></span>
+                <span>Lip <strong>{p.lipides||"—"}g</strong></span>
+                <span>Gluc <strong>{p.glucides||"—"}g</strong></span>
               </div>
-            ))}
+            </div>
+
+            {p.repartition&&<div>
+              <div style={{fontSize:11,fontWeight:600,color:C.tM,marginBottom:4}}>Répartition journalière</div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:4}}>
+                {Object.entries(p.repartition).map(([repas,kcal])=>(
+                  <div key={repas} style={{padding:"5px 8px",borderRadius:6,background:C.bg,
+                    display:"flex",justifyContent:"space-between",fontSize:11}}>
+                    <span style={{color:C.tM}}>{repasLabels[repas]||repas}</span>
+                    <span style={{fontWeight:600}}>{kcal} kcal</span>
+                  </div>
+                ))}
+              </div>
+            </div>}
+          </div>);
+        })}
+
+        <div style={{background:"#fff",borderRadius:12,padding:14,border:`1px solid ${C.bdr}`}}>
+          <h3 style={{margin:"0 0 8px",fontSize:13,fontWeight:700,color:C.forest}}>📋 Règles</h3>
+          <div style={{fontSize:11,lineHeight:1.8,color:C.tM}}>
+            <div>• Végétarien-first : Œufs {">"} Poissons {">"} Fromages {">"} Poulet halal</div>
+            <div>• 15 min max · Petit-déj salé 3-4x/sem · Batch dimanche ~2h</div>
           </div>
-        </div>}
-      </div>);
-    })}
+        </div>
 
-    <div style={{background:"#fff",borderRadius:12,padding:14,border:`1px solid ${C.bdr}`}}>
-      <h3 style={{margin:"0 0 8px",fontSize:13,fontWeight:700,color:C.forest}}>📋 Règles</h3>
-      <div style={{fontSize:11,lineHeight:1.8,color:C.tM}}>
-        <div>• Végétarien-first : Œufs {">"} Poissons {">"} Fromages {">"} Poulet halal</div>
-        <div>• 15 min max · Petit-déj salé 3-4x/sem · Batch dimanche ~2h</div>
-      </div>
-    </div>
-
-    <div style={{background:"#E3F2FD",borderRadius:12,padding:14,border:`1px solid ${C.blue}22`,marginTop:4}}>
-      <h3 style={{margin:"0 0 8px",fontSize:13,fontWeight:700,color:C.blue}}>📱 Fonctionnalités version Netlify</h3>
-      <div style={{fontSize:11,lineHeight:1.8,color:C.tM}}>
-        <div>🔔 <strong>Notification achats frais</strong> — Jeudi 9h : liste des produits frais à acheter pour le week-end</div>
-        <div>🔔 <strong>Notification batch</strong> — Dimanche 9h : rappel des préparations du jour</div>
-        <div>⏰ <strong>Notification cuisson longue</strong> — Alerte programmée (19h45 - temps cuisson) pour les plats {">"} 25 min</div>
-        <div>📄 <strong>Export PDF</strong> — Synthèse semaine téléchargeable au verrouillage</div>
-        <div>🔄 <strong>Synchro 2 iPhones</strong> — Firebase Realtime Database (Damien + Maroie)</div>
-        <div>📶 <strong>Mode hors-ligne</strong> — Service Worker + PWA (ajout écran d'accueil)</div>
-        <div>↕️ <strong>Drag & drop stock</strong> — Réordonner les articles dans chaque catégorie</div>
-      </div>
-      <PushButton/>
-    </div>
+        <div style={{background:"#E3F2FD",borderRadius:12,padding:14,border:`1px solid ${C.blue}22`,marginTop:4}}>
+          <h3 style={{margin:"0 0 8px",fontSize:13,fontWeight:700,color:C.blue}}>📱 Fonctionnalités version Netlify</h3>
+          <div style={{fontSize:11,lineHeight:1.8,color:C.tM}}>
+            <div>🔔 <strong>Notification achats frais</strong> — Jeudi 9h : liste des produits frais à acheter pour le week-end</div>
+            <div>🔔 <strong>Notification batch</strong> — Dimanche 9h : rappel des préparations du jour</div>
+            <div>⏰ <strong>Notification cuisson longue</strong> — Alerte programmée (19h45 - temps cuisson) pour les plats {">"} 25 min</div>
+            <div>📄 <strong>Export PDF</strong> — Synthèse semaine téléchargeable au verrouillage</div>
+            <div>🔄 <strong>Synchro 2 iPhones</strong> — Firebase Realtime Database (Damien + Maroie)</div>
+            <div>📶 <strong>Mode hors-ligne</strong> — Service Worker + PWA (ajout écran d'accueil)</div>
+            <div>↕️ <strong>Drag & drop stock</strong> — Réordonner les articles dans chaque catégorie</div>
+          </div>
+          <PushButton/>
+        </div>
+      </>
+    )}
   </div>);
 }
 
 // ═══════ TAB 7 — SALADE (bibliothèque + compositeur) ═══════
 function salIng(id){return SALAD_ALL_INGS[id]||{nom:id,emoji:"❓",portion_g:0,cal_100g:0,prot_100g:0};}
 function salCalcNutri(comp,mult=1){
-  let cal=0,prot=0;
+  let cal=0,prot=0,lip=0,gluc=0;
   Object.values(comp).forEach(ids=>ids.forEach(id=>{
     const i=salIng(id);const p=(i.portion_g||i.portion_ml||20)*mult;
     cal+=(i.cal_100g*p)/100;prot+=((i.prot_100g||0)*p)/100;
+    lip+=((i.lip_100g||0)*p)/100;gluc+=((i.gluc_100g||0)*p)/100;
   }));
-  return{cal:Math.round(cal),prot:Math.round(prot*10)/10};
+  return{cal:Math.round(cal),prot:Math.round(prot*10)/10,lip:Math.round(lip*10)/10,gluc:Math.round(gluc*10)/10};
 }
 function salAllIngs(comp){const items=[];Object.values(comp).forEach(ids=>ids.forEach(id=>items.push(salIng(id))));return items;}
 function salGenRecipe(selectedIds){
@@ -1582,22 +1767,22 @@ function salGenRecipe(selectedIds){
 }
 
 function SalStars({rating,onRate,size=20}){
-  return React.createElement("div",{style:{display:"flex",gap:2}},
-    [1,2,3,4,5].map(n=>React.createElement("button",{key:n,onClick:()=>onRate?.(rating===n?0:n),
-      style:{background:"none",border:"none",cursor:onRate?"pointer":"default",
-        fontSize:size,padding:0,color:n<=rating?"#F59E0B":"#d1d5db",transition:"color .15s"}},"★"))
-  );
+  return(<div style={{display:"flex",gap:2}}>
+    {[1,2,3,4,5].map(n=><button key={n} onClick={()=>onRate?.(rating===n?0:n)}
+      style={{background:"none",border:"none",cursor:onRate?"pointer":"default",
+        fontSize:size,padding:0,color:n<=rating?"#F59E0B":"#d1d5db",transition:"color .15s"}}>★</button>)}
+  </div>);
 }
 
 function SalBadge({children,color=C.forest,bg}){
-  return React.createElement("span",{style:{display:"inline-block",padding:"2px 7px",borderRadius:16,
-    fontSize:10.5,fontWeight:600,letterSpacing:.2,background:bg||(color+"15"),color,whiteSpace:"nowrap"}},children);
+  return(<span style={{display:"inline-block",padding:"2px 7px",borderRadius:16,
+    fontSize:10.5,fontWeight:600,letterSpacing:.2,background:bg||(color+"15"),color,whiteSpace:"nowrap"}}>{children}</span>);
 }
 
 function SalFilterPill({children,active,onClick,color}){
-  return React.createElement("button",{onClick,style:{padding:"5px 11px",borderRadius:18,border:"none",
+  return(<button onClick={onClick} style={{padding:"5px 11px",borderRadius:18,border:"none",
     background:active?(color||C.forest):"#f3f4f6",color:active?"#fff":"#6b7280",
-    fontSize:12,fontWeight:600,cursor:"pointer",transition:"all .15s",whiteSpace:"nowrap"}},children);
+    fontSize:12,fontWeight:600,cursor:"pointer",transition:"all .15s",whiteSpace:"nowrap"}}>{children}</button>);
 }
 
 function SalPhotoManager({photo,onPhotoChange}){
@@ -1605,35 +1790,35 @@ function SalPhotoManager({photo,onPhotoChange}){
   const [urlInput,setUrlInput]=useState("");
   const [showUrl,setShowUrl]=useState(false);
   const handleFile=e=>{const f=e.target.files?.[0];if(!f)return;const r=new FileReader();r.onload=ev=>onPhotoChange(ev.target.result);r.readAsDataURL(f);};
-  return React.createElement("div",null,
-    photo&&React.createElement("div",{style:{position:"relative",marginBottom:8}},
-      React.createElement("img",{src:photo,alt:"",style:{width:"100%",height:160,objectFit:"cover",borderRadius:12}}),
-      React.createElement("button",{onClick:()=>onPhotoChange(null),style:{position:"absolute",top:6,right:6,background:"#000a",color:"#fff",border:"none",borderRadius:16,width:28,height:28,cursor:"pointer",fontSize:14}},"✕")
-    ),
-    React.createElement("div",{style:{display:"flex",gap:6}},
-      React.createElement("button",{onClick:()=>fileRef.current?.click(),style:{flex:1,padding:"8px 12px",borderRadius:8,border:"1px solid #e5e7eb",background:"#fff",fontSize:12,cursor:"pointer",color:"#374151"}},"📷 Photo"),
-      React.createElement("button",{onClick:()=>setShowUrl(!showUrl),style:{flex:1,padding:"8px 12px",borderRadius:8,border:"1px solid #e5e7eb",background:"#fff",fontSize:12,cursor:"pointer",color:"#374151"}},"🔗 URL"),
-      React.createElement("input",{ref:fileRef,type:"file",accept:"image/*",onChange:handleFile,style:{display:"none"}})
-    ),
-    showUrl&&React.createElement("div",{style:{display:"flex",gap:4,marginTop:6}},
-      React.createElement("input",{value:urlInput,onChange:e=>setUrlInput(e.target.value),placeholder:"https://...",
-        style:{flex:1,padding:"6px 10px",borderRadius:8,border:"1px solid #d1d5db",fontSize:12}}),
-      React.createElement("button",{onClick:()=>{if(urlInput){onPhotoChange(urlInput);setUrlInput("");setShowUrl(false);}},
-        style:{padding:"6px 12px",borderRadius:8,background:C.fL,color:"#fff",border:"none",fontSize:12,cursor:"pointer"}},"OK")
-    )
-  );
+  return(<div>
+    {photo&&<div style={{position:"relative",marginBottom:8}}>
+      <img src={photo} alt="" style={{width:"100%",height:160,objectFit:"cover",borderRadius:12}}/>
+      <button onClick={()=>onPhotoChange(null)} style={{position:"absolute",top:6,right:6,background:"#000a",color:"#fff",border:"none",borderRadius:16,width:28,height:28,cursor:"pointer",fontSize:14}}>✕</button>
+    </div>}
+    <div style={{display:"flex",gap:6}}>
+      <button onClick={()=>fileRef.current?.click()} style={{flex:1,padding:"8px 12px",borderRadius:8,border:"1px solid #e5e7eb",background:"#fff",fontSize:12,cursor:"pointer",color:"#374151"}}>📷 Photo</button>
+      <button onClick={()=>setShowUrl(!showUrl)} style={{flex:1,padding:"8px 12px",borderRadius:8,border:"1px solid #e5e7eb",background:"#fff",fontSize:12,cursor:"pointer",color:"#374151"}}>🔗 URL</button>
+      <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} style={{display:"none"}}/>
+    </div>
+    {showUrl&&<div style={{display:"flex",gap:4,marginTop:6}}>
+      <input value={urlInput} onChange={e=>setUrlInput(e.target.value)} placeholder="https://..."
+        style={{flex:1,padding:"6px 10px",borderRadius:8,border:"1px solid #d1d5db",fontSize:12}}/>
+      <button onClick={()=>{if(urlInput){onPhotoChange(urlInput);setUrlInput("");setShowUrl(false);}}}
+        style={{padding:"6px 12px",borderRadius:8,background:C.fL,color:"#fff",border:"none",fontSize:12,cursor:"pointer"}}>OK</button>
+    </div>}
+  </div>);
 }
 
 function SalChip({ingredient:i,selected,onClick,small}){
-  return React.createElement("button",{onClick,style:{display:"inline-flex",alignItems:"center",gap:small?3:5,
+  return(<button onClick={onClick} style={{display:"inline-flex",alignItems:"center",gap:small?3:5,
     padding:small?"3px 7px":"5px 11px",borderRadius:18,
     border:selected?"2px solid "+C.fL:"1.5px solid #d1d5db",
     background:selected?C.fL+"10":"#fff",cursor:"pointer",fontSize:small?11:12.5,
-    fontWeight:selected?600:400,color:selected?C.forest:"#374151",transition:"all .15s"}},
-    React.createElement("span",{style:{fontSize:small?12:15}},i.emoji),
-    React.createElement("span",null,i.nom),
-    i.batch&&React.createElement("span",{style:{fontSize:8,color:C.gold}},"⏱")
-  );
+    fontWeight:selected?600:400,color:selected?C.forest:"#374151",transition:"all .15s"}}>
+    <span style={{fontSize:small?12:15}}>{i.emoji}</span>
+    <span>{i.nom}</span>
+    {i.batch&&<span style={{fontSize:8,color:C.gold}}>⏱</span>}
+  </button>);
 }
 
 function SalCard({salad,rating,photo,activeProfiles,onClick}){
@@ -1641,21 +1826,21 @@ function SalCard({salad,rating,photo,activeProfiles,onClick}){
   const{cal}=salCalcNutri(salad.composition,mult);
   const emojis=salAllIngs(salad.composition).slice(0,5).map(i=>i.emoji).join("");
   const cc=SALAD_CUISINE_COLORS[salad.cuisine]||"#6b7280";
-  return React.createElement("button",{onClick,style:{background:"#fff",borderRadius:14,border:"1px solid #e5e7eb",
-    padding:0,cursor:"pointer",textAlign:"left",overflow:"hidden",boxShadow:"0 1px 3px #0001",width:"100%",transition:"all .15s"}},
-    photo?React.createElement("img",{src:photo,alt:"",style:{width:"100%",height:80,objectFit:"cover"}}):
-      React.createElement("div",{style:{background:"linear-gradient(135deg,"+cc+"10,"+cc+"05)",padding:"12px 12px 8px"}},
-        React.createElement("div",{style:{fontSize:24}},emojis)),
-    React.createElement("div",{style:{padding:"8px 12px 10px"}},
-      React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"#111",lineHeight:1.2,marginBottom:4}},salad.nom),
-      rating>0&&React.createElement(SalStars,{rating,size:12}),
-      React.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:3,marginTop:4}},
-        React.createElement(SalBadge,{color:cc},salad.cuisine),
-        React.createElement(SalBadge,{color:C.forest},"⏱"+salad.temps+"′"),
-        React.createElement(SalBadge,{color:"#059669"},"~"+cal+"kcal")
-      )
-    )
-  );
+  return(<button onClick={onClick} style={{background:"#fff",borderRadius:14,border:"1px solid #e5e7eb",
+    padding:0,cursor:"pointer",textAlign:"left",overflow:"hidden",boxShadow:"0 1px 3px #0001",width:"100%",transition:"all .15s"}}>
+    {photo?<img src={photo} alt="" style={{width:"100%",height:80,objectFit:"cover"}}/>:
+      <div style={{background:"linear-gradient(135deg,"+cc+"10,"+cc+"05)",padding:"12px 12px 8px"}}>
+        <div style={{fontSize:24}}>{emojis}</div></div>}
+    <div style={{padding:"8px 12px 10px"}}>
+      <div style={{fontSize:13,fontWeight:700,color:"#111",lineHeight:1.2,marginBottom:4}}>{salad.nom}</div>
+      {rating>0&&<SalStars rating={rating} size={12}/>}
+      <div style={{display:"flex",flexWrap:"wrap",gap:3,marginTop:4}}>
+        <SalBadge color={cc}>{salad.cuisine}</SalBadge>
+        <SalBadge color={C.forest}>{"⏱"+salad.temps+"′"}</SalBadge>
+        <SalBadge color="#059669">{"~"+cal+"kcal"}</SalBadge>
+      </div>
+    </div>
+  </button>);
 }
 
 function SalDetail({salad,rating,photo,activeProfiles,menu,onAddToMenu,menuSaladIds,onClose,onRate,onPhotoChange,onDelete,onToggleBestSeller}){
@@ -1667,76 +1852,76 @@ function SalDetail({salad,rating,photo,activeProfiles,menu,onAddToMenu,menuSalad
   const renderRecipe=text=>{
     const parts=text.split(/(\*\*[^*]+\*\*)/g);
     return parts.map((p,i)=>p.startsWith("**")&&p.endsWith("**")?
-      React.createElement("strong",{key:i,style:{color:C.gold,fontWeight:700}},p.slice(2,-2)):
-      React.createElement("span",{key:i},p));
+      <strong key={i} style={{color:C.gold,fontWeight:700}}>{p.slice(2,-2)}</strong>:
+      <span key={i}>{p}</span>);
   };
-  return React.createElement("div",{style:{position:"fixed",inset:0,zIndex:1000,background:"#000a",display:"flex",alignItems:"flex-end",justifyContent:"center"},onClick:onClose},
-    React.createElement("div",{onClick:e=>e.stopPropagation(),style:{background:"#fff",borderRadius:"20px 20px 0 0",width:"100%",maxWidth:480,maxHeight:"90vh",overflow:"auto",paddingBottom:24}},
-      React.createElement("div",{style:{padding:"16px 16px 12px",position:"sticky",top:0,background:"#fff",borderRadius:"20px 20px 0 0",borderBottom:"1px solid #f3f4f6",zIndex:1}},
-        React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}},
-          React.createElement("div",{style:{flex:1}},
-            React.createElement("h2",{style:{margin:0,fontSize:18,fontWeight:800,color:"#111"}},salad.nom),
-            React.createElement("div",{style:{display:"flex",gap:5,marginTop:6,flexWrap:"wrap"}},
-              React.createElement(SalBadge,{color:cc},salad.cuisine),
-              React.createElement(SalBadge,null,"⏱ "+salad.temps+" min"),
-              salad.batch!=="Non"&&React.createElement(SalBadge,{color:C.gold,bg:C.gold+"14"},"🍳 Batch")
-            )
-          ),
-          React.createElement("button",{onClick:onClose,style:{background:"#f3f4f6",border:"none",borderRadius:18,width:32,height:32,fontSize:16,cursor:"pointer",color:"#6b7280"}},"✕")
-        ),
-        React.createElement("div",{style:{marginTop:8}},React.createElement(SalStars,{rating,onRate,size:22}))
-      ),
-      React.createElement("div",{style:{padding:"12px 16px"}},
-        React.createElement(SalPhotoManager,{photo,onPhotoChange}),
-        profileNutri.length>0&&React.createElement("div",{style:{display:"flex",gap:6,marginTop:12,flexWrap:"wrap"}},
-          profileNutri.map(p=>React.createElement("div",{key:p.key,style:{flex:1,minWidth:90,padding:"8px 10px",borderRadius:10,background:p.color+"08",border:"1px solid "+p.color+"20"}},
-            React.createElement("div",{style:{fontSize:11,fontWeight:700,color:p.color}},p.emoji+" "+p.nom),
-            React.createElement("div",{style:{fontSize:16,fontWeight:800,color:"#111"}},p.cal+" kcal"),
-            React.createElement("div",{style:{fontSize:10,color:"#6b7280"}},p.prot+"g prot")
-          ))
-        ),
-        React.createElement("h3",{style:{fontSize:12,fontWeight:700,color:C.forest,margin:"16px 0 8px",textTransform:"uppercase",letterSpacing:.8}},"Composition"),
-        Object.entries(salad.composition).map(([cat,ids])=>{
+  return(<div style={{position:"fixed",inset:0,zIndex:1000,background:"#000a",display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={onClose}>
+    <div onClick={e=>e.stopPropagation()} style={{background:"#fff",borderRadius:"20px 20px 0 0",width:"100%",maxWidth:480,maxHeight:"90vh",overflow:"auto",paddingBottom:24}}>
+      <div style={{padding:"16px 16px 12px",position:"sticky",top:0,background:"#fff",borderRadius:"20px 20px 0 0",borderBottom:"1px solid #f3f4f6",zIndex:1}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+          <div style={{flex:1}}>
+            <h2 style={{margin:0,fontSize:18,fontWeight:800,color:"#111"}}>{salad.nom}</h2>
+            <div style={{display:"flex",gap:5,marginTop:6,flexWrap:"wrap"}}>
+              <SalBadge color={cc}>{salad.cuisine}</SalBadge>
+              <SalBadge>{"⏱ "+salad.temps+" min"}</SalBadge>
+              {salad.batch!=="Non"&&<SalBadge color={C.gold} bg={C.gold+"14"}>🍳 Batch</SalBadge>}
+            </div>
+          </div>
+          <button onClick={onClose} style={{background:"#f3f4f6",border:"none",borderRadius:18,width:32,height:32,fontSize:16,cursor:"pointer",color:"#6b7280"}}>✕</button>
+        </div>
+        <div style={{marginTop:8}}><SalStars rating={rating} onRate={onRate} size={22}/></div>
+      </div>
+      <div style={{padding:"12px 16px"}}>
+        <SalPhotoManager photo={photo} onPhotoChange={onPhotoChange}/>
+        {profileNutri.length>0&&<div style={{display:"flex",gap:6,marginTop:12,flexWrap:"wrap"}}>
+          {profileNutri.map(p=><div key={p.key} style={{flex:1,minWidth:90,padding:"8px 10px",borderRadius:10,background:p.color+"08",border:"1px solid "+p.color+"20"}}>
+            <div style={{fontSize:11,fontWeight:700,color:p.color}}>{p.emoji+" "+p.nom}</div>
+            <div style={{fontSize:16,fontWeight:800,color:"#111"}}>{p.cal+" kcal"}</div>
+            <div style={{fontSize:10,color:"#6b7280"}}>{p.prot+"g prot"}</div>
+          </div>)}
+        </div>}
+        <h3 style={{fontSize:12,fontWeight:700,color:C.forest,margin:"16px 0 8px",textTransform:"uppercase",letterSpacing:.8}}>Composition</h3>
+        {Object.entries(salad.composition).map(([cat,ids])=>{
           if(!ids.length)return null;const c=SALAD_CATEGORIES[cat];
-          return React.createElement("div",{key:cat,style:{marginBottom:8}},
-            React.createElement("div",{style:{fontSize:10,fontWeight:600,color:"#9ca3af",marginBottom:3}},c?.emoji+" "+c?.label),
-            React.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:3}},
-              ids.map(id=>{const i=salIng(id);const portion=i.portion_g||i.portion_ml||0;
+          return(<div key={cat} style={{marginBottom:8}}>
+            <div style={{fontSize:10,fontWeight:600,color:"#9ca3af",marginBottom:3}}>{c?.emoji+" "+c?.label}</div>
+            <div style={{display:"flex",flexWrap:"wrap",gap:3}}>
+              {ids.map(id=>{const i=salIng(id);const portion=i.portion_g||i.portion_ml||0;
                 const mults=activeProfiles.map(k=>({...SALAD_PROFILES[k],key:k}));
-                return React.createElement("span",{key:id,style:{display:"inline-flex",alignItems:"center",gap:3,padding:"2px 8px",borderRadius:14,background:"#f9fafb",border:"1px solid #e5e7eb",fontSize:11,color:"#374151"}},
-                  i.emoji+" "+i.nom,
-                  mults.map(p=>React.createElement("span",{key:p.key,style:{fontSize:9,color:p.color,fontWeight:600}},Math.round(portion*p.mult)+"g"))
-                );
-              })
-            )
-          );
-        }),
-        React.createElement("h3",{style:{fontSize:12,fontWeight:700,color:C.forest,margin:"16px 0 8px",textTransform:"uppercase",letterSpacing:.8}},"Recette"),
-        React.createElement("div",{style:{background:"#f9fafb",borderRadius:10,padding:12,fontSize:12.5,lineHeight:1.7,color:"#374151"}},renderRecipe(salad.recette)),
-        !alreadyInMenu&&React.createElement("div",{style:{marginTop:16}},
-          !showDayPicker?
-            React.createElement("button",{onClick:()=>setShowDayPicker(true),style:{width:"100%",padding:"11px 14px",borderRadius:10,border:"2px solid "+C.fL+"40",background:C.fL+"08",color:C.forest,fontSize:13,fontWeight:700,cursor:"pointer"}},"📋 Ajouter au menu"):
-            React.createElement("div",{style:{background:C.fL+"08",borderRadius:10,padding:10,border:"1.5px solid "+C.fL+"30"}},
-              React.createElement("div",{style:{fontSize:11,fontWeight:600,color:C.forest,marginBottom:8}},"Choisir le jour :"),
-              React.createElement("div",{style:{display:"flex",gap:4,flexWrap:"wrap"}},
-                weekDays.map((d,i)=>React.createElement("button",{key:i,onClick:()=>{onAddToMenu(salad,i);setShowDayPicker(false);},
-                  style:{padding:"7px 10px",borderRadius:8,border:"1px solid "+C.fL+"30",background:"#fff",color:C.forest,fontSize:12,fontWeight:600,cursor:"pointer",flex:"1 0 auto",minWidth:50,textAlign:"center"}},d.name))
-              ),
-              React.createElement("button",{onClick:()=>setShowDayPicker(false),style:{marginTop:6,padding:"5px 10px",borderRadius:6,border:"none",background:"transparent",color:"#9ca3af",fontSize:11,cursor:"pointer"}},"Annuler")
-            )
-        ),
-        alreadyInMenu&&React.createElement("div",{style:{marginTop:16,padding:"10px 14px",borderRadius:10,background:"#f0fdf4",border:"1px solid #bbf7d0",textAlign:"center"}},
-          React.createElement("span",{style:{fontSize:12,fontWeight:600,color:"#16a34a"}},"✓ Déjà dans le menu")
-        ),
-        React.createElement("div",{style:{display:"flex",gap:6,marginTop:12}},
-          salad.cuisine!=="Best Seller"?
-            React.createElement("button",{onClick:onToggleBestSeller,style:{flex:1,padding:"10px 14px",borderRadius:10,border:"1.5px solid "+C.gold+"40",background:C.gold+"08",color:C.gold,fontSize:12,fontWeight:700,cursor:"pointer"}},"⭐ Passer en Best Seller"):
-            React.createElement("button",{onClick:onToggleBestSeller,style:{flex:1,padding:"10px 14px",borderRadius:10,border:"1.5px solid "+C.gold,background:C.gold+"14",color:C.gold,fontSize:12,fontWeight:700,cursor:"pointer"}},"⭐ Best Seller ✓"),
-          React.createElement("button",{onClick:onDelete,style:{padding:"10px 14px",borderRadius:10,border:"1px solid #fca5a5",background:"#fef2f2",color:"#dc2626",fontSize:12,fontWeight:600,cursor:"pointer"}},"🗑")
-        )
-      )
-    )
-  );
+                return(<span key={id} style={{display:"inline-flex",alignItems:"center",gap:3,padding:"2px 8px",borderRadius:14,background:"#f9fafb",border:"1px solid #e5e7eb",fontSize:11,color:"#374151"}}>
+                  {i.emoji+" "+i.nom}
+                  {mults.map(p=><span key={p.key} style={{fontSize:9,color:p.color,fontWeight:600}}>{Math.round(portion*p.mult)+"g"}</span>)}
+                </span>);
+              })}
+            </div>
+          </div>);
+        })}
+        <h3 style={{fontSize:12,fontWeight:700,color:C.forest,margin:"16px 0 8px",textTransform:"uppercase",letterSpacing:.8}}>Recette</h3>
+        <div style={{background:"#f9fafb",borderRadius:10,padding:12,fontSize:12.5,lineHeight:1.7,color:"#374151"}}>{renderRecipe(salad.recette)}</div>
+        {!alreadyInMenu&&<div style={{marginTop:16}}>
+          {!showDayPicker?
+            <button onClick={()=>setShowDayPicker(true)} style={{width:"100%",padding:"11px 14px",borderRadius:10,border:"2px solid "+C.fL+"40",background:C.fL+"08",color:C.forest,fontSize:13,fontWeight:700,cursor:"pointer"}}>📋 Ajouter au menu</button>:
+            <div style={{background:C.fL+"08",borderRadius:10,padding:10,border:"1.5px solid "+C.fL+"30"}}>
+              <div style={{fontSize:11,fontWeight:600,color:C.forest,marginBottom:8}}>Choisir le jour :</div>
+              <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
+                {weekDays.map((d,i)=><button key={i} onClick={()=>{onAddToMenu(salad,i);setShowDayPicker(false);}}
+                  style={{padding:"7px 10px",borderRadius:8,border:"1px solid "+C.fL+"30",background:"#fff",color:C.forest,fontSize:12,fontWeight:600,cursor:"pointer",flex:"1 0 auto",minWidth:50,textAlign:"center"}}>{d.name}</button>)}
+              </div>
+              <button onClick={()=>setShowDayPicker(false)} style={{marginTop:6,padding:"5px 10px",borderRadius:6,border:"none",background:"transparent",color:"#9ca3af",fontSize:11,cursor:"pointer"}}>Annuler</button>
+            </div>}
+        </div>}
+        {alreadyInMenu&&<div style={{marginTop:16,padding:"10px 14px",borderRadius:10,background:"#f0fdf4",border:"1px solid #bbf7d0",textAlign:"center"}}>
+          <span style={{fontSize:12,fontWeight:600,color:"#16a34a"}}>✓ Déjà dans le menu</span>
+        </div>}
+        <div style={{display:"flex",gap:6,marginTop:12}}>
+          {salad.cuisine!=="Best Seller"?
+            <button onClick={onToggleBestSeller} style={{flex:1,padding:"10px 14px",borderRadius:10,border:"1.5px solid "+C.gold+"40",background:C.gold+"08",color:C.gold,fontSize:12,fontWeight:700,cursor:"pointer"}}>⭐ Passer en Best Seller</button>:
+            <button onClick={onToggleBestSeller} style={{flex:1,padding:"10px 14px",borderRadius:10,border:"1.5px solid "+C.gold,background:C.gold+"14",color:C.gold,fontSize:12,fontWeight:700,cursor:"pointer"}}>⭐ Best Seller ✓</button>}
+          <button onClick={onDelete} style={{padding:"10px 14px",borderRadius:10,border:"1px solid #fca5a5",background:"#fef2f2",color:"#dc2626",fontSize:12,fontWeight:600,cursor:"pointer"}}>🗑</button>
+        </div>
+      </div>
+    </div>
+  </div>);
 }
 
 function SalComposer({onBack,onSave}){
@@ -1768,70 +1953,70 @@ function SalComposer({onBack,onSave}){
     const newSalad={id:"custom_"+Date.now(),nom:saveName.trim(),cuisine:"Best Seller",saison:saveSaison,temps:12,batch:hasBatch?"Partiel":"Non",composition,recette:salGenRecipe(selected),custom:true};
     onSave(newSalad);setShowSave(false);onBack();
   };
-  return React.createElement("div",null,
-    React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:14}},
-      React.createElement("button",{onClick:onBack,style:{background:"#f3f4f6",border:"none",borderRadius:8,width:32,height:32,cursor:"pointer",fontSize:14}},"←"),
-      React.createElement("h2",{style:{margin:0,fontSize:17,fontWeight:800,color:C.forest}},"Composer ma salade")
-    ),
-    React.createElement("div",{style:{display:"flex",gap:3,marginBottom:14}},
-      steps.map(s=>React.createElement("button",{key:s.num,onClick:()=>setStep(s.num),style:{flex:1,height:5,borderRadius:3,border:"none",cursor:"pointer",background:s.num<=step?C.fL:"#e5e7eb"}}))
-    ),
-    step===1&&selected.size===0&&React.createElement("div",{style:{marginBottom:14}},
-      React.createElement("div",{style:{fontSize:11,fontWeight:600,color:"#9ca3af",marginBottom:6,textTransform:"uppercase",letterSpacing:.5}},"💡 Suggestions rapides"),
-      React.createElement("div",{style:{display:"flex",gap:6,overflowX:"auto",paddingBottom:4}},
-        SALAD_COMBOS.map(c=>React.createElement("button",{key:c.nom,onClick:()=>applyCombo(c),style:{flexShrink:0,padding:"7px 12px",borderRadius:10,border:"1.5px solid "+C.fL+"30",background:C.fL+"06",cursor:"pointer",textAlign:"left",minWidth:120}},
-          React.createElement("div",{style:{fontSize:12,fontWeight:700,color:C.forest}},c.nom),
-          React.createElement("div",{style:{fontSize:10,color:"#6b7280",marginTop:1}},c.desc)
-        ))
-      )
-    ),
-    React.createElement("div",{style:{background:"#f9fafb",borderRadius:12,padding:10,marginBottom:10}},
-      React.createElement("div",{style:{fontSize:14,fontWeight:700,color:C.forest}},"Étape "+cur.num+" — "+cur.title),
-      React.createElement("div",{style:{fontSize:11,color:"#6b7280"}},cur.sub)
-    ),
-    cur.cats.map(catKey=>React.createElement("div",{key:catKey,style:{marginBottom:14}},
-      React.createElement("div",{style:{fontSize:12,fontWeight:700,color:"#374151",marginBottom:6}},SALAD_CATEGORIES[catKey].emoji+" "+SALAD_CATEGORIES[catKey].label),
-      React.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:5}},
-        (SALAD_INGREDIENTS[catKey]||[]).map(i=>React.createElement(SalChip,{key:i.id,ingredient:i,selected:selected.has(i.id),onClick:()=>toggle(i.id)}))
-      )
-    )),
-    React.createElement("div",{style:{position:"sticky",bottom:0,background:"#fff",borderTop:"1px solid #e5e7eb",padding:"10px 0 4px",marginTop:14}},
-      React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}},
-        React.createElement("span",{style:{fontSize:12,fontWeight:700,color:C.forest}},selected.size+" ingr. · ~"+cal+" kcal · "+prot+"g prot"),
-        React.createElement("div",{style:{display:"flex",gap:1}},[...selected].slice(0,8).map(id=>React.createElement("span",{key:id,style:{fontSize:13}},salIng(id).emoji)))
-      ),
-      React.createElement("div",{style:{display:"flex",gap:6}},
-        step>1&&React.createElement("button",{onClick:()=>setStep(s=>s-1),style:{padding:"9px 14px",borderRadius:10,border:"1px solid #d1d5db",background:"#fff",fontSize:12,fontWeight:600,cursor:"pointer"}},"←"),
-        step<5?
-          React.createElement("button",{onClick:()=>setStep(s=>s+1),style:{flex:1,padding:"9px",borderRadius:10,background:C.fL,color:"#fff",border:"none",fontSize:12,fontWeight:700,cursor:"pointer"}},"Suivant →"):
-          React.createElement("button",{onClick:()=>selected.size>=2&&setShowSave(true),style:{flex:1,padding:"9px",borderRadius:10,border:"none",background:selected.size>=2?C.forest:"#d1d5db",color:selected.size>=2?"#fff":"#9ca3af",fontSize:12,fontWeight:700,cursor:selected.size>=2?"pointer":"default"}},"🥗 Enregistrer ("+selected.size+" ingr.)")
-      )
-    ),
-    showSave&&React.createElement("div",{style:{position:"fixed",inset:0,zIndex:1000,background:"#000a",display:"flex",alignItems:"center",justifyContent:"center"},onClick:()=>setShowSave(false)},
-      React.createElement("div",{onClick:e=>e.stopPropagation(),style:{background:"#fff",borderRadius:16,padding:20,width:"85%",maxWidth:360}},
-        React.createElement("h3",{style:{margin:"0 0 12px",fontSize:16,fontWeight:800,color:C.forest}},"🥗 Enregistrer ma salade"),
-        React.createElement("div",{style:{marginBottom:10}},
-          React.createElement("label",{style:{fontSize:11,fontWeight:600,color:"#6b7280"}},"Nom de la salade"),
-          React.createElement("input",{value:saveName,onChange:e=>setSaveName(e.target.value),placeholder:"Ma super salade...",autoFocus:true,
-            style:{width:"100%",padding:"8px 10px",borderRadius:8,border:"1px solid #d1d5db",fontSize:13,marginTop:4,boxSizing:"border-box"}})
-        ),
-        React.createElement("div",{style:{marginBottom:12}},
-          React.createElement("label",{style:{fontSize:11,fontWeight:600,color:"#6b7280"}},"Saison"),
-          React.createElement("select",{value:saveSaison,onChange:e=>setSaveSaison(e.target.value),
-            style:{width:"100%",padding:"8px",borderRadius:8,border:"1px solid #d1d5db",fontSize:13,marginTop:4}},
-            ["Été","Automne","Hiver","Printemps","Toutes saisons"].map(s=>React.createElement("option",{key:s},s))
-          )
-        ),
-        React.createElement("div",{style:{fontSize:11,color:"#6b7280",marginBottom:12}},
-          "Type : ",React.createElement("strong",{style:{color:C.gold}},"⭐ Best Seller")," · "+selected.size+" ingrédients · ~"+cal+" kcal"
-        ),
-        React.createElement("div",{style:{display:"flex",gap:8}},
-          React.createElement("button",{onClick:()=>setShowSave(false),style:{flex:1,padding:"10px",borderRadius:10,border:"1px solid #d1d5db",background:"#fff",fontSize:13,cursor:"pointer"}},"Annuler"),
-          React.createElement("button",{onClick:handleSave,style:{flex:1,padding:"10px",borderRadius:10,border:"none",background:saveName.trim()?C.forest:"#d1d5db",color:saveName.trim()?"#fff":"#9ca3af",fontSize:13,fontWeight:700,cursor:saveName.trim()?"pointer":"default"}},"✓ Enregistrer")
-        )
-      )
-    )
-  );
+  return(<div>
+    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}>
+      <button onClick={onBack} style={{background:"#f3f4f6",border:"none",borderRadius:8,width:32,height:32,cursor:"pointer",fontSize:14}}>←</button>
+      <h2 style={{margin:0,fontSize:17,fontWeight:800,color:C.forest}}>Composer ma salade</h2>
+    </div>
+    <div style={{display:"flex",gap:3,marginBottom:14}}>
+      {steps.map(s=><button key={s.num} onClick={()=>setStep(s.num)} style={{flex:1,height:5,borderRadius:3,border:"none",cursor:"pointer",background:s.num<=step?C.fL:"#e5e7eb"}}/>)}
+    </div>
+    {step===1&&selected.size===0&&<div style={{marginBottom:14}}>
+      <div style={{fontSize:11,fontWeight:600,color:"#9ca3af",marginBottom:6,textTransform:"uppercase",letterSpacing:.5}}>💡 Suggestions rapides</div>
+      <div style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:4}}>
+        {SALAD_COMBOS.map(c=><button key={c.nom} onClick={()=>applyCombo(c)} style={{flexShrink:0,padding:"7px 12px",borderRadius:10,border:"1.5px solid "+C.fL+"30",background:C.fL+"06",cursor:"pointer",textAlign:"left",minWidth:120}}>
+          <div style={{fontSize:12,fontWeight:700,color:C.forest}}>{c.nom}</div>
+          <div style={{fontSize:10,color:"#6b7280",marginTop:1}}>{c.desc}</div>
+        </button>)}
+      </div>
+    </div>}
+    <div style={{background:"#f9fafb",borderRadius:12,padding:10,marginBottom:10}}>
+      <div style={{fontSize:14,fontWeight:700,color:C.forest}}>{"Étape "+cur.num+" — "+cur.title}</div>
+      <div style={{fontSize:11,color:"#6b7280"}}>{cur.sub}</div>
+    </div>
+    {cur.cats.map(catKey=><div key={catKey} style={{marginBottom:14}}>
+      <div style={{fontSize:12,fontWeight:700,color:"#374151",marginBottom:6}}>{SALAD_CATEGORIES[catKey].emoji+" "+SALAD_CATEGORIES[catKey].label}</div>
+      <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
+        {(SALAD_INGREDIENTS[catKey]||[]).map(i=><SalChip key={i.id} ingredient={i} selected={selected.has(i.id)} onClick={()=>toggle(i.id)}/>)}
+      </div>
+    </div>)}
+    <div style={{position:"sticky",bottom:0,background:"#fff",borderTop:"1px solid #e5e7eb",padding:"10px 0 4px",marginTop:14}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+        <span style={{fontSize:12,fontWeight:700,color:C.forest}}>{selected.size+" ingr. · ~"+cal+" kcal · "+prot+"g prot"}</span>
+        <div style={{display:"flex",gap:1}}>{[...selected].slice(0,8).map(id=><span key={id} style={{fontSize:13}}>{salIng(id).emoji}</span>)}</div>
+      </div>
+      <div style={{display:"flex",gap:6}}>
+        {step>1&&<button onClick={()=>setStep(s=>s-1)} style={{padding:"9px 14px",borderRadius:10,border:"1px solid #d1d5db",background:"#fff",fontSize:12,fontWeight:600,cursor:"pointer"}}>←</button>}
+        {step<5?
+          <button onClick={()=>setStep(s=>s+1)} style={{flex:1,padding:"9px",borderRadius:10,background:C.fL,color:"#fff",border:"none",fontSize:12,fontWeight:700,cursor:"pointer"}}>Suivant →</button>:
+          <button onClick={()=>selected.size>=2&&setShowSave(true)} style={{flex:1,padding:"9px",borderRadius:10,border:"none",background:selected.size>=2?C.forest:"#d1d5db",color:selected.size>=2?"#fff":"#9ca3af",fontSize:12,fontWeight:700,cursor:selected.size>=2?"pointer":"default"}}>{"🥗 Enregistrer ("+selected.size+" ingr.)"}</button>}
+      </div>
+    </div>
+    {showSave&&<div style={{position:"fixed",inset:0,zIndex:1000,background:"#000a",display:"flex",alignItems:"center",justifyContent:"center"}} onClick={()=>setShowSave(false)}>
+      <div onClick={e=>e.stopPropagation()} style={{background:"#fff",borderRadius:16,padding:20,width:"85%",maxWidth:360}}>
+        <h3 style={{margin:"0 0 12px",fontSize:16,fontWeight:800,color:C.forest}}>🥗 Enregistrer ma salade</h3>
+        <div style={{marginBottom:10}}>
+          <label style={{fontSize:11,fontWeight:600,color:"#6b7280"}}>Nom de la salade</label>
+          <input value={saveName} onChange={e=>setSaveName(e.target.value)} placeholder="Ma super salade..." autoFocus={true}
+            style={{width:"100%",padding:"8px 10px",borderRadius:8,border:"1px solid #d1d5db",fontSize:13,marginTop:4,boxSizing:"border-box"}}/>
+        </div>
+        <div style={{marginBottom:12}}>
+          <label style={{fontSize:11,fontWeight:600,color:"#6b7280"}}>Saison</label>
+          <select value={saveSaison} onChange={e=>setSaveSaison(e.target.value)}
+            style={{width:"100%",padding:"8px",borderRadius:8,border:"1px solid #d1d5db",fontSize:13,marginTop:4}}>
+            {["Été","Automne","Hiver","Printemps","Toutes saisons"].map(s=><option key={s}>{s}</option>)}
+          </select>
+        </div>
+        <div style={{fontSize:11,color:"#6b7280",marginBottom:12}}>
+          Type : <strong style={{color:C.gold}}>⭐ Best Seller</strong>{" · "+selected.size+" ingrédients · ~"+cal+" kcal"}
+        </div>
+        <div style={{display:"flex",gap:8}}>
+          <button onClick={()=>setShowSave(false)} style={{flex:1,padding:"10px",borderRadius:10,border:"1px solid #d1d5db",background:"#fff",fontSize:13,cursor:"pointer"}}>Annuler</button>
+          <button onClick={handleSave} style={{flex:1,padding:"10px",borderRadius:10,border:"none",background:saveName.trim()?C.forest:"#d1d5db",color:saveName.trim()?"#fff":"#9ca3af",fontSize:13,fontWeight:700,cursor:saveName.trim()?"pointer":"default"}}>✓ Enregistrer</button>
+        </div>
+      </div>
+    </div>}
+  </div>);
 }
 
 function SaladeTab({ratings,photos,customSalads,deletedIds,activeProfiles,bestsellerIds,menu,setMenu,onRate,onPhoto,onCustom,onDel,onProf,onBs}){
@@ -1886,75 +2071,75 @@ function SaladeTab({ratings,photos,customSalads,deletedIds,activeProfiles,bestse
   const handleSaveCustom=salad=>onCustom([...customSalads,salad]);
 
   if(view==="composer"){
-    return React.createElement("div",{style:{maxWidth:480,margin:"0 auto",padding:"14px 14px 80px"}},
-      React.createElement(SalComposer,{onBack:()=>setView("library"),onSave:handleSaveCustom})
-    );
+    return(<div style={{maxWidth:480,margin:"0 auto",padding:"14px 14px 80px"}}>
+      <SalComposer onBack={()=>setView("library")} onSave={handleSaveCustom}/>
+    </div>);
   }
 
-  return React.createElement("div",{style:{maxWidth:480,margin:"0 auto",padding:"14px 14px 80px"}},
-    React.createElement("h1",{style:{margin:"0 0 2px",fontSize:22,fontWeight:900,color:C.forest}},"🥗 Eat Salade Maison"),
-    React.createElement("p",{style:{margin:"0 0 12px",fontSize:12,color:"#6b7280"}},allSalads.length+" salades · Repas du midi"),
-    React.createElement("div",{style:{marginBottom:12,display:"flex",gap:6}},
-      Object.entries(SALAD_PROFILES).map(([key,p])=>{
+  return(<div style={{maxWidth:480,margin:"0 auto",padding:"14px 14px 80px"}}>
+    <h1 style={{margin:"0 0 2px",fontSize:22,fontWeight:900,color:C.forest}}>🥗 Eat Salade Maison</h1>
+    <p style={{margin:"0 0 12px",fontSize:12,color:"#6b7280"}}>{allSalads.length+" salades · Repas du midi"}</p>
+    <div style={{marginBottom:12,display:"flex",gap:6}}>
+      {Object.entries(SALAD_PROFILES).map(([key,p])=>{
         const active=activeProfiles.includes(key);
-        return React.createElement("button",{key,onClick:()=>toggleProfile(key),style:{padding:"5px 10px",borderRadius:20,border:"none",
+        return(<button key={key} onClick={()=>toggleProfile(key)} style={{padding:"5px 10px",borderRadius:20,border:"none",
           background:active?p.color+"18":"#f3f4f6",color:active?p.color:"#9ca3af",
-          fontSize:12,fontWeight:600,cursor:"pointer",transition:"all .15s",outline:active?"2px solid "+p.color+"40":"none"}},
-          p.emoji+" "+p.nom);
-      })
-    ),
-    React.createElement("button",{onClick:()=>setView("composer"),style:{width:"100%",padding:"12px 14px",borderRadius:12,
-      border:"2px dashed "+C.fL+"40",background:C.fL+"06",cursor:"pointer",textAlign:"left",marginBottom:12,display:"flex",alignItems:"center",gap:10}},
-      React.createElement("span",{style:{width:38,height:38,borderRadius:10,background:C.fL+"12",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}},"✨"),
-      React.createElement("div",null,
-        React.createElement("div",{style:{fontSize:14,fontWeight:700,color:C.forest}},"Composer ma salade"),
-        React.createElement("div",{style:{fontSize:11,color:"#6b7280"}},"Étape par étape → enregistrer en Best Seller")
-      ),
-      React.createElement("span",{style:{marginLeft:"auto",fontSize:16,color:C.fL}},"→")
-    ),
-    React.createElement("input",{type:"text",placeholder:"🔍 Rechercher...",value:search,onChange:e=>setSearch(e.target.value),
-      style:{width:"100%",padding:"9px 12px",borderRadius:10,border:"1.5px solid #e5e7eb",fontSize:13,outline:"none",marginBottom:10,boxSizing:"border-box"}}),
-    React.createElement("div",{style:{display:"flex",gap:5,marginBottom:8,overflowX:"auto",paddingBottom:2}},
-      React.createElement(SalFilterPill,{active:filterCuisine==="all",onClick:()=>setFilterCuisine("all")},"Toutes"),
-      cuisines.map(c=>React.createElement(SalFilterPill,{key:c,active:filterCuisine===c,onClick:()=>setFilterCuisine(c),color:SALAD_CUISINE_COLORS[c]},c))
-    ),
-    React.createElement("div",{style:{display:"flex",gap:5,marginBottom:12,alignItems:"center",flexWrap:"wrap"}},
-      React.createElement(SalFilterPill,{active:filterSaison==="all",onClick:()=>setFilterSaison("all")},"🌍 Toutes"),
-      React.createElement(SalFilterPill,{active:filterSaison==="Été",onClick:()=>setFilterSaison("Été")},"☀️ Été"),
-      React.createElement(SalFilterPill,{active:filterSaison==="Automne",onClick:()=>setFilterSaison("Automne")},"🍂 Automne"),
-      React.createElement(SalFilterPill,{active:filterSaison==="Hiver",onClick:()=>setFilterSaison("Hiver")},"❄️ Hiver"),
-      React.createElement(SalFilterPill,{active:filterSaison==="Printemps",onClick:()=>setFilterSaison("Printemps")},"🌸 Print."),
-      React.createElement("select",{value:filterMinStars,onChange:e=>setFilterMinStars(Number(e.target.value)),
-        style:{marginLeft:"auto",padding:"5px 8px",borderRadius:8,
+          fontSize:12,fontWeight:600,cursor:"pointer",transition:"all .15s",outline:active?"2px solid "+p.color+"40":"none"}}>
+          {p.emoji+" "+p.nom}</button>);
+      })}
+    </div>
+    <button onClick={()=>setView("composer")} style={{width:"100%",padding:"12px 14px",borderRadius:12,
+      border:"2px dashed "+C.fL+"40",background:C.fL+"06",cursor:"pointer",textAlign:"left",marginBottom:12,display:"flex",alignItems:"center",gap:10}}>
+      <span style={{width:38,height:38,borderRadius:10,background:C.fL+"12",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>✨</span>
+      <div>
+        <div style={{fontSize:14,fontWeight:700,color:C.forest}}>Composer ma salade</div>
+        <div style={{fontSize:11,color:"#6b7280"}}>Étape par étape → enregistrer en Best Seller</div>
+      </div>
+      <span style={{marginLeft:"auto",fontSize:16,color:C.fL}}>→</span>
+    </button>
+    <input type="text" placeholder="🔍 Rechercher..." value={search} onChange={e=>setSearch(e.target.value)}
+      style={{width:"100%",padding:"9px 12px",borderRadius:10,border:"1.5px solid #e5e7eb",fontSize:13,outline:"none",marginBottom:10,boxSizing:"border-box"}}/>
+    <div style={{display:"flex",gap:5,marginBottom:8,overflowX:"auto",paddingBottom:2}}>
+      <SalFilterPill active={filterCuisine==="all"} onClick={()=>setFilterCuisine("all")}>Toutes</SalFilterPill>
+      {cuisines.map(c=><SalFilterPill key={c} active={filterCuisine===c} onClick={()=>setFilterCuisine(c)} color={SALAD_CUISINE_COLORS[c]}>{c}</SalFilterPill>)}
+    </div>
+    <div style={{display:"flex",gap:5,marginBottom:12,alignItems:"center",flexWrap:"wrap"}}>
+      <SalFilterPill active={filterSaison==="all"} onClick={()=>setFilterSaison("all")}>🌍 Toutes</SalFilterPill>
+      <SalFilterPill active={filterSaison==="Été"} onClick={()=>setFilterSaison("Été")}>☀️ Été</SalFilterPill>
+      <SalFilterPill active={filterSaison==="Automne"} onClick={()=>setFilterSaison("Automne")}>🍂 Automne</SalFilterPill>
+      <SalFilterPill active={filterSaison==="Hiver"} onClick={()=>setFilterSaison("Hiver")}>❄️ Hiver</SalFilterPill>
+      <SalFilterPill active={filterSaison==="Printemps"} onClick={()=>setFilterSaison("Printemps")}>🌸 Print.</SalFilterPill>
+      <select value={filterMinStars} onChange={e=>setFilterMinStars(Number(e.target.value))}
+        style={{marginLeft:"auto",padding:"5px 8px",borderRadius:8,
           border:filterMinStars>0?"1.5px solid #F59E0B":"1.5px solid #e5e7eb",
           background:filterMinStars>0?"#FFFBEB":"#fff",fontSize:12,fontWeight:600,
-          color:filterMinStars>0?"#B45309":"#6b7280",cursor:"pointer",outline:"none"}},
-        React.createElement("option",{value:0},"⭐ Note"),
-        React.createElement("option",{value:1},"≥ 1 ★"),
-        React.createElement("option",{value:2},"≥ 2 ★★"),
-        React.createElement("option",{value:3},"≥ 3 ★★★"),
-        React.createElement("option",{value:4},"≥ 4 ★★★★"),
-        React.createElement("option",{value:5},"5 ★★★★★")
-      )
-    ),
-    React.createElement("div",{style:{fontSize:11,color:"#9ca3af",marginBottom:8,fontWeight:600}},filtered.length+" salade"+(filtered.length>1?"s":"")),
-    React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}},
-      filtered.map(s=>React.createElement(SalCard,{key:s.id,salad:s,rating:ratings[s.id]||0,photo:photos[s.id],
-        activeProfiles,onClick:()=>{setSelectedSalad(s);setView("detail");}}))
-    ),
-    filtered.length===0&&React.createElement("div",{style:{textAlign:"center",padding:32,color:"#9ca3af"}},
-      React.createElement("div",{style:{fontSize:36,marginBottom:6}},"🥬"),
-      React.createElement("div",{style:{fontSize:13}},"Aucune salade trouvée")
-    ),
-    view==="detail"&&selectedSalad&&(()=>{
+          color:filterMinStars>0?"#B45309":"#6b7280",cursor:"pointer",outline:"none"}}>
+        <option value={0}>⭐ Note</option>
+        <option value={1}>≥ 1 ★</option>
+        <option value={2}>≥ 2 ★★</option>
+        <option value={3}>≥ 3 ★★★</option>
+        <option value={4}>≥ 4 ★★★★</option>
+        <option value={5}>5 ★★★★★</option>
+      </select>
+    </div>
+    <div style={{fontSize:11,color:"#9ca3af",marginBottom:8,fontWeight:600}}>{filtered.length+" salade"+(filtered.length>1?"s":"")}</div>
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+      {filtered.map(s=><SalCard key={s.id} salad={s} rating={ratings[s.id]||0} photo={photos[s.id]}
+        activeProfiles={activeProfiles} onClick={()=>{setSelectedSalad(s);setView("detail");}}/>)}
+    </div>
+    {filtered.length===0&&<div style={{textAlign:"center",padding:32,color:"#9ca3af"}}>
+      <div style={{fontSize:36,marginBottom:6}}>🥬</div>
+      <div style={{fontSize:13}}>Aucune salade trouvée</div>
+    </div>}
+    {view==="detail"&&selectedSalad&&(()=>{
       const liveSalad=allSalads.find(s=>s.id===selectedSalad.id)||selectedSalad;
-      return React.createElement(SalDetail,{salad:liveSalad,rating:ratings[liveSalad.id]||0,photo:photos[liveSalad.id],
-        activeProfiles,menu,onAddToMenu:addSaladToMenu,menuSaladIds,
-        onClose:()=>{setView("library");setSelectedSalad(null);},
-        onRate:n=>onRate(liveSalad.id,n),onPhotoChange:url=>onPhoto(liveSalad.id,url),
-        onDelete:()=>handleDelete(liveSalad.id),onToggleBestSeller:()=>handleToggleBestSeller(liveSalad.id)});
-    })()
-  );
+      return(<SalDetail salad={liveSalad} rating={ratings[liveSalad.id]||0} photo={photos[liveSalad.id]}
+        activeProfiles={activeProfiles} menu={menu} onAddToMenu={addSaladToMenu} menuSaladIds={menuSaladIds}
+        onClose={()=>{setView("library");setSelectedSalad(null);}}
+        onRate={n=>onRate(liveSalad.id,n)} onPhotoChange={url=>onPhoto(liveSalad.id,url)}
+        onDelete={()=>handleDelete(liveSalad.id)} onToggleBestSeller={()=>handleToggleBestSeller(liveSalad.id)}/>);
+    })()}
+  </div>);
 }
 
 
