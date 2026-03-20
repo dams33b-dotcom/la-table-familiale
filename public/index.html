@@ -213,69 +213,92 @@ const TYPES=["Poisson/fruit de mer","Poulet halal","Végétarien/végétalien","
 const CUISINES=["Française","Méditerranéenne","Asiatique","Indienne","Orientale","Autres"];
 
 const IC={"Levure chimique":"SUCRÉ","Miel":"SUCRÉ","Pain de mie complet":"SUCRÉ",
-  "Sirop d\u0027érable":"SUCRÉ","Sucre de coco":"SUCRÉ",
-  "Beurre de cacahuète":"SALÉ","Couscous parfumé (cru)":"SALÉ","Croûtons":"SALÉ",
-  "Crème de coco":"SALÉ","Fajitas (tortillas)":"SALÉ","Farine":"SALÉ",
-  "Gaspacho (brique)":"SALÉ","Lentilles corail (crues)":"SALÉ","Macédoine (prête)":"SALÉ",
-  "Maquereaux (conserve)":"SALÉ","Maïs (conserve)":"SALÉ","Petits pois (conserve)":"SALÉ",
-  "Purée (sachet ou PDT)":"SALÉ","Pâtes 3 min (crues)":"SALÉ","Pâtes à lasagnes":"SALÉ",
-  "Quinoa (cru)":"SALÉ","Riz thaï & basmati (cru)":"SALÉ","Sardines (conserve)":"SALÉ",
-  "Sauce arrabiata":"SALÉ","Sauce pesto ail":"SALÉ","Sauce tomate":"SALÉ",
-  "Soupe tomate (brique)":"SALÉ","Thon (conserve)":"SALÉ","Tomate séchée":"SALÉ",
-  "Basilic frais":"HUI","Bouillon légumes":"HUI","Cornichons":"HUI","Cumin":"HUI",
-  "Curcuma":"HUI","Curry":"HUI","Gros sel":"HUI","Harissa / piment":"HUI",
-  "Herbes de Provence":"HUI","Huile de coco":"HUI","Huile olive":"HUI",
-  "Huile sésame toastée":"HUI","Mayonnaise":"HUI","Moutarde":"HUI",
-  "Paprika":"HUI","Piment":"HUI","Poivre":"HUI","Pâte de curry vert":"HUI",
-  "Sauce soja sucrée":"HUI","Sauce teriyaki":"HUI","Sel":"HUI",
-  "Sel, poivre":"HUI","Vinaigre balsamique":"HUI","Vinaigre de cidre":"HUI",
-  "Vinaigre de xérès":"HUI","Vinaigre vin rouge":"HUI",
+  "Sirop d\u0027érable":"SUCRÉ","Sucre de coco":"SUCRÉ","Beurre de cacahuète":"SUCRÉ",
+  "Chia":"SUCRÉ","Chocolat noir":"SUCRÉ","Confiture":"SUCRÉ","Cassonade":"SUCRÉ",
+  // Boissons et sirops
+  "Gaspacho (brique)":"BOISS","Jus de citron":"BOISS","Jus de citron vert":"BOISS",
+  "Vin blanc sec":"BOISS","Lait d'amande":"BOISS",
+  // Conserves et bocaux
+  "Maquereaux (conserve)":"CONS","Maïs (conserve)":"CONS","Petits pois (conserve)":"CONS",
+  "Sardines (conserve)":"CONS","Sauce arrabiata":"CONS","Sauce pesto ail":"CONS",
+  "Sauce tomate":"CONS","Soupe tomate (brique)":"CONS","Thon (conserve)":"CONS",
+  "Tomate séchée":"CONS","Tomates pelées (conserve)":"CONS","Macédoine (prête)":"CONS",
+  "Câpres":"CONS","Haricots noirs (conserve)":"CONS","Pâte miso":"CONS",
+  // Féculents et céréales
+  "Couscous parfumé (cru)":"FEC","Farine":"FEC","Lentilles corail (crues)":"FEC",
+  "Purée (sachet ou PDT)":"FEC","Pâtes 3 min (crues)":"FEC","Pâtes à lasagnes":"FEC",
+  "Quinoa (cru)":"FEC","Riz thaï & basmati (cru)":"FEC","Boulgour (cru)":"FEC",
+  "Nouilles de riz (sèches)":"FEC","Riz arborio (cru)":"FEC","Farine de pois chiche":"FEC",
+  // Sauces et aides culinaires
+  "Crème de coco":"SAUCE","Chapelure":"SAUCE","Tahini":"SAUCE",
+  "Crème fluide":"SAUCE",
+  // Boulangerie / tortillas
+  "Croûtons":"BOUL","Fajitas (tortillas)":"BOUL","Pain pita":"BOUL",
+  "Pain burger":"BOUL","Pain":"BOUL","Chips":"BOUL",
+  // Huiles et vinaigres
+  "Huile de coco":"HUIL","Huile olive":"HUIL","Huile sésame toastée":"HUIL",
+  "Vinaigre balsamique":"HUIL","Vinaigre de cidre":"HUIL",
+  "Vinaigre de xérès":"HUIL","Vinaigre vin rouge":"HUIL","Huile de noix":"HUIL",
+  // Épices et condiments
+  "Basilic frais":"EPIC","Bouillon légumes":"EPIC","Cornichons":"EPIC","Cumin":"EPIC",
+  "Curcuma":"EPIC","Curry":"EPIC","Gros sel":"EPIC","Harissa / piment":"EPIC",
+  "Herbes de Provence":"EPIC","Mayonnaise":"EPIC","Moutarde":"EPIC",
+  "Paprika":"EPIC","Piment":"EPIC","Poivre":"EPIC","Pâte de curry vert":"EPIC",
+  "Sauce soja sucrée":"EPIC","Sauce teriyaki":"EPIC","Sel":"EPIC",
+  "Sel, poivre":"EPIC","Garam masala":"EPIC","Muscade":"EPIC",
+  "Zaatar":"EPIC","Tabasco":"EPIC","Cannelle":"EPIC",
+  // Frais crémerie
   "Beurre doux":"FRAIS","Beurre salé":"FRAIS","Brique chèvre":"FRAIS",
   "Chèvre frais":"FRAIS","Crème fraîche":"FRAIS","Fromage râpé":"FRAIS",
-  "Fêta":"FRAIS","Houmous":"FRAIS","Jus de citron":"FRAIS","Jus de citron vert":"FRAIS",
-  "Lait de vache":"FRAIS","Mozzarella":"FRAIS","Pain":"FRAIS","Parmesan":"FRAIS",
-  "Parmesan (copeaux)":"FRAIS","Pâte feuilletée":"FRAIS","Pâte à pizza ronde":"FRAIS",
-  "Rillettes / jambon dinde":"FRAIS","Surimi":"FRAIS","Taboulé (prêt)":"FRAIS",
-  "Yaourt blanc":"FRAIS","Œufs":"FRAIS",
+  "Fêta":"FRAIS","Lait de vache":"FRAIS","Mozzarella":"FRAIS","Parmesan":"FRAIS",
+  "Parmesan (copeaux)":"FRAIS","Yaourt blanc":"FRAIS","Œufs":"FRAIS",
+  "Beaufort":"FRAIS","Boursin":"FRAIS","Tomme de brebis":"FRAIS",
+  "Cream cheese / Philadelphia":"FRAIS","Labneh":"FRAIS",
+  // Frais traiteur / pâtes
+  "Houmous":"TRAIT","Pâte feuilletée":"TRAIT","Pâte à pizza ronde":"TRAIT",
+  "Rillettes / jambon dinde":"TRAIT","Surimi":"TRAIT","Taboulé (prêt)":"TRAIT",
+  // Frais protéines
   "Anchois":"PROT","Brandade morue (traiteur)":"PROT","Crevettes":"PROT",
   "Hachis parmentier mer (traiteur)":"PROT","Merguez végétales":"PROT",
   "Pavé de truite":"PROT","Poisson blanc (filet)":"PROT",
   "Poulet halal (aiguillettes)":"PROT","Poulet halal (blanc)":"PROT",
   "Saumon (pavé)":"PROT","Truite fumée":"PROT","Viande végétale hachée":"PROT",
+  "Sole (filet)":"PROT","Halloumi":"PROT",
+  // Fruits
   "Dattes":"FRUITS","Mangue":"FRUITS","Nectarines / pêches":"FRUITS",
   "Pastèque":"FRUITS","Poires":"FRUITS","Pomme (fruit)":"FRUITS",
+  // Fruits secs
   "Amandes effilées":"FSEC","Cranberry (séchée)":"FSEC","Graines de courge":"FSEC",
-  "Graines de sésame":"FSEC","Huile de noix":"FSEC","Mélange de graines":"FSEC",
+  "Graines de sésame":"FSEC","Mélange de graines":"FSEC",
   "Noisettes":"FSEC","Noix":"FSEC","Noix de cajou":"FSEC",
   "Noix de muscade":"FSEC","Pignons de pin":"FSEC","Raisins secs":"FSEC",
-  "Ail":"LEG","Algues (nori)":"LEG","Aubergines":"LEG","Avocat":"LEG",
+  // Légumes frais
+  "Ail":"LEG","Aubergines":"LEG","Avocat":"LEG",
   "Betteraves (cuites)":"LEG","Brocolis":"LEG","Brocolis / chou-fleur":"LEG",
   "Carottes":"LEG","Champignons":"LEG","Chou blanc":"LEG",
-  "Citron (zeste + jus)":"LEG","Concombre":"LEG","Courgettes":"LEG",
+  "Concombre":"LEG","Courgettes":"LEG",
   "Haricots verts frais":"LEG","Oignons":"LEG","Olives":"LEG",
-  "Persil":"LEG","Persil / ciboulette":"LEG","Persil frais":"LEG",
   "Poireaux":"LEG","Pois chiches (conserve)":"LEG","Pomme de terre":"LEG",
   "Pousses de soja / germes":"LEG","Radis":"LEG","Roquette":"LEG",
   "Salade verte":"LEG","Salade verte / romaine":"LEG","Tomates":"LEG",
-  "Tomates cerises":"LEG","Tomates pelées (conserve)":"LEG",
+  "Tomates cerises":"LEG","Poivrons":"LEG",
   "Échalotes":"LEG","Épinards frais":"LEG",
-  "Beaufort":"SURG","Boulgour (cru)":"SURG","Boursin":"SURG",
-  "Butternut (courge)":"SURG","Coriandre fraîche":"SURG",
-  "Cream cheese / Philadelphia":"SURG","Crêpes salées (surgelées)":"SURG",
-  "Câpres":"SURG","Edamame / petits pois":"SURG","Farine de pois chiche":"SURG",
+  "Butternut (courge)":"LEG","Oignon rouge":"LEG","Oignon vert / cébette":"LEG",
+  "Patate douce":"LEG",
+  // Herbes et aromates frais
+  "Persil":"HERB","Persil / ciboulette":"HERB","Persil frais":"HERB",
+  "Citron (zeste + jus)":"HERB","Algues (nori)":"HERB",
+  "Coriandre fraîche":"HERB","Menthe fraîche":"HERB","Gingembre frais":"HERB",
+  "Thym frais":"HERB","Ciboulette":"HERB","Aneth":"HERB",
+  // Surgelés
+  "Crêpes salées (surgelées)":"SURG","Edamame / petits pois":"SURG",
   "Feuilleté St-Jacques (surgelé)":"SURG","Feuilleté chèvre (surgelé)":"SURG",
-  "Garam masala":"SURG","Gingembre frais":"SURG","Haricots noirs (conserve)":"SURG",
-  "Légumes grillés (surgelés)":"SURG","Menthe fraîche":"SURG","Muscade":"SURG",
-  "Nouilles de riz (sèches)":"SURG","Oignon rouge":"SURG","Oignon vert / cébette":"SURG",
-  "Pain burger":"SURG","Pain pita":"SURG","Patate douce":"SURG",
-  "Poisson bordelaise (surgelé)":"SURG","Poivrons":"SURG","Riz arborio (cru)":"SURG",
-  "Sole (filet)":"SURG","Tabasco":"SURG","Tahini":"SURG","Thym frais":"SURG",
-  "Tomme de brebis":"SURG","Vin blanc sec":"SURG","Zaatar":"SURG",
-  "Épinards (surgelés)":"SURG","Labneh":"SURG","Pâte miso":"SURG",
+  "Légumes grillés (surgelés)":"SURG","Poisson bordelaise (surgelé)":"SURG",
+  "Épinards (surgelés)":"SURG",
   // ═══ Mappings ingrédients salade (module Eat Salade Maison) ═══
   // Bases
-  "Quinoa":"SALÉ","Boulgour":"SALÉ","Pâtes courtes":"SALÉ","Lentilles":"SALÉ",
-  "Pomme de terre":"LEG","Patate douce":"LEG","Vermicelles riz":"SALÉ",
+  "Quinoa":"FEC","Boulgour":"FEC","Pâtes courtes":"FEC","Lentilles":"FEC",
+  "Pomme de terre":"LEG","Patate douce":"LEG","Vermicelles riz":"FEC",
   // Verdures
   "Roquette":"LEG","Épinards":"LEG","Mâche":"LEG","Salade verte":"LEG",
   "Chou blanc":"LEG","Chou rouge":"LEG",
@@ -288,33 +311,39 @@ const IC={"Levure chimique":"SUCRÉ","Miel":"SUCRÉ","Pain de mie complet":"SUCR
   "Patate douce rôtie":"LEG","Haricots verts":"LEG","Poivrons grillés":"LEG",
   "Maïs":"LEG","Champignons sautés":"LEG","Brocoli blanchi":"LEG","Asperges":"LEG",
   // Marinés & Pickles
-  "Poivrons marinés":"FRAIS","Artichauts marinés":"FRAIS",
-  "Pickles oignon":"HUI","Pickles concombre":"HUI","Pickles carottes":"HUI","Pickles radis":"HUI",
+  "Poivrons marinés":"CONS","Artichauts marinés":"CONS",
+  "Pickles oignon":"EPIC","Pickles concombre":"EPIC","Pickles carottes":"EPIC","Pickles radis":"EPIC",
   // Fromages
-  "Chèvre":"FRAIS","Roquefort":"FRAIS","Halloumi":"FRAIS","Cream cheese":"FRAIS",
+  "Chèvre":"FRAIS","Roquefort":"FRAIS","Halloumi":"PROT","Cream cheese":"FRAIS",
   // Herbes
-  "Basilic":"LEG","Coriandre":"LEG","Menthe":"LEG","Persil":"LEG",
-  "Ciboulette":"LEG","Aneth":"LEG",
+  "Basilic":"HERB","Coriandre":"HERB","Menthe":"HERB","Persil":"HERB",
+  "Ciboulette":"HERB","Aneth":"HERB",
   // Protéines
-  "Œuf dur":"FRAIS","Thon":"SALÉ","Truite fumée":"PROT","Sardines":"SALÉ",
-  "Maquereaux":"SALÉ","Crevettes":"PROT","Poulet halal":"PROT",
-  "Pois chiches":"LEG","Anchois":"SALÉ","Houmous":"FRAIS",
+  "Œuf dur":"FRAIS","Thon":"CONS","Truite fumée":"PROT","Sardines":"CONS",
+  "Maquereaux":"CONS","Crevettes":"PROT","Poulet halal":"PROT",
+  "Pois chiches":"LEG","Anchois":"CONS","Houmous":"TRAIT",
   // Toppings
   "Noix":"FSEC","Gr. courge":"FSEC","Gr. sésame":"FSEC","Mix graines":"FSEC",
-  "Olives":"LEG","Câpres":"HUI","Croûtons":"SALÉ","Dattes":"FRUITS",
-  "Cornichons":"HUI","Algues":"SURG","Edamame":"SURG","Cajou":"FSEC","Oignons frits":"SALÉ",
+  "Olives":"LEG","Câpres":"CONS","Croûtons":"BOUL","Dattes":"FRUITS",
+  "Cornichons":"EPIC","Algues":"HERB","Edamame":"SURG","Cajou":"FSEC","Oignons frits":"EPIC",
   // Sauces
-  "Citron-HO":"HUI","Balsamique":"HUI","Tahini":"HUI","Soja-sésame":"HUI",
-  "Moutarde":"HUI","Huile noix":"FSEC","César":"FRAIS","Xérès":"HUI",
-  "Pesto":"HUI","Coleslaw":"FRAIS",
+  "Citron-HO":"HUIL","Balsamique":"HUIL","Tahini":"SAUCE","Soja-sésame":"EPIC",
+  "Moutarde":"EPIC","Huile noix":"HUIL","César":"FRAIS","Xérès":"HUIL",
+  "Pesto":"EPIC","Coleslaw":"FRAIS",
   // Nouveaux ingrédients salade (Étape B)
-  "Tomate":"LEG","Tomates séchées":"SALÉ"};
+  "Tomate":"LEG","Tomates séchées":"CONS"};
 
-const CAT_ORDER=[["SUCRÉ","🍫"],["SALÉ","🧂"],["HUI","🫒"],["FRAIS","🧀"],
-  ["PROT","🥩"],["FRUITS","🍎"],["FSEC","🥜"],["LEG","🥬"],["SURG","❄️"]];
-const CN={"SUCRÉ":"SUCRÉ","SALÉ":"SALÉ","HUI":"HUILES ET CONDIMENTS",
-  "FRAIS":"FRAIS","PROT":"FRAIS PROTÉINES","FRUITS":"FRUITS","FSEC":"FRUITS SECS",
-  "LEG":"LÉGUMES","SURG":"SURGELÉS"};
+const CAT_ORDER=[["BOISS","🥤"],["SUCRÉ","🍫"],["CONS","🥫"],["FEC","🌾"],
+  ["SAUCE","🫙"],["BOUL","🍞"],["HUIL","🫒"],["EPIC","🧂"],
+  ["FRAIS","🧀"],["TRAIT","🥧"],["PROT","🥩"],["FRUITS","🍎"],["FSEC","🥜"],
+  ["LEG","🥬"],["HERB","🌿"],["SURG","❄️"]];
+const CN={"BOISS":"BOISSONS ET SIROPS","SUCRÉ":"ALIMENTS SUCRÉS",
+  "CONS":"CONSERVES ET BOCAUX","FEC":"FÉCULENTS ET CÉRÉALES",
+  "SAUCE":"SAUCES ET AIDES CULINAIRES","BOUL":"BOULANGERIE / TORTILLAS",
+  "HUIL":"HUILES ET VINAIGRES","EPIC":"ÉPICES ET CONDIMENTS",
+  "FRAIS":"FRAIS CRÉMERIE","TRAIT":"FRAIS TRAITEUR / PÂTES",
+  "PROT":"FRAIS PROTÉINES","FRUITS":"FRUITS","FSEC":"FRUITS SECS",
+  "LEG":"LÉGUMES FRAIS","HERB":"HERBES ET AROMATES FRAIS","SURG":"SURGELÉS"};
 
 
 function App(){
@@ -1291,9 +1320,14 @@ function StockTab({stockCk,setStockCk,stockOrder,setStockOrder,customArt,setCust
   const [renamingKey,setRenamingKey]=useState(null);
   const [renameVal,setRenameVal]=useState("");
   const nonAlim=["SANITAIRES","PRODUITS MÉNAGERS","DIVERS"];
-  const ECat={"SUCRÉ":"🍫","SALÉ":"🧂","HUILES ET CONDIMENTS":"🫒","SANITAIRES":"🧴",
-    "PRODUITS MÉNAGERS":"🧹","DIVERS":"📦","FRAIS":"🧀","FRAIS PROTÉINES":"🥩",
-    "FRUITS":"🍎","FRUITS SECS":"🥜","LÉGUMES":"🥬","SURGELÉS":"❄️"};
+  const ECat={"BOISSONS ET SIROPS":"🥤","ALIMENTS SUCRÉS":"🍫",
+    "CONSERVES ET BOCAUX":"🥫","FÉCULENTS ET CÉRÉALES":"🌾",
+    "SAUCES ET AIDES CULINAIRES":"🫙","BOULANGERIE / TORTILLAS":"🍞",
+    "HUILES ET VINAIGRES":"🫒","ÉPICES ET CONDIMENTS":"🧂",
+    "SANITAIRES":"🧴","PRODUITS MÉNAGERS":"🧹","DIVERS":"📦",
+    "FRAIS CRÉMERIE":"🧀","FRAIS TRAITEUR / PÂTES":"🥧",
+    "FRAIS PROTÉINES":"🥩","FRUITS":"🍎","FRUITS SECS":"🥜",
+    "LÉGUMES FRAIS":"🥬","HERBES ET AROMATES FRAIS":"🌿","SURGELÉS":"❄️"};
 
   // Get ordered articles for a category
   function getOrdered(cat){
@@ -2405,9 +2439,11 @@ function Root(){
       };
       // Inject new stock articles for salad module
       const NEW_STOCK_ARTICLES=[
-        {cat:"FRAIS",art:"Halloumi"},{cat:"LÉGUMES",art:"Ciboulette"},{cat:"LÉGUMES",art:"Aneth"},
-        {cat:"FRAIS",art:"Artichauts marinés"},{cat:"FRAIS",art:"Poivrons marinés"},
-        {cat:"HUILES ET CONDIMENTS",art:"Vinaigre blanc"}
+        {cat:"FRAIS PROTÉINES",art:"Halloumi"},{cat:"HERBES ET AROMATES FRAIS",art:"Ciboulette"},
+        {cat:"HERBES ET AROMATES FRAIS",art:"Aneth"},
+        {cat:"CONSERVES ET BOCAUX",art:"Artichauts marinés"},
+        {cat:"CONSERVES ET BOCAUX",art:"Poivrons marinés"},
+        {cat:"HUILES ET VINAIGRES",art:"Vinaigre blanc"}
       ];
       NEW_STOCK_ARTICLES.forEach(({cat,art})=>{
         const c=DATA.stock.find(s=>s.nom===cat);
