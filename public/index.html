@@ -521,14 +521,11 @@ function MenuTab({menu:rawMenu,setMenu,locked,profiles,setProfiles,ratings,salad
   const [replEIdx,setReplEIdx]=useState(null);
   const [replListE,setReplListE]=useState(null); // {idx,genre} — liste choix entrées
   const [addingR,setAddingR]=useState(false); // K5: adding a meal
+  const [addTypeR,setAddTypeR]=useState(null); // K5b: selected type filter for adding
   const [addingE,setAddingE]=useState(false); // K5: adding an entrée
+  const [addGenreE,setAddGenreE]=useState(null); // K5b: selected genre filter for adding entrée
   const [addingS,setAddingS]=useState(false); // K5: adding a salade
-  const [addSearch,setAddSearch]=useState("");
-  // K8: drag & drop state for menu
-  const [dragMenuSection,setDragMenuSection]=useState(null); // 'repas' or 'salades'
-  const [dragMenuIdx,setDragMenuIdx]=useState(null);
-  const [dragMenuOverIdx,setDragMenuOverIdx]=useState(null);
-  const menuTouchStart=React.useRef(null);
+  const [addCuisineS,setAddCuisineS]=useState(null); // K5b: selected cuisine for adding salade
 
   // Pool salades (depuis BASE_SALADES — module Eat Salade Maison)
   const filteredS=useMemo(()=>BASE_SALADES.filter(s=>{
@@ -597,12 +594,13 @@ function MenuTab({menu:rawMenu,setMenu,locked,profiles,setProfiles,ratings,salad
     setMenu({...(menu||{repas:[],entrees:[],at:new Date().toISOString(),startDate:new Date().toISOString()}),salades});
     setAddingS(false);setAddSearch("");
   }
-  // K8: drag & drop reorder for menu sections
-  function reorderMenu(section,fromIdx,toIdx){
-    if(fromIdx===toIdx||locked)return;
+  // K8: move up/down for menu sections
+  function moveMenuItem(section,idx,direction){
+    if(locked)return;
     const arr=[...(menu[section]||[])];
-    const item=arr.splice(fromIdx,1)[0];
-    arr.splice(toIdx,0,item);
+    const newIdx=idx+direction;
+    if(newIdx<0||newIdx>=arr.length)return;
+    const temp=arr[idx];arr[idx]=arr[newIdx];arr[newIdx]=temp;
     const wd=getWeekDays(menu.startDate?new Date(menu.startDate):new Date());
     const reindexed=arr.map((r,i)=>({...r,jour:wd[i%7].full,jourShort:wd[i%7].name,jourIdx:i%7,jourDate:wd[i%7].dateStr}));
     setMenu({...menu,[section]:reindexed});
@@ -723,37 +721,16 @@ function MenuTab({menu:rawMenu,setMenu,locked,profiles,setProfiles,ratings,salad
       {menu&&<>
         <h3 style={{fontSize:13,color:C.forest,fontWeight:700,marginBottom:8,textTransform:"uppercase",letterSpacing:.5,textAlign:"center"}}>
           🍽 Repas ({menu.repas.length})
-          {!locked&&<span style={{fontSize:9,color:C.tL,fontWeight:400,textTransform:"none",letterSpacing:0,display:"block",marginTop:2}}>↕️ Maintenez et glissez pour réordonner</span>}
         </h3>
         <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:6}}>
           {menu.repas.map((p,idx)=>{
             const fresh=idx>=Math.max(0,menu.repas.length-(menu.repas.length>4?3:1));
-            const isDragging=dragMenuSection==="repas"&&dragMenuIdx===idx;
-            const isDragOver=dragMenuSection==="repas"&&dragMenuOverIdx===idx;
-            return(<div key={p.id+"-"+idx} data-midx={idx}
-              draggable={!locked}
-              onDragStart={e=>{setDragMenuSection("repas");setDragMenuIdx(idx);e.dataTransfer.effectAllowed="move";}}
-              onDragOver={e=>{e.preventDefault();if(dragMenuSection==="repas")setDragMenuOverIdx(idx);}}
-              onDragEnd={()=>{if(dragMenuSection==="repas"&&dragMenuIdx!==null&&dragMenuOverIdx!==null)reorderMenu("repas",dragMenuIdx,dragMenuOverIdx);
-                setDragMenuSection(null);setDragMenuIdx(null);setDragMenuOverIdx(null);}}
-              onTouchStart={e=>{if(locked)return;menuTouchStart.current={section:"repas",idx,y:e.touches[0].clientY,started:false};}}
-              onTouchMove={e=>{
-                if(!menuTouchStart.current||menuTouchStart.current.section!=="repas")return;
-                const dy=Math.abs(e.touches[0].clientY-menuTouchStart.current.y);
-                if(!menuTouchStart.current.started&&dy>10){menuTouchStart.current.started=true;setDragMenuSection("repas");setDragMenuIdx(menuTouchStart.current.idx);}
-                if(!menuTouchStart.current.started)return;
-                const touch=e.touches[0];const el=document.elementFromPoint(touch.clientX,touch.clientY);
-                if(el){const row=el.closest("[data-midx]");if(row){const ni=parseInt(row.dataset.midx);if(!isNaN(ni))setDragMenuOverIdx(ni);}}
-              }}
-              onTouchEnd={()=>{if(dragMenuSection==="repas"&&dragMenuIdx!==null&&dragMenuOverIdx!==null)reorderMenu("repas",dragMenuIdx,dragMenuOverIdx);
-                menuTouchStart.current=null;setDragMenuSection(null);setDragMenuIdx(null);setDragMenuOverIdx(null);}}>
-              <div style={{background:isDragOver?"#E8F5E9":isDragging?"#FFF8E1":"#fff",borderRadius:10,padding:"10px 12px",border:`1px solid ${isDragOver?C.ok+"66":C.bdr}`,position:"relative",
-                opacity:isDragging?.5:1,transition:"background .15s, border .15s"}}>
+            return(<div key={p.id+"-"+idx}>
+              <div style={{background:"#fff",borderRadius:10,padding:"10px 12px",border:`1px solid ${C.bdr}`,position:"relative"}}>
                 <div style={{position:"absolute",top:-7,left:12,background:fresh?"#E3F2FD":C.okBg,
                   padding:"1px 8px",borderRadius:8,fontSize:9,fontWeight:700,
                   color:fresh?C.blue:C.ok,border:`1px solid ${fresh?C.blue+"33":C.ok+"33"}`}}>
                   {p.jourDate||p.jour} {fresh&&"🧊"}</div>
-                {!locked&&<span style={{position:"absolute",top:4,right:10,fontSize:10,color:C.tL,cursor:"grab",userSelect:"none"}}>☰</span>}
                 <div onClick={()=>onSel(p)} style={{cursor:"pointer",marginTop:6}}>
                   <div style={{display:"flex",alignItems:"center",gap:8}}>
                     {photos[p.id]?<img src={photos[p.id]} style={{width:40,height:40,borderRadius:8,objectFit:"cover",flexShrink:0}} onError={e=>{e.target.style.display="none"}}/>:<span style={{fontSize:24}}>{ET[p.type]||"🍽"}</span>}
@@ -773,7 +750,11 @@ function MenuTab({menu:rawMenu,setMenu,locked,profiles,setProfiles,ratings,salad
                         {name[0]}: {p.macros[name].prot}g P · {p.macros[name].kcal}kcal</span>
                     ))}</div>}
                 </div>
-                {!locked&&<div style={{display:"flex",justifyContent:"flex-end",gap:4,marginTop:6}}>
+                {!locked&&<div style={{display:"flex",justifyContent:"flex-end",gap:4,marginTop:6,alignItems:"center"}}>
+                  {idx>0&&<button onClick={()=>moveMenuItem("repas",idx,-1)} style={{padding:"3px 8px",borderRadius:6,
+                    border:`1px solid ${C.bdr}`,background:"#fff",fontSize:12,cursor:"pointer",color:C.tM,lineHeight:1}}>▲</button>}
+                  {idx<menu.repas.length-1&&<button onClick={()=>moveMenuItem("repas",idx,1)} style={{padding:"3px 8px",borderRadius:6,
+                    border:`1px solid ${C.bdr}`,background:"#fff",fontSize:12,cursor:"pointer",color:C.tM,lineHeight:1}}>▼</button>}
                   <button onClick={()=>{setReplIdx(replIdx===idx?null:idx);setReplListR(null);}} style={{padding:"3px 8px",borderRadius:6,
                     border:`1px solid ${C.bdr}`,background:"#fff",fontSize:10,cursor:"pointer",color:C.tM}}>🔄</button>
                   <button onClick={()=>removeR(idx)} style={{padding:"3px 8px",borderRadius:6,
@@ -819,26 +800,31 @@ function MenuTab({menu:rawMenu,setMenu,locked,profiles,setProfiles,ratings,salad
             </div>);
           })}
         </div>
-        {/* K5: Bouton + ajouter un repas */}
+        {/* K5b: Bouton + ajouter un repas — avec sélection par catégorie */}
         {!locked&&<div style={{textAlign:"center",marginBottom:16}}>
-          <button onClick={()=>{setAddingR(!addingR);setAddSearch("");setAddingE(false);setAddingS(false);}} style={{padding:"6px 16px",borderRadius:20,
+          <button onClick={()=>{setAddingR(!addingR);setAddTypeR(null);setAddingE(false);setAddingS(false);}} style={{padding:"6px 16px",borderRadius:20,
             border:`1px dashed ${C.fL}`,background:addingR?C.fL+"10":"transparent",fontSize:12,cursor:"pointer",color:C.fL,fontWeight:600}}>
             {addingR?"✕ Annuler":"＋ Ajouter un repas"}</button>
-          {addingR&&<div style={{marginTop:8,background:"#fff",borderRadius:10,border:`1px solid ${C.bdr}`,maxHeight:300,overflowY:"auto",textAlign:"left"}}>
-            <div style={{padding:"8px 10px",position:"sticky",top:0,background:"#fff",zIndex:1,borderBottom:`1px solid ${C.bdr}`}}>
-              <input type="text" value={addSearch} onChange={e=>setAddSearch(e.target.value)} placeholder="Rechercher un plat..."
-                autoFocus style={{width:"100%",padding:"6px 10px",borderRadius:6,border:`1px solid ${C.bdr}`,fontSize:12,boxSizing:"border-box"}}/>
+          {addingR&&<div style={{marginTop:8,background:"#fff",borderRadius:10,border:`1px solid ${C.bdr}`,textAlign:"left"}}>
+            <div style={{padding:8,display:"flex",flexWrap:"wrap",gap:4,borderBottom:`1px solid ${C.bdr}`}}>
+              {TYPES.filter(t=>t!=="Salade/bowl").map(type=>{const cnt=filtered.filter(p2=>p2.type===type&&!menu.repas.some(r=>r.id===p2.id)).length;
+                return <button key={type} onClick={()=>setAddTypeR(addTypeR===type?null:type)} disabled={!cnt}
+                  style={{padding:"3px 8px",borderRadius:12,fontSize:10,border:`1px solid ${addTypeR===type?C.fL:C.bdr}`,
+                    background:addTypeR===type?C.fL+"18":"#fff",cursor:cnt?"pointer":"default",
+                    color:cnt?C.text:C.tL,opacity:cnt?1:.5}}>{ET[type]||"🍽"} {type.split("/")[0]} ({cnt})</button>;})}
             </div>
-            {filtered.filter(p=>!menu.repas.some(r=>r.id===p.id)&&(!addSearch.trim()||p.nom.toLowerCase().includes(addSearch.toLowerCase()))).slice(0,20).map(p2=>(
-              <div key={p2.id} onClick={()=>addMeal(p2)} style={{padding:"8px 10px",borderBottom:`1px solid ${C.bdr}22`,cursor:"pointer",display:"flex",alignItems:"center",gap:8}}
-                onMouseOver={e=>e.currentTarget.style.background=C.fL+"0A"} onMouseOut={e=>e.currentTarget.style.background="transparent"}>
-                <span style={{fontSize:16}}>{ET[p2.type]||"🍽"}</span>
-                <div style={{flex:1}}>
-                  <div style={{fontSize:12,fontWeight:600}}>{p2.nom}</div>
-                  <div style={{fontSize:10,color:C.tL}}>{p2.genre} · {p2.temps_prepa}min{p2.batch!=="Non"?" · 🍳 Batch":""}</div>
+            {addTypeR&&<div style={{maxHeight:260,overflowY:"auto"}}>
+              {filtered.filter(p2=>p2.type===addTypeR&&!menu.repas.some(r=>r.id===p2.id)).map(p2=>(
+                <div key={p2.id} onClick={()=>{addMeal(p2);setAddTypeR(null);}} style={{padding:"8px 10px",borderBottom:`1px solid ${C.bdr}22`,cursor:"pointer",display:"flex",alignItems:"center",gap:8}}
+                  onMouseOver={e=>e.currentTarget.style.background=C.fL+"0A"} onMouseOut={e=>e.currentTarget.style.background="transparent"}>
+                  <span style={{fontSize:16}}>{ET[p2.type]||"🍽"}</span>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:12,fontWeight:600}}>{p2.nom}</div>
+                    <div style={{fontSize:10,color:C.tL}}>{p2.genre} · {p2.temps_prepa}min{p2.batch!=="Non"?" · 🍳 Batch":""}</div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>}
           </div>}
         </div>}
 
@@ -901,26 +887,31 @@ function MenuTab({menu:rawMenu,setMenu,locked,profiles,setProfiles,ratings,salad
             ))}
           </div>
         </>}
-        {/* K5: Bouton + ajouter une entrée */}
+        {/* K5b: Bouton + ajouter une entrée — avec sélection par cuisine */}
         {!locked&&menu&&<div style={{textAlign:"center",marginBottom:16}}>
-          <button onClick={()=>{setAddingE(!addingE);setAddSearch("");setAddingR(false);setAddingS(false);}} style={{padding:"6px 16px",borderRadius:20,
+          <button onClick={()=>{setAddingE(!addingE);setAddGenreE(null);setAddingR(false);setAddingS(false);}} style={{padding:"6px 16px",borderRadius:20,
             border:`1px dashed ${C.gold}`,background:addingE?C.gold+"10":"transparent",fontSize:12,cursor:"pointer",color:C.gold,fontWeight:600}}>
             {addingE?"✕ Annuler":"＋ Ajouter une entrée"}</button>
-          {addingE&&<div style={{marginTop:8,background:"#fff",borderRadius:10,border:`1px solid ${C.bdr}`,maxHeight:300,overflowY:"auto",textAlign:"left"}}>
-            <div style={{padding:"8px 10px",position:"sticky",top:0,background:"#fff",zIndex:1,borderBottom:`1px solid ${C.bdr}`}}>
-              <input type="text" value={addSearch} onChange={e=>setAddSearch(e.target.value)} placeholder="Rechercher une entrée..."
-                autoFocus style={{width:"100%",padding:"6px 10px",borderRadius:6,border:`1px solid ${C.bdr}`,fontSize:12,boxSizing:"border-box"}}/>
+          {addingE&&<div style={{marginTop:8,background:"#fff",borderRadius:10,border:`1px solid ${C.bdr}`,textAlign:"left"}}>
+            <div style={{padding:8,display:"flex",flexWrap:"wrap",gap:4,borderBottom:`1px solid ${C.bdr}`}}>
+              {CUISINES.map(cui=>{const cnt=filteredE.filter(e2=>e2.genre===cui&&!(menu.entrees||[]).some(r=>r.id===e2.id)).length;
+                return <button key={cui} onClick={()=>setAddGenreE(addGenreE===cui?null:cui)} disabled={!cnt}
+                  style={{padding:"3px 8px",borderRadius:12,fontSize:10,border:`1px solid ${addGenreE===cui?C.gold:C.bdr}`,
+                    background:addGenreE===cui?C.gold+"18":"#fff",cursor:cnt?"pointer":"default",
+                    color:cnt?C.text:C.tL,opacity:cnt?1:.5}}>{EC[cui]||"🌍"} {cui} ({cnt})</button>;})}
             </div>
-            {filteredE.filter(ent=>!(menu.entrees||[]).some(r=>r.id===ent.id)&&(!addSearch.trim()||ent.nom.toLowerCase().includes(addSearch.toLowerCase()))).slice(0,20).map(e2=>(
-              <div key={e2.id} onClick={()=>addEntree(e2)} style={{padding:"8px 10px",borderBottom:`1px solid ${C.bdr}22`,cursor:"pointer",display:"flex",alignItems:"center",gap:8}}
-                onMouseOver={e=>e.currentTarget.style.background=C.gold+"0A"} onMouseOut={e=>e.currentTarget.style.background="transparent"}>
-                <span style={{fontSize:16}}>🥕</span>
-                <div style={{flex:1}}>
-                  <div style={{fontSize:12,fontWeight:600}}>{e2.nom}</div>
-                  <div style={{fontSize:10,color:C.tL}}>{e2.genre} · {e2.temps_prepa}min</div>
+            {addGenreE&&<div style={{maxHeight:260,overflowY:"auto"}}>
+              {filteredE.filter(e2=>e2.genre===addGenreE&&!(menu.entrees||[]).some(r=>r.id===e2.id)).map(e2=>(
+                <div key={e2.id} onClick={()=>{addEntree(e2);setAddGenreE(null);}} style={{padding:"8px 10px",borderBottom:`1px solid ${C.bdr}22`,cursor:"pointer",display:"flex",alignItems:"center",gap:8}}
+                  onMouseOver={e=>e.currentTarget.style.background=C.gold+"0A"} onMouseOut={e=>e.currentTarget.style.background="transparent"}>
+                  <span style={{fontSize:16}}>🥕</span>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:12,fontWeight:600}}>{e2.nom}</div>
+                    <div style={{fontSize:10,color:C.tL}}>{e2.genre} · {e2.temps_prepa}min</div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>}
           </div>}
         </div>}
 
@@ -930,32 +921,12 @@ function MenuTab({menu:rawMenu,setMenu,locked,profiles,setProfiles,ratings,salad
           <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:6}}>
             {(menu.salades||[]).map((s,idx)=>{
               const fresh=s.jourIdx>=3;
-              const isDragging=dragMenuSection==="salades"&&dragMenuIdx===idx;
-              const isDragOver=dragMenuSection==="salades"&&dragMenuOverIdx===idx;
-              return(<div key={s.id+"-s-"+idx} data-sidx={idx}
-                draggable={!locked}
-                onDragStart={e=>{setDragMenuSection("salades");setDragMenuIdx(idx);e.dataTransfer.effectAllowed="move";}}
-                onDragOver={e=>{e.preventDefault();if(dragMenuSection==="salades")setDragMenuOverIdx(idx);}}
-                onDragEnd={()=>{if(dragMenuSection==="salades"&&dragMenuIdx!==null&&dragMenuOverIdx!==null)reorderMenu("salades",dragMenuIdx,dragMenuOverIdx);
-                  setDragMenuSection(null);setDragMenuIdx(null);setDragMenuOverIdx(null);}}
-                onTouchStart={e=>{if(locked)return;menuTouchStart.current={section:"salades",idx,y:e.touches[0].clientY,started:false};}}
-                onTouchMove={e=>{
-                  if(!menuTouchStart.current||menuTouchStart.current.section!=="salades")return;
-                  const dy=Math.abs(e.touches[0].clientY-menuTouchStart.current.y);
-                  if(!menuTouchStart.current.started&&dy>10){menuTouchStart.current.started=true;setDragMenuSection("salades");setDragMenuIdx(menuTouchStart.current.idx);}
-                  if(!menuTouchStart.current.started)return;
-                  const touch=e.touches[0];const el=document.elementFromPoint(touch.clientX,touch.clientY);
-                  if(el){const row=el.closest("[data-sidx]");if(row){const ni=parseInt(row.dataset.sidx);if(!isNaN(ni))setDragMenuOverIdx(ni);}}
-                }}
-                onTouchEnd={()=>{if(dragMenuSection==="salades"&&dragMenuIdx!==null&&dragMenuOverIdx!==null)reorderMenu("salades",dragMenuIdx,dragMenuOverIdx);
-                  menuTouchStart.current=null;setDragMenuSection(null);setDragMenuIdx(null);setDragMenuOverIdx(null);}}>
-                <div style={{background:isDragOver?"#E8F5E9":isDragging?"#FFF8E1":"#fff",borderRadius:10,padding:"10px 12px",border:`1px solid ${isDragOver?C.ok+"66":C.fL+"22"}`,position:"relative",
-                  opacity:isDragging?.5:1,transition:"background .15s, border .15s"}}>
+              return(<div key={s.id+"-s-"+idx}>
+                <div style={{background:"#fff",borderRadius:10,padding:"10px 12px",border:`1px solid ${C.fL}22`,position:"relative"}}>
                   <div style={{position:"absolute",top:-7,left:12,background:fresh?"#E3F2FD":C.fL+"15",
                     padding:"1px 8px",borderRadius:8,fontSize:9,fontWeight:700,
                     color:fresh?C.blue:C.fL,border:`1px solid ${fresh?C.blue+"33":C.fL+"33"}`}}>
                     {s.jourDate||s.jour} {fresh&&"🧊"}</div>
-                  {!locked&&<span style={{position:"absolute",top:4,right:10,fontSize:10,color:C.tL,cursor:"grab",userSelect:"none"}}>☰</span>}
                   <div onClick={()=>onSel(s)} style={{cursor:"pointer",marginTop:6}}>
                     <div style={{display:"flex",alignItems:"center",gap:8}}>
                       {photos[s.id]?<img src={photos[s.id]} style={{width:40,height:40,borderRadius:8,objectFit:"cover",flexShrink:0}} onError={e=>{e.target.style.display="none"}}/>:<span style={{fontSize:24}}>🥗</span>}
@@ -969,7 +940,11 @@ function MenuTab({menu:rawMenu,setMenu,locked,profiles,setProfiles,ratings,salad
                       </div>
                     </div>
                   </div>
-                  {!locked&&<div style={{display:"flex",justifyContent:"flex-end",gap:4,marginTop:6}}>
+                  {!locked&&<div style={{display:"flex",justifyContent:"flex-end",gap:4,marginTop:6,alignItems:"center"}}>
+                    {idx>0&&<button onClick={()=>moveMenuItem("salades",idx,-1)} style={{padding:"3px 8px",borderRadius:6,
+                      border:`1px solid ${C.bdr}`,background:"#fff",fontSize:12,cursor:"pointer",color:C.tM,lineHeight:1}}>▲</button>}
+                    {idx<(menu.salades||[]).length-1&&<button onClick={()=>moveMenuItem("salades",idx,1)} style={{padding:"3px 8px",borderRadius:6,
+                      border:`1px solid ${C.bdr}`,background:"#fff",fontSize:12,cursor:"pointer",color:C.tM,lineHeight:1}}>▼</button>}
                     <button onClick={()=>setReplSIdx(replSIdx===idx?null:idx)} style={{padding:"3px 8px",borderRadius:6,
                       border:`1px solid ${C.bdr}`,background:"#fff",fontSize:10,cursor:"pointer",color:C.tM}}>🔄</button>
                     <button onClick={()=>removeS(idx)} style={{padding:"3px 8px",borderRadius:6,
@@ -989,26 +964,31 @@ function MenuTab({menu:rawMenu,setMenu,locked,profiles,setProfiles,ratings,salad
             })}
           </div>
         </>}
-        {/* K5: Bouton + ajouter une salade */}
+        {/* K5b: Bouton + ajouter une salade — avec sélection par cuisine */}
         {!locked&&menu&&<div style={{textAlign:"center",marginBottom:16}}>
-          <button onClick={()=>{setAddingS(!addingS);setAddSearch("");setAddingR(false);setAddingE(false);}} style={{padding:"6px 16px",borderRadius:20,
+          <button onClick={()=>{setAddingS(!addingS);setAddCuisineS(null);setAddingR(false);setAddingE(false);}} style={{padding:"6px 16px",borderRadius:20,
             border:`1px dashed ${C.fL}`,background:addingS?C.fL+"10":"transparent",fontSize:12,cursor:"pointer",color:C.fL,fontWeight:600}}>
             {addingS?"✕ Annuler":"＋ Ajouter une salade"}</button>
-          {addingS&&<div style={{marginTop:8,background:"#fff",borderRadius:10,border:`1px solid ${C.bdr}`,maxHeight:300,overflowY:"auto",textAlign:"left"}}>
-            <div style={{padding:"8px 10px",position:"sticky",top:0,background:"#fff",zIndex:1,borderBottom:`1px solid ${C.bdr}`}}>
-              <input type="text" value={addSearch} onChange={e=>setAddSearch(e.target.value)} placeholder="Rechercher une salade..."
-                autoFocus style={{width:"100%",padding:"6px 10px",borderRadius:6,border:`1px solid ${C.bdr}`,fontSize:12,boxSizing:"border-box"}}/>
+          {addingS&&<div style={{marginTop:8,background:"#fff",borderRadius:10,border:`1px solid ${C.bdr}`,textAlign:"left"}}>
+            <div style={{padding:8,display:"flex",flexWrap:"wrap",gap:4,borderBottom:`1px solid ${C.bdr}`}}>
+              {CUISINES.map(cui=>{const cnt=filteredS.filter(p=>p.cuisine===cui&&!(menu.salades||[]).some(r=>r.id===p.id)).length;
+                return <button key={cui} onClick={()=>setAddCuisineS(addCuisineS===cui?null:cui)} disabled={!cnt}
+                  style={{padding:"3px 8px",borderRadius:12,fontSize:10,border:`1px solid ${addCuisineS===cui?C.fL:C.bdr}`,
+                    background:addCuisineS===cui?C.fL+"18":"#fff",cursor:cnt?"pointer":"default",
+                    color:cnt?C.text:C.tL,opacity:cnt?1:.5}}>{EC[cui]||"🌍"} {cui} ({cnt})</button>;})}
             </div>
-            {filteredS.filter(sal=>!(menu.salades||[]).some(r=>r.id===sal.id)&&(!addSearch.trim()||sal.nom.toLowerCase().includes(addSearch.toLowerCase()))).slice(0,20).map(sal=>(
-              <div key={sal.id} onClick={()=>addSalade(sal)} style={{padding:"8px 10px",borderBottom:`1px solid ${C.bdr}22`,cursor:"pointer",display:"flex",alignItems:"center",gap:8}}
-                onMouseOver={e=>e.currentTarget.style.background=C.fL+"0A"} onMouseOut={e=>e.currentTarget.style.background="transparent"}>
-                <span style={{fontSize:16}}>🥗</span>
-                <div style={{flex:1}}>
-                  <div style={{fontSize:12,fontWeight:600}}>{sal.nom}</div>
-                  <div style={{fontSize:10,color:C.tL}}>{sal.cuisine} · {sal.temps}min{sal.batch!=="Non"?" · 🍳 Batch":""}</div>
+            {addCuisineS&&<div style={{maxHeight:260,overflowY:"auto"}}>
+              {filteredS.filter(sal=>sal.cuisine===addCuisineS&&!(menu.salades||[]).some(r=>r.id===sal.id)).map(sal=>(
+                <div key={sal.id} onClick={()=>{addSalade(sal);setAddCuisineS(null);}} style={{padding:"8px 10px",borderBottom:`1px solid ${C.bdr}22`,cursor:"pointer",display:"flex",alignItems:"center",gap:8}}
+                  onMouseOver={e=>e.currentTarget.style.background=C.fL+"0A"} onMouseOut={e=>e.currentTarget.style.background="transparent"}>
+                  <span style={{fontSize:16}}>🥗</span>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:12,fontWeight:600}}>{sal.nom}</div>
+                    <div style={{fontSize:10,color:C.tL}}>{sal.cuisine} · {sal.temps}min{sal.batch!=="Non"?" · 🍳 Batch":""}</div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>}
           </div>}
         </div>}
       </>}
