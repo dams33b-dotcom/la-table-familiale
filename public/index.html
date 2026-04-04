@@ -331,7 +331,9 @@ const IC={"Levure chimique":"SUCRÉ","Miel":"SUCRÉ","Pain de mie complet":"SUCR
   "Moutarde":"EPIC","Huile noix":"HUIL","César":"FRAIS","Xérès":"HUIL",
   "Pesto":"EPIC","Coleslaw":"FRAIS",
   // Nouveaux ingrédients salade (Étape B)
-  "Tomate":"LEG","Tomates séchées":"CONS"};
+  "Tomate":"LEG","Tomates séchées":"CONS",
+  // Étape K — ajouts
+  "Fromage blanc":"FRAIS","Cure-dents":"DIVERS","Galettes (achetées)":"BOUL"};
 
 const CAT_ORDER=[["BOISS","🥤"],["SUCRÉ","🍫"],["CONS","🥫"],["FEC","🌾"],
   ["SAUCE","🫙"],["BOUL","🍞"],["HUIL","🫒"],["EPIC","🧂"],
@@ -511,12 +513,22 @@ function MenuTab({menu:rawMenu,setMenu,locked,profiles,setProfiles,ratings,salad
   const [nbE,setNbE]=useState(menu?.entrees?.length||2);
   const [saison,setSaison]=useState("Toutes saisons");
   const [noteF,setNoteF]=useState(0);
-  const [confirm,setConfirm]=useState(false);
+  const [confirmR,setConfirmR]=useState(false);
+  const [confirmE,setConfirmE]=useState(false);
   const [replIdx,setReplIdx]=useState(null);
   const [replListR,setReplListR]=useState(null); // {idx,type} — liste choix repas
   const [replSIdx,setReplSIdx]=useState(null);
   const [replEIdx,setReplEIdx]=useState(null);
   const [replListE,setReplListE]=useState(null); // {idx,genre} — liste choix entrées
+  const [addingR,setAddingR]=useState(false); // K5: adding a meal
+  const [addingE,setAddingE]=useState(false); // K5: adding an entrée
+  const [addingS,setAddingS]=useState(false); // K5: adding a salade
+  const [addSearch,setAddSearch]=useState("");
+  // K8: drag & drop state for menu
+  const [dragMenuSection,setDragMenuSection]=useState(null); // 'repas' or 'salades'
+  const [dragMenuIdx,setDragMenuIdx]=useState(null);
+  const [dragMenuOverIdx,setDragMenuOverIdx]=useState(null);
+  const menuTouchStart=React.useRef(null);
 
   // Pool salades (depuis BASE_SALADES — module Eat Salade Maison)
   const filteredS=useMemo(()=>BASE_SALADES.filter(s=>{
@@ -539,19 +551,61 @@ function MenuTab({menu:rawMenu,setMenu,locked,profiles,setProfiles,ratings,salad
     return e.saison==="Toutes saisons"||e.saison===saison;
   }),[saison]);
 
-  function generate(){
-    if(menu&&!confirm){setConfirm(true);return;}
-    setConfirm(false);
+  function generateR(){
+    if(menu&&menu.repas.length>0&&!confirmR){setConfirmR(true);return;}
+    setConfirmR(false);
     const sh=nbR>0?[...filtered].sort(()=>Math.random()-.5).slice(0,nbR):[];
     const bo={Oui:0,Partiel:1,Non:2};
     sh.sort((a,b)=>(bo[a.batch]??1)-(bo[b.batch]??1));
     const weekDays=getWeekDays(new Date());
     const repas=sh.map((p,i)=>({...p,jour:weekDays[i%7].full,jourShort:weekDays[i%7].name,jourIdx:i%7,jourDate:weekDays[i%7].dateStr}));
+    const base=menu||{entrees:[],salades:[],at:new Date().toISOString(),startDate:new Date().toISOString()};
+    setMenu({...base,repas,at:new Date().toISOString(),startDate:new Date().toISOString()});
+    setReplIdx(null);setReplListR(null);
+  }
+  function generateE(){
+    if(menu&&menu.entrees.length>0&&!confirmE){setConfirmE(true);return;}
+    setConfirmE(false);
     const ent=nbE>0?[...filteredE].sort(()=>Math.random()-.5).slice(0,nbE):[];
-    // Conserver les salades existantes (ajoutées manuellement depuis l'onglet Salade)
-    const salades=menu?.salades||[];
-    setMenu({repas,entrees:ent,salades,at:new Date().toISOString(),startDate:new Date().toISOString()});
-    setReplIdx(null);setReplListR(null);setReplEIdx(null);setReplListE(null);setReplSIdx(null);
+    const base=menu||{repas:[],salades:[],at:new Date().toISOString(),startDate:new Date().toISOString()};
+    setMenu({...base,entrees:ent});
+    setReplEIdx(null);setReplListE(null);
+  }
+  // K5: add single meal/entrée/salade
+  function addMeal(plat){
+    if(locked)return;
+    const wd=getWeekDays(menu?.startDate?new Date(menu.startDate):new Date());
+    const repas=[...(menu?.repas||[])];
+    const nextIdx=repas.length%7;
+    repas.push({...plat,jour:wd[nextIdx].full,jourShort:wd[nextIdx].name,jourIdx:nextIdx,jourDate:wd[nextIdx].dateStr});
+    setMenu({...(menu||{entrees:[],salades:[],at:new Date().toISOString(),startDate:new Date().toISOString()}),repas});
+    setAddingR(false);setAddSearch("");
+  }
+  function addEntree(ent){
+    if(locked)return;
+    const entrees=[...(menu?.entrees||[]),ent];
+    setMenu({...(menu||{repas:[],salades:[],at:new Date().toISOString(),startDate:new Date().toISOString()}),entrees});
+    setAddingE(false);setAddSearch("");
+  }
+  function addSalade(sal){
+    if(locked)return;
+    const wd=getWeekDays(menu?.startDate?new Date(menu.startDate):new Date());
+    const salades=[...(menu?.salades||[])];
+    const picked=buildSaladForMenu(sal);
+    const nextIdx=salades.length%7;
+    salades.push({...picked,jour:wd[nextIdx].full,jourShort:wd[nextIdx].name,jourIdx:nextIdx,jourDate:wd[nextIdx].dateStr});
+    setMenu({...(menu||{repas:[],entrees:[],at:new Date().toISOString(),startDate:new Date().toISOString()}),salades});
+    setAddingS(false);setAddSearch("");
+  }
+  // K8: drag & drop reorder for menu sections
+  function reorderMenu(section,fromIdx,toIdx){
+    if(fromIdx===toIdx||locked)return;
+    const arr=[...(menu[section]||[])];
+    const item=arr.splice(fromIdx,1)[0];
+    arr.splice(toIdx,0,item);
+    const wd=getWeekDays(menu.startDate?new Date(menu.startDate):new Date());
+    const reindexed=arr.map((r,i)=>({...r,jour:wd[i%7].full,jourShort:wd[i%7].name,jourIdx:i%7,jourDate:wd[i%7].dateStr}));
+    setMenu({...menu,[section]:reindexed});
   }
   function removeS(idx){if(locked)return;
     const wd=getWeekDays(menu.startDate?new Date(menu.startDate):new Date());
@@ -631,19 +685,36 @@ function MenuTab({menu:rawMenu,setMenu,locked,profiles,setProfiles,ratings,salad
           {[1,2,3,4,5].map(n=><option key={n} value={n}>≥ {"⭐".repeat(n)}</option>)}
         </select></div>
 
-        <button onClick={generate} disabled={locked} style={{width:"100%",padding:12,borderRadius:10,
-          border:"none",background:locked?C.tL:`linear-gradient(135deg,${C.forest},${C.fL})`,
-          color:"#fff",fontSize:14,fontWeight:700,cursor:locked?"not-allowed":"pointer",
-          boxShadow:locked?"none":"0 3px 10px rgba(26,58,10,.3)"}}>
-          {locked?"🔒 Verrouillé":`🔄 Générer ${nbR} repas, ${nbE} entrées`}
-        </button>
+        <div style={{display:"flex",gap:8}}>
+          <button onClick={generateR} disabled={locked} style={{flex:1,padding:12,borderRadius:10,
+            border:"none",background:locked?C.tL:`linear-gradient(135deg,${C.forest},${C.fL})`,
+            color:"#fff",fontSize:13,fontWeight:700,cursor:locked?"not-allowed":"pointer",
+            boxShadow:locked?"none":"0 3px 10px rgba(26,58,10,.3)"}}>
+            {locked?"🔒":`🍽 Générer ${nbR} repas`}
+          </button>
+          <button onClick={generateE} disabled={locked} style={{flex:1,padding:12,borderRadius:10,
+            border:"none",background:locked?C.tL:`linear-gradient(135deg,${C.gold},#D4A017)`,
+            color:"#fff",fontSize:13,fontWeight:700,cursor:locked?"not-allowed":"pointer",
+            boxShadow:locked?"none":"0 3px 10px rgba(184,134,11,.3)"}}>
+            {locked?"🔒":`🥕 Générer ${nbE} entrées`}
+          </button>
+        </div>
 
-        {confirm&&<div style={{marginTop:10,padding:12,background:C.dangerBg,borderRadius:10}}>
-          <p style={{margin:"0 0 8px",fontSize:12,color:C.danger,fontWeight:600}}>⚠️ Remplacer le menu ?</p>
+        {confirmR&&<div style={{marginTop:10,padding:12,background:C.dangerBg,borderRadius:10}}>
+          <p style={{margin:"0 0 8px",fontSize:12,color:C.danger,fontWeight:600}}>⚠️ Remplacer les {menu.repas.length} repas actuels ?</p>
           <div style={{display:"flex",gap:6}}>
-            <button onClick={generate} style={{flex:1,padding:8,borderRadius:8,border:"none",
+            <button onClick={generateR} style={{flex:1,padding:8,borderRadius:8,border:"none",
               background:C.danger,color:"#fff",fontSize:12,fontWeight:600,cursor:"pointer"}}>Oui</button>
-            <button onClick={()=>setConfirm(false)} style={{flex:1,padding:8,borderRadius:8,
+            <button onClick={()=>setConfirmR(false)} style={{flex:1,padding:8,borderRadius:8,
+              border:`1px solid ${C.bdr}`,background:"#fff",fontSize:12,cursor:"pointer"}}>Non</button>
+          </div>
+        </div>}
+        {confirmE&&<div style={{marginTop:10,padding:12,background:C.dangerBg,borderRadius:10}}>
+          <p style={{margin:"0 0 8px",fontSize:12,color:C.danger,fontWeight:600}}>⚠️ Remplacer les {menu.entrees.length} entrées actuelles ?</p>
+          <div style={{display:"flex",gap:6}}>
+            <button onClick={generateE} style={{flex:1,padding:8,borderRadius:8,border:"none",
+              background:C.danger,color:"#fff",fontSize:12,fontWeight:600,cursor:"pointer"}}>Oui</button>
+            <button onClick={()=>setConfirmE(false)} style={{flex:1,padding:8,borderRadius:8,
               border:`1px solid ${C.bdr}`,background:"#fff",fontSize:12,cursor:"pointer"}}>Non</button>
           </div>
         </div>}
@@ -652,16 +723,37 @@ function MenuTab({menu:rawMenu,setMenu,locked,profiles,setProfiles,ratings,salad
       {menu&&<>
         <h3 style={{fontSize:13,color:C.forest,fontWeight:700,marginBottom:8,textTransform:"uppercase",letterSpacing:.5,textAlign:"center"}}>
           🍽 Repas ({menu.repas.length})
+          {!locked&&<span style={{fontSize:9,color:C.tL,fontWeight:400,textTransform:"none",letterSpacing:0,display:"block",marginTop:2}}>↕️ Maintenez et glissez pour réordonner</span>}
         </h3>
-        <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:20}}>
+        <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:6}}>
           {menu.repas.map((p,idx)=>{
             const fresh=idx>=Math.max(0,menu.repas.length-(menu.repas.length>4?3:1));
-            return(<div key={p.id+"-"+idx}>
-              <div style={{background:"#fff",borderRadius:10,padding:"10px 12px",border:`1px solid ${C.bdr}`,position:"relative"}}>
+            const isDragging=dragMenuSection==="repas"&&dragMenuIdx===idx;
+            const isDragOver=dragMenuSection==="repas"&&dragMenuOverIdx===idx;
+            return(<div key={p.id+"-"+idx} data-midx={idx}
+              draggable={!locked}
+              onDragStart={e=>{setDragMenuSection("repas");setDragMenuIdx(idx);e.dataTransfer.effectAllowed="move";}}
+              onDragOver={e=>{e.preventDefault();if(dragMenuSection==="repas")setDragMenuOverIdx(idx);}}
+              onDragEnd={()=>{if(dragMenuSection==="repas"&&dragMenuIdx!==null&&dragMenuOverIdx!==null)reorderMenu("repas",dragMenuIdx,dragMenuOverIdx);
+                setDragMenuSection(null);setDragMenuIdx(null);setDragMenuOverIdx(null);}}
+              onTouchStart={e=>{if(locked)return;menuTouchStart.current={section:"repas",idx,y:e.touches[0].clientY,started:false};}}
+              onTouchMove={e=>{
+                if(!menuTouchStart.current||menuTouchStart.current.section!=="repas")return;
+                const dy=Math.abs(e.touches[0].clientY-menuTouchStart.current.y);
+                if(!menuTouchStart.current.started&&dy>10){menuTouchStart.current.started=true;setDragMenuSection("repas");setDragMenuIdx(menuTouchStart.current.idx);}
+                if(!menuTouchStart.current.started)return;
+                const touch=e.touches[0];const el=document.elementFromPoint(touch.clientX,touch.clientY);
+                if(el){const row=el.closest("[data-midx]");if(row){const ni=parseInt(row.dataset.midx);if(!isNaN(ni))setDragMenuOverIdx(ni);}}
+              }}
+              onTouchEnd={()=>{if(dragMenuSection==="repas"&&dragMenuIdx!==null&&dragMenuOverIdx!==null)reorderMenu("repas",dragMenuIdx,dragMenuOverIdx);
+                menuTouchStart.current=null;setDragMenuSection(null);setDragMenuIdx(null);setDragMenuOverIdx(null);}}>
+              <div style={{background:isDragOver?"#E8F5E9":isDragging?"#FFF8E1":"#fff",borderRadius:10,padding:"10px 12px",border:`1px solid ${isDragOver?C.ok+"66":C.bdr}`,position:"relative",
+                opacity:isDragging?.5:1,transition:"background .15s, border .15s"}}>
                 <div style={{position:"absolute",top:-7,left:12,background:fresh?"#E3F2FD":C.okBg,
                   padding:"1px 8px",borderRadius:8,fontSize:9,fontWeight:700,
                   color:fresh?C.blue:C.ok,border:`1px solid ${fresh?C.blue+"33":C.ok+"33"}`}}>
                   {p.jourDate||p.jour} {fresh&&"🧊"}</div>
+                {!locked&&<span style={{position:"absolute",top:4,right:10,fontSize:10,color:C.tL,cursor:"grab",userSelect:"none"}}>☰</span>}
                 <div onClick={()=>onSel(p)} style={{cursor:"pointer",marginTop:6}}>
                   <div style={{display:"flex",alignItems:"center",gap:8}}>
                     {photos[p.id]?<img src={photos[p.id]} style={{width:40,height:40,borderRadius:8,objectFit:"cover",flexShrink:0}} onError={e=>{e.target.style.display="none"}}/>:<span style={{fontSize:24}}>{ET[p.type]||"🍽"}</span>}
@@ -727,6 +819,28 @@ function MenuTab({menu:rawMenu,setMenu,locked,profiles,setProfiles,ratings,salad
             </div>);
           })}
         </div>
+        {/* K5: Bouton + ajouter un repas */}
+        {!locked&&<div style={{textAlign:"center",marginBottom:16}}>
+          <button onClick={()=>{setAddingR(!addingR);setAddSearch("");setAddingE(false);setAddingS(false);}} style={{padding:"6px 16px",borderRadius:20,
+            border:`1px dashed ${C.fL}`,background:addingR?C.fL+"10":"transparent",fontSize:12,cursor:"pointer",color:C.fL,fontWeight:600}}>
+            {addingR?"✕ Annuler":"＋ Ajouter un repas"}</button>
+          {addingR&&<div style={{marginTop:8,background:"#fff",borderRadius:10,border:`1px solid ${C.bdr}`,maxHeight:300,overflowY:"auto",textAlign:"left"}}>
+            <div style={{padding:"8px 10px",position:"sticky",top:0,background:"#fff",zIndex:1,borderBottom:`1px solid ${C.bdr}`}}>
+              <input type="text" value={addSearch} onChange={e=>setAddSearch(e.target.value)} placeholder="Rechercher un plat..."
+                autoFocus style={{width:"100%",padding:"6px 10px",borderRadius:6,border:`1px solid ${C.bdr}`,fontSize:12,boxSizing:"border-box"}}/>
+            </div>
+            {filtered.filter(p=>!menu.repas.some(r=>r.id===p.id)&&(!addSearch.trim()||p.nom.toLowerCase().includes(addSearch.toLowerCase()))).slice(0,20).map(p2=>(
+              <div key={p2.id} onClick={()=>addMeal(p2)} style={{padding:"8px 10px",borderBottom:`1px solid ${C.bdr}22`,cursor:"pointer",display:"flex",alignItems:"center",gap:8}}
+                onMouseOver={e=>e.currentTarget.style.background=C.fL+"0A"} onMouseOut={e=>e.currentTarget.style.background="transparent"}>
+                <span style={{fontSize:16}}>{ET[p2.type]||"🍽"}</span>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:12,fontWeight:600}}>{p2.nom}</div>
+                  <div style={{fontSize:10,color:C.tL}}>{p2.genre} · {p2.temps_prepa}min{p2.batch!=="Non"?" · 🍳 Batch":""}</div>
+                </div>
+              </div>
+            ))}
+          </div>}
+        </div>}
 
         {menu.entrees.length>0&&<>
           <h3 style={{fontSize:13,color:C.gold,fontWeight:700,marginBottom:8,textTransform:"uppercase",letterSpacing:.5,textAlign:"center"}}>🥕 Entrées ({menu.entrees.length})</h3>
@@ -787,19 +901,61 @@ function MenuTab({menu:rawMenu,setMenu,locked,profiles,setProfiles,ratings,salad
             ))}
           </div>
         </>}
+        {/* K5: Bouton + ajouter une entrée */}
+        {!locked&&menu&&<div style={{textAlign:"center",marginBottom:16}}>
+          <button onClick={()=>{setAddingE(!addingE);setAddSearch("");setAddingR(false);setAddingS(false);}} style={{padding:"6px 16px",borderRadius:20,
+            border:`1px dashed ${C.gold}`,background:addingE?C.gold+"10":"transparent",fontSize:12,cursor:"pointer",color:C.gold,fontWeight:600}}>
+            {addingE?"✕ Annuler":"＋ Ajouter une entrée"}</button>
+          {addingE&&<div style={{marginTop:8,background:"#fff",borderRadius:10,border:`1px solid ${C.bdr}`,maxHeight:300,overflowY:"auto",textAlign:"left"}}>
+            <div style={{padding:"8px 10px",position:"sticky",top:0,background:"#fff",zIndex:1,borderBottom:`1px solid ${C.bdr}`}}>
+              <input type="text" value={addSearch} onChange={e=>setAddSearch(e.target.value)} placeholder="Rechercher une entrée..."
+                autoFocus style={{width:"100%",padding:"6px 10px",borderRadius:6,border:`1px solid ${C.bdr}`,fontSize:12,boxSizing:"border-box"}}/>
+            </div>
+            {filteredE.filter(ent=>!(menu.entrees||[]).some(r=>r.id===ent.id)&&(!addSearch.trim()||ent.nom.toLowerCase().includes(addSearch.toLowerCase()))).slice(0,20).map(e2=>(
+              <div key={e2.id} onClick={()=>addEntree(e2)} style={{padding:"8px 10px",borderBottom:`1px solid ${C.bdr}22`,cursor:"pointer",display:"flex",alignItems:"center",gap:8}}
+                onMouseOver={e=>e.currentTarget.style.background=C.gold+"0A"} onMouseOut={e=>e.currentTarget.style.background="transparent"}>
+                <span style={{fontSize:16}}>🥕</span>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:12,fontWeight:600}}>{e2.nom}</div>
+                  <div style={{fontSize:10,color:C.tL}}>{e2.genre} · {e2.temps_prepa}min</div>
+                </div>
+              </div>
+            ))}
+          </div>}
+        </div>}
 
         {/* ═══ EAT SALADE — MIDI ═══ */}
         {(menu.salades||[]).length>0&&<>
           <h3 style={{fontSize:13,color:C.fL,fontWeight:700,marginBottom:8,textTransform:"uppercase",letterSpacing:.5,textAlign:"center"}}>🥗 Eat Salade — Midi ({(menu.salades||[]).length})</h3>
-          <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:16}}>
+          <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:6}}>
             {(menu.salades||[]).map((s,idx)=>{
               const fresh=s.jourIdx>=3;
-              return(<div key={s.id+"-s-"+idx}>
-                <div style={{background:"#fff",borderRadius:10,padding:"10px 12px",border:`1px solid ${C.fL}22`,position:"relative"}}>
+              const isDragging=dragMenuSection==="salades"&&dragMenuIdx===idx;
+              const isDragOver=dragMenuSection==="salades"&&dragMenuOverIdx===idx;
+              return(<div key={s.id+"-s-"+idx} data-sidx={idx}
+                draggable={!locked}
+                onDragStart={e=>{setDragMenuSection("salades");setDragMenuIdx(idx);e.dataTransfer.effectAllowed="move";}}
+                onDragOver={e=>{e.preventDefault();if(dragMenuSection==="salades")setDragMenuOverIdx(idx);}}
+                onDragEnd={()=>{if(dragMenuSection==="salades"&&dragMenuIdx!==null&&dragMenuOverIdx!==null)reorderMenu("salades",dragMenuIdx,dragMenuOverIdx);
+                  setDragMenuSection(null);setDragMenuIdx(null);setDragMenuOverIdx(null);}}
+                onTouchStart={e=>{if(locked)return;menuTouchStart.current={section:"salades",idx,y:e.touches[0].clientY,started:false};}}
+                onTouchMove={e=>{
+                  if(!menuTouchStart.current||menuTouchStart.current.section!=="salades")return;
+                  const dy=Math.abs(e.touches[0].clientY-menuTouchStart.current.y);
+                  if(!menuTouchStart.current.started&&dy>10){menuTouchStart.current.started=true;setDragMenuSection("salades");setDragMenuIdx(menuTouchStart.current.idx);}
+                  if(!menuTouchStart.current.started)return;
+                  const touch=e.touches[0];const el=document.elementFromPoint(touch.clientX,touch.clientY);
+                  if(el){const row=el.closest("[data-sidx]");if(row){const ni=parseInt(row.dataset.sidx);if(!isNaN(ni))setDragMenuOverIdx(ni);}}
+                }}
+                onTouchEnd={()=>{if(dragMenuSection==="salades"&&dragMenuIdx!==null&&dragMenuOverIdx!==null)reorderMenu("salades",dragMenuIdx,dragMenuOverIdx);
+                  menuTouchStart.current=null;setDragMenuSection(null);setDragMenuIdx(null);setDragMenuOverIdx(null);}}>
+                <div style={{background:isDragOver?"#E8F5E9":isDragging?"#FFF8E1":"#fff",borderRadius:10,padding:"10px 12px",border:`1px solid ${isDragOver?C.ok+"66":C.fL+"22"}`,position:"relative",
+                  opacity:isDragging?.5:1,transition:"background .15s, border .15s"}}>
                   <div style={{position:"absolute",top:-7,left:12,background:fresh?"#E3F2FD":C.fL+"15",
                     padding:"1px 8px",borderRadius:8,fontSize:9,fontWeight:700,
                     color:fresh?C.blue:C.fL,border:`1px solid ${fresh?C.blue+"33":C.fL+"33"}`}}>
                     {s.jourDate||s.jour} {fresh&&"🧊"}</div>
+                  {!locked&&<span style={{position:"absolute",top:4,right:10,fontSize:10,color:C.tL,cursor:"grab",userSelect:"none"}}>☰</span>}
                   <div onClick={()=>onSel(s)} style={{cursor:"pointer",marginTop:6}}>
                     <div style={{display:"flex",alignItems:"center",gap:8}}>
                       {photos[s.id]?<img src={photos[s.id]} style={{width:40,height:40,borderRadius:8,objectFit:"cover",flexShrink:0}} onError={e=>{e.target.style.display="none"}}/>:<span style={{fontSize:24}}>🥗</span>}
@@ -833,6 +989,28 @@ function MenuTab({menu:rawMenu,setMenu,locked,profiles,setProfiles,ratings,salad
             })}
           </div>
         </>}
+        {/* K5: Bouton + ajouter une salade */}
+        {!locked&&menu&&<div style={{textAlign:"center",marginBottom:16}}>
+          <button onClick={()=>{setAddingS(!addingS);setAddSearch("");setAddingR(false);setAddingE(false);}} style={{padding:"6px 16px",borderRadius:20,
+            border:`1px dashed ${C.fL}`,background:addingS?C.fL+"10":"transparent",fontSize:12,cursor:"pointer",color:C.fL,fontWeight:600}}>
+            {addingS?"✕ Annuler":"＋ Ajouter une salade"}</button>
+          {addingS&&<div style={{marginTop:8,background:"#fff",borderRadius:10,border:`1px solid ${C.bdr}`,maxHeight:300,overflowY:"auto",textAlign:"left"}}>
+            <div style={{padding:"8px 10px",position:"sticky",top:0,background:"#fff",zIndex:1,borderBottom:`1px solid ${C.bdr}`}}>
+              <input type="text" value={addSearch} onChange={e=>setAddSearch(e.target.value)} placeholder="Rechercher une salade..."
+                autoFocus style={{width:"100%",padding:"6px 10px",borderRadius:6,border:`1px solid ${C.bdr}`,fontSize:12,boxSizing:"border-box"}}/>
+            </div>
+            {filteredS.filter(sal=>!(menu.salades||[]).some(r=>r.id===sal.id)&&(!addSearch.trim()||sal.nom.toLowerCase().includes(addSearch.toLowerCase()))).slice(0,20).map(sal=>(
+              <div key={sal.id} onClick={()=>addSalade(sal)} style={{padding:"8px 10px",borderBottom:`1px solid ${C.bdr}22`,cursor:"pointer",display:"flex",alignItems:"center",gap:8}}
+                onMouseOver={e=>e.currentTarget.style.background=C.fL+"0A"} onMouseOut={e=>e.currentTarget.style.background="transparent"}>
+                <span style={{fontSize:16}}>🥗</span>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:12,fontWeight:600}}>{sal.nom}</div>
+                  <div style={{fontSize:10,color:C.tL}}>{sal.cuisine} · {sal.temps}min{sal.batch!=="Non"?" · 🍳 Batch":""}</div>
+                </div>
+              </div>
+            ))}
+          </div>}
+        </div>}
       </>}
 
       {!menu&&<div style={{textAlign:"center",padding:"30px 16px",color:C.tL}}>
@@ -910,8 +1088,8 @@ function CatalogTab({ratings,profiles,photos,onSel,platDel,onPlatDel}){
     <div style={{display:"flex",flexDirection:"column",gap:6}}>
       {items.map(p=>{const isDel=del.includes(p.id);return(<div key={p.id}>
         <div style={{background:isDel?"#fff5f5":"#fff",borderRadius:10,padding:"10px 12px",
-          border:`1px solid ${isDel?C.danger+"33":C.bdr}`,display:"flex",alignItems:"center",gap:10}}>
-          <div onClick={()=>onSel(p)} style={{display:"flex",alignItems:"center",gap:10,flex:1,cursor:"pointer"}}>
+          border:`1px solid ${isDel?C.danger+"33":C.bdr}`,display:"flex",alignItems:"center",gap:10,overflow:"hidden"}}>
+          <div onClick={()=>onSel(p)} style={{display:"flex",alignItems:"center",gap:10,flex:1,cursor:"pointer",minWidth:0,overflow:"hidden"}}>
             {photos[p.id]?<img src={photos[p.id]} style={{width:40,height:40,borderRadius:8,objectFit:"cover",flexShrink:0}} onError={e=>{e.target.style.display="none"}}/>:<span style={{fontSize:24,flexShrink:0}}>{ET[p.type]||"🍽"}</span>}
             <div style={{flex:1,minWidth:0}}>
               <div style={{fontSize:13,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",
@@ -922,6 +1100,7 @@ function CatalogTab({ratings,profiles,photos,onSel,platDel,onPlatDel}){
               </div>
             </div>
           </div>
+          <div style={{flexShrink:0,display:"flex",alignItems:"center"}}>
           {isDel?<button onClick={()=>toggleDel(p.id)} style={{padding:"4px 10px",borderRadius:8,border:`1px solid ${C.ok}`,
             background:C.okBg,fontSize:10,cursor:"pointer",color:C.ok,fontWeight:600,whiteSpace:"nowrap"}}>↩ Restaurer</button>
           :<>{confirmDel===p.id?<div style={{display:"flex",gap:4,alignItems:"center"}}>
@@ -932,6 +1111,7 @@ function CatalogTab({ratings,profiles,photos,onSel,platDel,onPlatDel}){
           </div>:<button onClick={(e)=>{e.stopPropagation();setConfirmDel(p.id);}} style={{padding:"4px 10px",borderRadius:8,
             border:`1px solid ${C.danger}33`,background:C.dangerBg,fontSize:10,cursor:"pointer",color:C.danger,
             whiteSpace:"nowrap"}}>🗑</button>}</>}
+          </div>
         </div>
       </div>);})}
     </div>
@@ -971,7 +1151,6 @@ function CoursesTab({menu,profiles,stockCk,courseCk,setCk,stockOrder}){
       const si=[];
       const sc=DATA.stock.find(c=>c.nom===(CN[ck]||ck));
       if(sc)sc.articles.forEach(art=>{if(stockCk[sc.nom+"__"+art.nom])
-        if(!ci.some(i=>i.nom.toLowerCase().includes(art.nom.toLowerCase())||art.nom.toLowerCase().includes(i.nom.toLowerCase())))
           si.push({nom:art.nom,unite:"",tot:null,isStock:true,cat:ck});});
       const combined=[...ci,...si];
       if(combined.length)result.push({key:ck,name:CN[ck]||ck,emoji,items:combined,freshOnly});
@@ -1404,7 +1583,7 @@ function StockTab({stockCk,setStockCk,stockOrder,setStockOrder,customArt,setCust
       return(<div key={cat.nom} style={{marginBottom:14}}>
       <h3 style={{fontSize:12,fontWeight:700,color:C.forest,marginBottom:5,display:"flex",alignItems:"center",gap:4,justifyContent:"center"}}>
         {ECat[cat.nom]||"📦"} {cat.nom} <span style={{fontSize:10,color:C.tL,fontWeight:400}}>({orderedNames.length})</span></h3>
-      {nonAlim.includes(cat.nom)&&addingTo===cat.nom?
+      {addingTo===cat.nom?
         <div style={{display:"flex",gap:4,marginBottom:6}}>
           <input type="text" value={newArtName} onChange={e=>setNewArtName(e.target.value)}
             placeholder="Nom du nouvel article..." autoFocus
@@ -1415,7 +1594,7 @@ function StockTab({stockCk,setStockCk,stockOrder,setStockOrder,customArt,setCust
           <button onClick={()=>{setAddingTo(null);setNewArtName("");}} style={{padding:"6px 8px",borderRadius:6,
             border:`1px solid ${C.bdr}`,background:"#fff",fontSize:11,cursor:"pointer"}}>X</button>
         </div>
-      :nonAlim.includes(cat.nom)&&<button onClick={()=>setAddingTo(cat.nom)} style={{marginBottom:6,padding:"5px 10px",
+      :<button onClick={()=>setAddingTo(cat.nom)} style={{marginBottom:6,padding:"5px 10px",
         borderRadius:6,border:`1px dashed ${C.fL}`,background:"transparent",fontSize:11,cursor:"pointer",color:C.fL}}>
         + Ajouter un article</button>}
       {orderedNames.map((artNom,idx)=>{const k=cat.nom+"__"+artNom;const ck=stockCk[k];
@@ -1462,7 +1641,7 @@ function StockTab({stockCk,setStockCk,stockOrder,setStockOrder,customArt,setCust
                   border:`1px solid ${C.bdr}`,background:"#fff",fontSize:10,cursor:"pointer"}}>X</button>
               </div>
             :<><span style={{fontSize:12,textAlign:"left",flex:1}}>{artNom}</span>
-              {nonAlim.includes(cat.nom)&&<div style={{display:"flex",gap:2,flexShrink:0}} onClick={e=>e.stopPropagation()}>
+              {(nonAlim.includes(cat.nom)||(customArt.add||[]).some(a=>a.cat===cat.nom&&a.nom===artNom))&&<div style={{display:"flex",gap:2,flexShrink:0}} onClick={e=>e.stopPropagation()}>
                 <button onClick={()=>{setRenamingKey(cat.nom+"__"+artNom);setRenameVal(artNom);}} style={{padding:"2px 5px",borderRadius:4,
                   border:`1px solid ${C.bdrL}`,background:"#fff",fontSize:9,cursor:"pointer",color:C.tL}}>✏️</button>
                 <button onClick={()=>deleteArticle(cat.nom,artNom)} style={{padding:"2px 5px",borderRadius:4,
@@ -2443,7 +2622,10 @@ function Root(){
         {cat:"HERBES ET AROMATES FRAIS",art:"Aneth"},
         {cat:"CONSERVES ET BOCAUX",art:"Artichauts marinés"},
         {cat:"CONSERVES ET BOCAUX",art:"Poivrons marinés"},
-        {cat:"HUILES ET VINAIGRES",art:"Vinaigre blanc"}
+        {cat:"HUILES ET VINAIGRES",art:"Vinaigre blanc"},
+        {cat:"FRAIS CRÉMERIE",art:"Fromage blanc pot 850g"},
+        {cat:"DIVERS",art:"Cure-dents"},
+        {cat:"BOULANGERIE / TORTILLAS",art:"Galettes (dosa/sarrasin)"}
       ];
       NEW_STOCK_ARTICLES.forEach(({cat,art})=>{
         const c=DATA.stock.find(s=>s.nom===cat);
