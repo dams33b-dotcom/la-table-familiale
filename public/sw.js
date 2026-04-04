@@ -1,4 +1,4 @@
-const CACHE_NAME = "ltf-v5";
+const CACHE_NAME = "ltf-v6";
 const ASSETS = [
   "/",
   "/index.html",
@@ -12,14 +12,12 @@ const ASSETS = [
   "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js",
   "https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"
 ];
-
 // Install: cache all assets
 self.addEventListener("install", e => {
   e.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting())
   );
 });
-
 // Activate: clean old caches
 self.addEventListener("activate", e => {
   e.waitUntil(
@@ -28,13 +26,11 @@ self.addEventListener("activate", e => {
     )).then(() => self.clients.claim())
   );
 });
-
 // Fetch: network first, fallback to cache
 self.addEventListener("fetch", e => {
   if (e.request.method !== "GET") return;
   const url = e.request.url;
   if (url.includes("firebasedatabase.app") || url.includes("firebaseio.com")) return;
-
   e.respondWith(
     fetch(e.request).then(response => {
       if (response.ok) {
@@ -47,16 +43,13 @@ self.addEventListener("fetch", e => {
     })
   );
 });
-
 // ═══════ PUSH NOTIFICATIONS ═══════
-
 // Recevoir une notification push du serveur
 self.addEventListener("push", e => {
   if (!e.data) return;
   let data;
   try { data = e.data.json(); }
   catch { data = { title: "La Table Familiale", body: e.data.text() }; }
-
   const options = {
     body: data.body || "",
     icon: "/icon-192.svg",
@@ -66,12 +59,10 @@ self.addEventListener("push", e => {
     data: { url: data.url || "/" },
     vibrate: [100, 50, 200]
   };
-
   e.waitUntil(
     self.registration.showNotification(data.title || "🌿 La Table Familiale", options)
   );
 });
-
 // Clic sur la notification → ouvrir l'app
 self.addEventListener("notificationclick", e => {
   e.notification.close();
