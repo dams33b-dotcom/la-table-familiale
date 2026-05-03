@@ -474,7 +474,7 @@ function App(){
         {tab===0&&<MenuTab menu={menu} setMenu={sv.menu} locked={locked} profiles={profiles}
           setProfiles={sv.prof} ratings={ratings} saladRat={saladRat} photos={photos} onSel={setSelPlat} platDel={platDel}/>}
         {tab===1&&<CatalogTab ratings={ratings} profiles={profiles} photos={photos} onSel={setSelPlat} platDel={platDel} onPlatDel={sv.pDel}/>}
-        {tab===2&&<CoursesTab menu={menu} profiles={profiles} stockCk={stockCk} courseCk={courseCk} setCk={sv.crs} stockOrder={stockOrder}/>}
+        {tab===2&&<CoursesTab menu={menu} profiles={profiles} stockCk={stockCk} courseCk={courseCk} setCk={sv.crs} stockOrder={stockOrder} customArt={customArt}/>}
         {tab===3&&<BatchTab menu={menu}/>}
         {tab===4&&<StockTab stockCk={stockCk} setStockCk={sv.stk} stockOrder={stockOrder} setStockOrder={sv.sord} customArt={customArt} setCustomArt={sv.cart}/>}
         {tab===5&&<ProfilsTab menu={menu}/>}
@@ -1099,7 +1099,7 @@ function CatalogTab({ratings,profiles,photos,onSel,platDel,onPlatDel}){
 }
 
 // ═══════ TAB 3 — COURSES ═══════
-function CoursesTab({menu,profiles,stockCk,courseCk,setCk,stockOrder}){
+function CoursesTab({menu,profiles,stockCk,courseCk,setCk,stockOrder,customArt}){
   const grouped=useMemo(()=>{
     if(!menu)return[];
     const all=[...(menu.repas||[]),...(menu.entrees||[]),...(menu.salades||[])];
@@ -1120,23 +1120,45 @@ function CoursesTab({menu,profiles,stockCk,courseCk,setCk,stockOrder}){
     (menu.repas||[]).forEach(r=>{(r.ingredients||[]).forEach(([n])=>{if(r.jourIdx<3)early.add(n);else late.add(n);});});
     const freshOnly=new Set([...late].filter(n=>!early.has(n)));
     const result=[];
+
+    // Helper: get all article names for a stock category (base + custom added - deleted + renamed)
+    function getStockNames(catNom){
+      const sc=DATA.stock.find(c=>c.nom===catNom);
+      let names=sc?sc.articles.map(a=>a.nom):[];
+      if(customArt&&customArt.add){customArt.add.forEach(a=>{if(a.cat===catNom&&!names.includes(a.nom))names.push(a.nom);});}
+      if(customArt&&customArt.del){names=names.filter(n=>!(customArt.del||[]).includes(catNom+"__"+n));}
+      if(customArt&&customArt.ren){names=names.map(n=>(customArt.ren||{})[catNom+"__"+n]||n);}
+      return names;
+    }
+
+    // Alimentaires (via CAT_ORDER)
     CAT_ORDER.forEach(([ck,emoji])=>{
       const ciRaw=items.filter(i=>i.cat===ck);
-      // Sort by stock order if available, else alphabetical
       const catFullName=CN[ck]||ck;
       const order=stockOrder&&stockOrder[catFullName];
       const ci=order?ciRaw.sort((a,b)=>{const ia=order.indexOf(a.nom);const ib=order.indexOf(b.nom);
         if(ia===-1&&ib===-1)return a.nom.localeCompare(b.nom,"fr");if(ia===-1)return 1;if(ib===-1)return -1;return ia-ib;}):
         ciRaw.sort((a,b)=>a.nom.localeCompare(b.nom,"fr"));
       const si=[];
-      const sc=DATA.stock.find(c=>c.nom===(CN[ck]||ck));
-      if(sc)sc.articles.forEach(art=>{if(stockCk[sc.nom+"__"+art.nom])
-          si.push({nom:art.nom,unite:"",tot:null,isStock:true,cat:ck});});
+      const allNames=getStockNames(catFullName);
+      allNames.forEach(artNom=>{if(stockCk[catFullName+"__"+artNom])
+          si.push({nom:artNom,unite:"",tot:null,isStock:true,cat:ck});});
       const combined=[...ci,...si];
-      if(combined.length)result.push({key:ck,name:CN[ck]||ck,emoji,items:combined,freshOnly});
+      if(combined.length)result.push({key:ck,name:catFullName,emoji,items:combined,freshOnly});
     });
+
+    // Non-alimentaires (SANITAIRES, PRODUITS MÉNAGERS, DIVERS)
+    const nonAlimCats=[["SANITAIRES","🧴"],["PRODUITS MÉNAGERS","🧹"],["DIVERS","📦"]];
+    nonAlimCats.forEach(([catNom,emoji])=>{
+      const si=[];
+      const allNames=getStockNames(catNom);
+      allNames.forEach(artNom=>{if(stockCk[catNom+"__"+artNom])
+          si.push({nom:artNom,unite:"",tot:null,isStock:true,cat:catNom});});
+      if(si.length)result.push({key:catNom,name:catNom,emoji,items:si,freshOnly});
+    });
+
     return result;
-  },[menu,profiles,stockCk]);
+  },[menu,profiles,stockCk,customArt]);
 
   const total=grouped.reduce((s,g)=>s+g.items.length,0);
   const checked=Object.values(courseCk).filter(Boolean).length;
